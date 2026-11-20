@@ -8,6 +8,7 @@ import click
 
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._output import format_time, json_option, print_json, print_table
+from openhexa.companion.cli._prompt import confirm, yes_option
 
 version_option = click.option(
     "--version",
@@ -182,3 +183,17 @@ def deploy(
         return
     click.echo(f"Deployed version {version.label} of {version.pipeline}", err=True)
     click.echo(version.pipeline)
+
+
+@pipelines.command()
+@click.argument("pipeline")
+@yes_option
+@pass_client
+def delete(client: LazyClient, pipeline: str, yes: bool) -> None:
+    """Delete a pipeline with its versions and runs."""
+    library = client.get()
+    item = library.pipelines.get(pipeline)
+    count = len(library.pipelines.versions(pipeline))
+    confirm(f"Delete pipeline '{item.code}' and its {count} version(s) and runs", yes=yes)
+    library.pipelines.delete(pipeline)
+    click.echo(f"Deleted pipeline {item.code}", err=True)

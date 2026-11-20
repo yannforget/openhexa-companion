@@ -13,6 +13,7 @@ from openhexa.companion.cli._output import (
     print_json,
     print_table,
 )
+from openhexa.companion.cli._prompt import confirm, yes_option
 
 
 @click.group()
@@ -109,3 +110,20 @@ def upload(client: LazyClient, sources: tuple[Path, ...], destination: str) -> N
         library.files.upload(local, prefix + path)
         click.echo(f"{prefix}{path} ({format_size(local.stat().st_size)})", err=True)
     click.echo(f"Uploaded {len(pairs)} file(s)", err=True)
+
+
+@files.command()
+@click.argument("path")
+@yes_option
+@pass_client
+def delete(client: LazyClient, path: str, yes: bool) -> None:
+    """Delete the file at PATH, or the directory at PATH with everything in it."""
+    library = client.get()
+    item = library.files.get(path)
+    if item.is_directory:
+        count = len(library.files.list(item.path, recursive=True))
+        confirm(f"Delete directory '{item.path}' and the {count} file(s) in it", yes=yes)
+    else:
+        confirm(f"Delete '{item.path}'", yes=yes)
+    library.files.delete(item.path)
+    click.echo(f"Deleted {item.path}", err=True)

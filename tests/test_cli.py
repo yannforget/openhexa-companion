@@ -37,6 +37,18 @@ def test_parameters_are_read_as_json_or_strings(tmp_path: Path):
 
 
 @pytest.mark.workspace
+def test_delete_needs_confirmation_without_terminal():
+    if not ENV_FILE.exists():
+        pytest.skip(".env with demo workspace credentials is missing")
+    result = CliRunner().invoke(
+        main, ["--env-file", str(ENV_FILE), "files", "delete", "regional_summary.parquet"]
+    )
+
+    assert result.exit_code == 1
+    assert "Add --yes to confirm" in result.output
+
+
+@pytest.mark.workspace
 def test_list_datasets_as_json():
     if not ENV_FILE.exists():
         pytest.skip(".env with demo workspace credentials is missing")

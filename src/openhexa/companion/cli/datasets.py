@@ -13,6 +13,7 @@ from openhexa.companion.cli._output import (
     print_json,
     print_table,
 )
+from openhexa.companion.cli._prompt import confirm, yes_option
 
 dataset_argument = click.argument("dataset")
 version_option = click.option(
@@ -190,3 +191,17 @@ def upload(
         print_json({"version": version, "files": uploaded})
         return
     click.echo(f"Published version {version.name} with {len(uploaded)} file(s)", err=True)
+
+
+@datasets.command()
+@dataset_argument
+@yes_option
+@pass_client
+def delete(client: LazyClient, dataset: str, yes: bool) -> None:
+    """Delete a dataset with all its versions and files."""
+    library = client.get()
+    item = library.datasets.get(dataset)
+    count = len(library.datasets.versions(dataset))
+    confirm(f"Delete dataset '{item.reference}' and its {count} version(s)", yes=yes)
+    library.datasets.delete(dataset)
+    click.echo(f"Deleted dataset {item.reference}", err=True)
