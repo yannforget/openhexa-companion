@@ -3,8 +3,9 @@
 .env.*
 !.env.example
 
-# Temporary implementation plans
+# Local plans and research notes
 plans/
+research/
 
 # Python
 __pycache__/

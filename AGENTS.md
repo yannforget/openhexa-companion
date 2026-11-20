@@ -23,6 +23,8 @@ architecture.
 - `docs/`: design documents.
 - `plans/`: temporary implementation plans for handing context between sessions.
   Not tracked by Git and not documentation.
+- `research/`: short notes on findings from explorations, one Markdown file per
+  question. Not tracked by Git.
 
 ## Related resources
 
