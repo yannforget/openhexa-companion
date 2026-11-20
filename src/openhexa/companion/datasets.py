@@ -1,7 +1,6 @@
 """Datasets of a workspace, their versions and files."""
 
 import builtins
-import mimetypes
 from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
@@ -10,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from openhexa.companion._transport import ByteStream, Transport
-from openhexa.companion._util import check_uuid, format_options
+from openhexa.companion._util import check_uuid, format_options, guess_content_type
 from openhexa.companion.errors import InvalidInputError, NotFoundError, PermissionDeniedError
 from openhexa.companion.workspace import workspace_not_found
 
@@ -233,25 +232,6 @@ FILE_ERRORS = {
     "PERMISSION_DENIED": "the token may not add files to this dataset",
     "VERSION_NOT_FOUND": "the version does not exist",
 }
-# Content types missing from the table built into `mimetypes`.
-EXTRA_CONTENT_TYPES = {
-    ".geojson": "application/geo+json",
-    ".gpkg": "application/geopackage+sqlite3",
-    ".parquet": "application/vnd.apache.parquet",
-    ".zst": "application/zstd",
-}
-# Content types of compressed files, by the encoding `mimetypes` reports for them.
-COMPRESSED_CONTENT_TYPES = {
-    "bzip2": "application/x-bzip2",
-    "compress": "application/x-compress",
-    "gzip": "application/gzip",
-    "xz": "application/x-xz",
-}
-# Guesses content types from Python's built-in table, ignoring the system's MIME files so
-# that a file gets the same type on every machine.
-MIME_TYPES = mimetypes.MimeTypes()
-for _suffix, _content_type in EXTRA_CONTENT_TYPES.items():
-    MIME_TYPES.add_type(_content_type, _suffix)
 
 
 @dataclass(frozen=True)
@@ -793,19 +773,6 @@ class Datasets:
             f"'{version.name}' in workspace '{self._workspace}' has no file '{path}'. "
             f"Files: {format_options(paths)}"
         )
-
-
-def guess_content_type(path: str) -> str:
-    """Guess the media type of a file from the extension of its `path`.
-
-    Compressed files, such as `cases.csv.gz`, get the type of their compression, since
-    their content is not readable as the inner type. Unknown extensions get
-    `application/octet-stream`.
-    """
-    content_type, encoding = MIME_TYPES.guess_file_type(path)
-    if encoding is not None:
-        return COMPRESSED_CONTENT_TYPES.get(encoding, "application/octet-stream")
-    return content_type or "application/octet-stream"
 
 
 def _parse_reference(dataset: str) -> tuple[str | None, str]:

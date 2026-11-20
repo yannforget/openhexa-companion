@@ -9,8 +9,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from openhexa.companion._transport import PAGE_SIZE, ByteStream, Transport
-from openhexa.companion._util import format_options
-from openhexa.companion.datasets import guess_content_type
+from openhexa.companion._util import format_options, guess_content_type
 from openhexa.companion.errors import NotFoundError
 from openhexa.companion.workspace import workspace_not_found
 

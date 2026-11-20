@@ -1,6 +1,6 @@
 import pytest
 
-from openhexa.companion.datasets import guess_content_type
+from openhexa.companion._util import guess_content_type
 
 
 @pytest.mark.parametrize(
