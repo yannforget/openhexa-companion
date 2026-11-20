@@ -72,6 +72,12 @@ def test_publish_dataset(client: Client, tmp_path: Path):
         assert files["cases.csv"].content_type == "text/csv"
         with client.datasets.read(client.datasets.file(version, "cases.csv")) as stream:
             assert stream.read() == local.read_bytes()
+
+        renamed = client.datasets.update_version(version, name="v1-fixed")
+        assert client.datasets.update(dataset.slug, description="Cases").description == "Cases"
+        second = client.datasets.create_version(dataset.slug, "v2")
+        client.datasets.delete_version(second)
+        assert client.datasets.version(dataset.slug) == renamed
     finally:
         client.datasets.delete(dataset.slug)
 

@@ -195,12 +195,79 @@ def upload(
 
 @datasets.command()
 @dataset_argument
+@click.option(
+    "--version",
+    "version_name",
+    help="Update this version instead of the dataset: --name renames it.",
+)
+@click.option("--name", help="New name of the dataset, or of the version with --version.")
+@click.option("--description", help="New description of the dataset, in Markdown.")
+@click.option("--changelog", help="New changelog of the version given with --version.")
+@json_option
+@pass_client
+def update(
+    client: LazyClient,
+    *,
+    dataset: str,
+    version_name: str | None,
+    name: str | None,
+    description: str | None,
+    changelog: str | None,
+    as_json: bool,
+) -> None:
+    """Change the name or description of a dataset, or the name or changelog of a version.
+
+    The slug of the dataset does not change with its name.
+    """
+    library = client.get()
+    if version_name is None:
+        if changelog is not None:
+            raise click.UsageError("--changelog needs --version")
+        if name is None and description is None:
+            raise click.UsageError("Give --name or --description")
+        result = library.datasets.update(dataset, name=name, description=description)
+        message = f"Updated dataset {result.reference}"
+    else:
+        if description is not None:
+            raise click.UsageError("--description applies to the dataset, not a version")
+        if name is None and changelog is None:
+            raise click.UsageError("Give --name or --changelog")
+        version = library.datasets.version(dataset, version_name)
+        result = library.datasets.update_version(version, name=name, changelog=changelog)
+        message = f"Updated version {result.name} of dataset {dataset}"
+    if as_json:
+        print_json(result)
+        return
+    click.echo(message, err=True)
+
+
+@datasets.command()
+@dataset_argument
+@click.option(
+    "--version",
+    "version_name",
+    help="Delete only this version and its files, instead of the whole dataset.",
+)
 @yes_option
 @pass_client
-def delete(client: LazyClient, dataset: str, yes: bool) -> None:
-    """Delete a dataset with all its versions and files."""
+def delete(client: LazyClient, dataset: str, version_name: str | None, yes: bool) -> None:
+    """Delete a dataset with all its versions and files, or a single version.
+
+    Deleting the latest version makes the previous one the latest.
+    """
     library = client.get()
     item = library.datasets.get(dataset)
+    if version_name is not None:
+        version = library.datasets.version(dataset, version_name)
+        count = len(library.datasets.files(version))
+        confirm(
+            f"Delete version '{version.name}' of dataset '{item.reference}' and its "
+            f"{count} file(s)",
+            yes=yes,
+        )
+        library.datasets.delete_version(version)
+        click.echo(f"Deleted version {version.name} of dataset {item.reference}", err=True)
+        return
     count = len(library.datasets.versions(dataset))
     confirm(f"Delete dataset '{item.reference}' and its {count} version(s)", yes=yes)
     library.datasets.delete(dataset)

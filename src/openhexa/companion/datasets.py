@@ -166,6 +166,35 @@ mutation CreateDatasetVersionFile($input: CreateDatasetVersionFileInput!) {{
 }}
 """
 
+UPDATE_MUTATION = f"""
+mutation UpdateDataset($input: UpdateDatasetInput!) {{
+  updateDataset(input: $input) {{
+    success
+    errors
+    dataset {{ {DATASET_FIELDS} }}
+  }}
+}}
+"""
+
+UPDATE_VERSION_MUTATION = f"""
+mutation UpdateDatasetVersion($input: UpdateDatasetVersionInput!) {{
+  updateDatasetVersion(input: $input) {{
+    success
+    errors
+    version {{ {VERSION_FIELDS} }}
+  }}
+}}
+"""
+
+DELETE_VERSION_MUTATION = """
+mutation DeleteDatasetVersion($input: DeleteDatasetVersionInput!) {
+  deleteDatasetVersion(input: $input) {
+    success
+    errors
+  }
+}
+"""
+
 DELETE_MUTATION = """
 mutation DeleteDataset($input: DeleteDatasetInput!) {
   deleteDataset(input: $input) {
@@ -532,6 +561,88 @@ class Datasets:
             reasons=FILE_ERRORS,
         )
         return _file(result["file"], version)
+
+    def update(
+        self, dataset: str, *, name: str | None = None, description: str | None = None
+    ) -> Dataset:
+        """Change the name or description of a dataset; `None` leaves a field unchanged.
+
+        The slug does not change with the name.
+
+        Raises:
+            NotFoundError: The workspace has no such dataset.
+            PermissionDeniedError: The token may not update the dataset.
+        """
+        changes = {"name": name, "description": description}
+        result = self._transport.mutate(
+            "updateDataset",
+            UPDATE_MUTATION,
+            {
+                "input": {
+                    "datasetId": self._find(GET_QUERY, dataset)["id"],
+                    **{key: value for key, value in changes.items() if value is not None},
+                }
+            },
+            action=f"update dataset '{dataset}' in workspace '{self._workspace}'",
+            reasons={"PERMISSION_DENIED": "the token may not update this dataset"},
+        )
+        return _dataset(result["dataset"])
+
+    def update_version(
+        self,
+        version: DatasetVersion,
+        *,
+        name: str | None = None,
+        changelog: str | None = None,
+    ) -> DatasetVersion:
+        """Rename a dataset version or change its changelog; `None` leaves a field unchanged.
+
+        Raises:
+            NotFoundError: The version no longer exists.
+            PermissionDeniedError: The token may not update the dataset.
+        """
+        changes = {"name": name, "changelog": changelog}
+        dataset = self._reference(version.workspace, version.dataset)
+        result = self._transport.mutate(
+            "updateDatasetVersion",
+            UPDATE_VERSION_MUTATION,
+            {
+                "input": {
+                    "versionId": version.id,
+                    **{key: value for key, value in changes.items() if value is not None},
+                }
+            },
+            action=f"update version '{version.name}' of dataset '{dataset}' in workspace "
+            f"'{self._workspace}'",
+            reasons={"PERMISSION_DENIED": "the token may not update this dataset"},
+        )
+        return DatasetVersion(
+            dataset=version.dataset,
+            workspace=version.workspace,
+            name=result["version"]["name"],
+            changelog=result["version"]["changelog"] or None,
+            created_at=version.created_at,
+            id=version.id,
+        )
+
+    def delete_version(self, version: DatasetVersion) -> None:
+        """Delete a dataset version and its files.
+
+        If it was the latest version, the previous one becomes the latest.
+
+        Raises:
+            NotFoundError: The version no longer exists.
+            PermissionDeniedError: The token may not delete versions of the dataset.
+        """
+        dataset = self._reference(version.workspace, version.dataset)
+        self._transport.mutate(
+            "deleteDatasetVersion",
+            DELETE_VERSION_MUTATION,
+            {"input": {"versionId": version.id}},
+            action=f"delete version '{version.name}' of dataset '{dataset}' in workspace "
+            f"'{self._workspace}'",
+            reasons={"PERMISSION_DENIED": "the token may not delete versions of this dataset"},
+        )
 
     def delete(self, dataset: str) -> None:
         """Delete a dataset with all its versions and files.
