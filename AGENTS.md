@@ -21,6 +21,7 @@ architecture.
   import it.
 - `tests/`: tests.
 - `docs/`: design documents.
+- `guidelines/`: rules for writing code in this project.
 - `plans/`: temporary implementation plans for handing context between sessions.
   Not tracked by Git and not documentation.
 - `research/`: short notes on findings from explorations, one Markdown file per
@@ -49,7 +50,10 @@ especially its authorization section.
 
 ## Development
 
-Read [PYTHON_GUIDELINES.md](PYTHON_GUIDELINES.md) before changing Python code.
+Read the relevant guidelines before changing code:
+
+- [guidelines/python.md](guidelines/python.md): any Python code.
+- [guidelines/library.md](guidelines/library.md): the library, outside `cli/` and `server/`.
 
 For Python changes, run:
 
