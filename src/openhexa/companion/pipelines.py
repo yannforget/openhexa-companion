@@ -213,7 +213,7 @@ class PipelineVersion:
     @property
     def label(self) -> str:
         """Names the version as OpenHEXA shows it, such as `v3` or `fix [v3]`."""
-        return _label(self.name, self.number)
+        return version_label(self.name, self.number)
 
 
 class Pipelines:
@@ -268,10 +268,13 @@ class Pipelines:
             raise InvalidInputError("Give either a version name or a version ID, not both")
         if name is not None:
             versions = self.versions(pipeline)
-            for match in (lambda v: v.name == name, lambda v: f"v{v.number}" == name):
-                found = next((version for version in versions if match(version)), None)
-                if found is not None:
-                    return found
+            # A name given when deploying wins over a number, since a version may be named `v2`.
+            for version in versions:
+                if version.name == name:
+                    return version
+            for version in versions:
+                if f"v{version.number}" == name:
+                    return version
             raise NotFoundError(
                 f"Pipeline '{pipeline}' in workspace '{self._workspace}' has no version "
                 f"'{name}'. Versions, newest first: {format_options(v.label for v in versions)}"
@@ -499,7 +502,8 @@ def _declared_timeout(tree: ast.Module) -> int | None:
     return None
 
 
-def _label(name: str | None, number: int) -> str:
+def version_label(name: str | None, number: int) -> str:
+    """Name a version as OpenHEXA shows it, such as `v3` or `fix [v3]`."""
     return f"{name} [v{number}]" if name else f"v{number}"
 
 
@@ -511,7 +515,9 @@ def _pipeline(data: dict[str, Any]) -> Pipeline:
         description=data["description"] or "",
         type=data["type"],
         schedule=data["schedule"],
-        current_version=_label(current["name"], current["versionNumber"]) if current else None,
+        current_version=version_label(current["name"], current["versionNumber"])
+        if current
+        else None,
         id=data["id"],
     )
 

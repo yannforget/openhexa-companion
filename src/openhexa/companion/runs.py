@@ -8,7 +8,12 @@ from typing import Any
 from openhexa.companion._transport import Transport
 from openhexa.companion._util import check_uuid
 from openhexa.companion.errors import InvalidInputError, NotFoundError
-from openhexa.companion.pipelines import Pipelines, PipelineVersion, find_pipeline
+from openhexa.companion.pipelines import (
+    Pipelines,
+    PipelineVersion,
+    find_pipeline,
+    version_label,
+)
 
 # Statuses after which a run no longer changes.
 FINISHED_STATUSES = frozenset({"success", "failed", "stopped", "skipped"})
@@ -339,13 +344,6 @@ class Runs:
 def _run(data: dict[str, Any]) -> Run:
     version = data["version"]
     started_at = data["executionDate"]
-    label = None
-    if version:
-        label = (
-            f"{version['name']} [v{version['versionNumber']}]"
-            if version["name"]
-            else f"v{version['versionNumber']}"
-        )
     return Run(
         id=data["id"],
         pipeline=data["pipeline"]["code"],
@@ -355,7 +353,7 @@ def _run(data: dict[str, Any]) -> Run:
         trigger=data["triggerMode"],
         progress=data["progress"],
         parameters=data["config"] or {},
-        version=label,
+        version=version_label(version["name"], version["versionNumber"]) if version else None,
         version_id=version["id"] if version else None,
         user=data["user"]["displayName"] if data["user"] else None,
     )

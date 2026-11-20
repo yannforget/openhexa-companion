@@ -2,7 +2,7 @@
 
 import io
 import zipfile
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 import click
 
@@ -120,11 +120,8 @@ def source(
     target = output or Path(f"{pipeline}-v{version.number}")
     if target.exists() and not force:
         raise click.ClickException(f"{target} already exists. Use --force to extract into it.")
+    # `extractall` drops absolute paths and `..` parts, so nothing lands outside `target`.
     with zipfile.ZipFile(io.BytesIO(library.pipelines.source(version))) as archive:
-        for name in archive.namelist():
-            path = PurePosixPath(name)
-            if path.is_absolute() or ".." in path.parts:
-                raise click.ClickException(f"Refusing to extract '{name}' outside {target}")
         archive.extractall(target)
     click.echo(f"Extracted version {version.label} of {pipeline} to {target}", err=True)
 
