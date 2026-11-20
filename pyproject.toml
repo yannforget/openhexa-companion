@@ -1,0 +1,111 @@
+[project]
+name = "openhexa-companion"
+version = "0.1.0"
+authors = [
+    { name = "Yann Forget", email = "yforget@bluesquarehub.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "click>=8.5.1",
+]
+
+[project.scripts]
+hexa = "openhexa.companion.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.9.26,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "openhexa.companion"
+
+[dependency-groups]
+dev = [
+    "pyrefly>=1.5.0",
+    "pytest>=9.2.0",
+    "ruff>=0.17.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.pyrefly]
+project-includes = ["src/**/*.py", "tests/**/*.py"]
+
+[tool.ruff]
+line-length = 100
+required-version = ">=0.16"
+
+[tool.ruff.lint]
+extend-select = [
+    "BLE",   # flake8-blind-except
+    "TRY",   # tryceratops
+    "S",     # flake8-bandit
+    "B",     # flake8-bugbear
+    "E",     # pycodestyle errors
+    "PL",    # pylint
+    "PGH",   # pygrep-hooks (blanket noqa / type: ignore)
+    "RUF",   # ruff-specific rules
+    "PT",    # flake8-pytest-style
+    "F",     # pyflakes
+    "ASYNC", # flake8-async
+    "RET",   # flake8-return
+    "LOG",   # flake8-logging
+    "G",     # flake8-logging-format
+    "DTZ",   # flake8-datetimez
+    "ARG",   # flake8-unused-arguments
+    "T20",   # flake8-print
+    "ERA",   # eradicate
+    "FIX",   # flake8-fixme
+    "SIM",   # flake8-simplify
+    "W",     # pycodestyle warnings
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "C4",    # flake8-comprehensions
+    "FURB",  # refurb
+    "PIE",   # flake8-pie
+    "RSE",   # flake8-raise
+    "FLY",   # flynt
+    "PTH",   # flake8-use-pathlib
+    "SLF",   # flake8-self
+    "A",     # flake8-builtins
+    "ISC",   # flake8-implicit-str-concat
+    "YTT",   # flake8-2020
+    "T10",   # flake8-debugger
+    "ICN",   # flake8-import-conventions
+    "PYI",   # flake8-pyi
+    "SLOT",  # flake8-slots
+    "TID",   # flake8-tidy-imports
+    "INT",   # flake8-gettext
+    "FA",    # flake8-future-annotations
+    "D",     # pydocstyle
+]
+ignore = [
+    "ISC001",  # single-line-implicit-string-concatenation (conflicts with formatter)
+    "SIM105",  # suppressible-exception (contextlib.suppress hides failures from S110)
+    "TRY003",  # raise-vanilla-args (overly strict for simple exceptions)
+    "PLR0911", # too-many-return-statements (early returns are clearer)
+    "PLR0913", # too-many-arguments (too restrictive for complex APIs)
+    "PLR2004", # magic-value-comparison (too many false positives)
+    "RET504",  # unnecessary-assign (useful for readability/debugging)
+    "S105",    # hardcoded-password-string (false positives on token names)
+    "S106",    # hardcoded-password-func-arg (same)
+    "S107",    # hardcoded-password-default (same)
+    "S603",    # subprocess-without-shell-equals-true (too many false positives)
+    "S607",    # start-process-with-partial-path
+    "FIX002",  # line-contains-todo (TODOs are fine; FIXME/HACK/XXX still flagged)
+    "D1",      # missing docstrings: don't require them, only check the ones that exist
+    "D206",    # conflicts with formatter
+    "D300",    # conflicts with formatter
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101",    # assert is how pytest works
+    "SLF001",  # tests may access private members
+    "ARG",     # unused fixture arguments
+]
