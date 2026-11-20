@@ -12,6 +12,7 @@ from openhexa.companion.datasets import Datasets
 from openhexa.companion.files import Files
 from openhexa.companion.pipelines import Pipelines
 from openhexa.companion.runs import Runs
+from openhexa.companion.webapps import Webapps
 from openhexa.companion.workspace import Workspace, get_workspace
 
 
@@ -36,6 +37,7 @@ class Client:
         database: The workspace database.
         pipelines: Pipelines of the workspace.
         runs: Runs of the pipelines of the workspace.
+        webapps: Webapps of the workspace.
     """
 
     def __init__(
@@ -65,6 +67,7 @@ class Client:
         self.database = Database(self._transport, workspace)
         self.pipelines = Pipelines(self._transport, workspace)
         self.runs = Runs(self._transport, workspace, self.pipelines)
+        self.webapps = Webapps(self._transport, workspace)
 
     def get_workspace(self) -> Workspace:
         """Read the workspace.

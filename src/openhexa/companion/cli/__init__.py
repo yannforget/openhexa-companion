@@ -12,6 +12,7 @@ from openhexa.companion.cli.datasets import datasets
 from openhexa.companion.cli.files import files
 from openhexa.companion.cli.pipelines import pipelines
 from openhexa.companion.cli.runs import runs
+from openhexa.companion.cli.webapps import webapps
 
 
 class Group(click.Group):
@@ -67,3 +68,4 @@ main.add_command(datasets)
 main.add_command(files)
 main.add_command(pipelines)
 main.add_command(runs)
+main.add_command(webapps)
