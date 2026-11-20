@@ -8,6 +8,8 @@ from openhexa.companion import OpenHexaError
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._output import json_option, print_json
 from openhexa.companion.cli.datasets import datasets
+from openhexa.companion.cli.pipelines import pipelines
+from openhexa.companion.cli.runs import runs
 
 
 class Group(click.Group):
@@ -58,3 +60,5 @@ def workspace(client: LazyClient, as_json: bool) -> None:
 
 
 main.add_command(datasets)
+main.add_command(pipelines)
+main.add_command(runs)
