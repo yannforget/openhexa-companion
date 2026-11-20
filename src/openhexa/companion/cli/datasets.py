@@ -1,11 +1,11 @@
 """`hexa datasets` commands."""
 
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 import click
 
-from openhexa.companion import Client, DatasetFile
 from openhexa.companion.cli._context import LazyClient, pass_client
+from openhexa.companion.cli._local import check_targets, local_path, save_stream, upload_pairs
 from openhexa.companion.cli._output import (
     format_size,
     format_time,
@@ -135,14 +135,11 @@ def download(
         selected = [library.datasets.file(version, path) for path in paths]
     else:
         selected = library.datasets.files(version)
-    targets = [(file, _local_path(output, file)) for file in selected]
-    existing = [str(target) for _, target in targets if target.exists()]
-    if existing and not force:
-        raise click.ClickException(
-            f"Not downloading: {', '.join(existing)} already exist. Use --force to replace."
-        )
+    targets = [(file, local_path(output, file.path)) for file in selected]
+    check_targets((target for _, target in targets), force=force)
     for file, target in targets:
-        _download(library, file, target)
+        with library.datasets.read(file) as stream:
+            save_stream(stream, target)
         click.echo(f"{target} ({format_size(file.size)})", err=True)
     click.echo(f"Downloaded {len(targets)} file(s) of version {version.name}", err=True)
 
@@ -182,7 +179,7 @@ def upload(
     Files are added at the root of the version. The files in a directory keep their
     path relative to it; hidden files and directories, such as `.env`, are skipped.
     """
-    uploads = _files_to_upload(sources)
+    uploads = upload_pairs(sources)
     library = client.get()
     version = library.datasets.create_version(dataset, version_name, changelog)
     uploaded = []
@@ -193,48 +190,3 @@ def upload(
         print_json({"version": version, "files": uploaded})
         return
     click.echo(f"Published version {version.name} with {len(uploaded)} file(s)", err=True)
-
-
-def _local_path(output: Path, file: DatasetFile) -> Path:
-    """Place `file` under `output`, refusing paths that would escape it."""
-    path = PurePosixPath(file.path)
-    if path.is_absolute() or ".." in path.parts:
-        raise click.ClickException(f"Refusing to save '{file.path}' outside {output}")
-    return output.joinpath(*path.parts)
-
-
-def _download(library: Client, file: DatasetFile, target: Path) -> None:
-    """Save `file` at `target`, through a temporary file so a failure leaves no partial file."""
-    target.parent.mkdir(parents=True, exist_ok=True)
-    partial = target.with_name(f".{target.name}.part")
-    try:
-        with library.datasets.read(file) as stream, partial.open("wb") as out:
-            for chunk in stream:
-                out.write(chunk)
-        partial.replace(target)
-    finally:
-        partial.unlink(missing_ok=True)
-
-
-def _files_to_upload(sources: tuple[Path, ...]) -> list[tuple[Path, str]]:
-    """List `(local file, path in the version)` pairs, refusing duplicate paths."""
-    uploads: dict[str, Path] = {}
-    for source in sources:
-        if source.is_dir():
-            pairs = [
-                (local, local.relative_to(source).as_posix())
-                for local in sorted(source.rglob("*"))
-                if local.is_file()
-                and not any(part.startswith(".") for part in local.relative_to(source).parts)
-            ]
-        else:
-            pairs = [(source, source.name)]
-        for local, path in pairs:
-            if path in uploads:
-                raise click.ClickException(
-                    f"Both {uploads[path]} and {local} would be uploaded as '{path}'"
-                )
-            uploads[path] = local
-    if not uploads:
-        raise click.ClickException("No files to upload")
-    return [(local, path) for path, local in uploads.items()]

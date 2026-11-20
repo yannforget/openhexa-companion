@@ -7,7 +7,9 @@ import click
 from openhexa.companion import OpenHexaError
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._output import json_option, print_json
+from openhexa.companion.cli.connections import connections, database
 from openhexa.companion.cli.datasets import datasets
+from openhexa.companion.cli.files import files
 from openhexa.companion.cli.pipelines import pipelines
 from openhexa.companion.cli.runs import runs
 
@@ -59,6 +61,9 @@ def workspace(client: LazyClient, as_json: bool) -> None:
         click.echo(info.description)
 
 
+main.add_command(connections)
+main.add_command(database)
 main.add_command(datasets)
+main.add_command(files)
 main.add_command(pipelines)
 main.add_command(runs)

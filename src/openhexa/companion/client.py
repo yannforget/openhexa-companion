@@ -6,7 +6,10 @@ from typing import Self
 import httpx2
 
 from openhexa.companion._transport import Transport
+from openhexa.companion.connections import Connections
+from openhexa.companion.database import Database
 from openhexa.companion.datasets import Datasets
+from openhexa.companion.files import Files
 from openhexa.companion.pipelines import Pipelines
 from openhexa.companion.runs import Runs
 from openhexa.companion.workspace import Workspace, get_workspace
@@ -28,6 +31,9 @@ class Client:
         url: Base URL of the OpenHEXA instance.
         workspace: Slug of the workspace.
         datasets: Datasets of the workspace.
+        files: Files of the workspace, shared by its pipelines and notebooks.
+        connections: Connections of the workspace, including secret values.
+        database: The workspace database.
         pipelines: Pipelines of the workspace.
         runs: Runs of the pipelines of the workspace.
     """
@@ -54,6 +60,9 @@ class Client:
         self.url = self._transport.url
         self.workspace = workspace
         self.datasets = Datasets(self._transport, workspace)
+        self.files = Files(self._transport, workspace)
+        self.connections = Connections(self._transport, workspace)
+        self.database = Database(self._transport, workspace)
         self.pipelines = Pipelines(self._transport, workspace)
         self.runs = Runs(self._transport, workspace, self.pipelines)
 
