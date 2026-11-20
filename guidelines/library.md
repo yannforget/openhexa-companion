@@ -10,4 +10,4 @@ These rules apply to `src/openhexa/companion/` outside `cli/` and `server/`.
   where, what went wrong and, when useful, the valid options. Interface-specific
   hints, such as command or tool names, belong to the CLI or the server.
 - Never include tokens or storage URLs in messages, logs or tool results.
-- Use frozen dataclasses for internal data; keep Pydantic at API boundaries.
+- Use dataclasses for internal data; keep Pydantic at API boundaries.
