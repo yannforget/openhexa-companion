@@ -29,6 +29,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not workspace'"
 markers = [
     "workspace: needs the demo workspace credentials in .env",
 ]
