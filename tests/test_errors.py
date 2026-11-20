@@ -26,3 +26,13 @@ def test_server_error_names_the_host():
 
     with pytest.raises(APIError, match=r"openhexa\.test returned HTTP 502"):
         client.get_workspace()
+
+
+def test_request_too_large_is_explained(tmp_path):
+    (tmp_path / "pipeline.py").write_text("")
+    client = _client(httpx2.Response(413, json={"error": "REQUEST_TOO_LARGE"}))
+
+    with pytest.raises(APIError, match="larger than this OpenHEXA instance accepts") as error:
+        client.pipelines.deploy("cases", tmp_path)
+
+    assert error.value.codes == ("REQUEST_TOO_LARGE",)

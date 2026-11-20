@@ -2,7 +2,6 @@
 
 import base64
 import builtins
-import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -102,11 +101,9 @@ WEBAPP_ERRORS = {
     "VERSION_NOT_FOUND": "the version does not exist",
     "WEBAPPS_NOT_CONFIGURED": "webapps are not enabled on this OpenHEXA instance",
     "WEBAPP_NOT_FOUND": "the webapp does not exist",
+    "REQUEST_TOO_LARGE": "the files are larger than this OpenHEXA instance accepts; load "
+    "large data from a dataset instead",
 }
-# Largest request OpenHEXA accepts by default (Django's DATA_UPLOAD_MAX_MEMORY_SIZE).
-MAX_REQUEST_SIZE = 5 * 1024 * 1024
-# Bytes reserved for the rest of a publication request besides the files.
-REQUEST_OVERHEAD = 64 * 1024
 # Directories that are never part of a static site, even if not hidden.
 EXCLUDED_DIRECTORIES = frozenset({"node_modules", "__pycache__"})
 
@@ -269,7 +266,7 @@ class Webapps:
                 it, such as `DATASETS_READ`.
 
         Raises:
-            InvalidInputError: `source` is not a site directory or is too large.
+            InvalidInputError: `source` has no `index.html`.
             PermissionDeniedError: The token may not create webapps.
             APIError: OpenHEXA rejected the webapp, with the reason in the message.
         """
@@ -311,7 +308,7 @@ class Webapps:
             message: Description of the change.
 
         Raises:
-            InvalidInputError: `source` is not a site directory or is too large.
+            InvalidInputError: `source` has no `index.html`.
             NotFoundError: The workspace has no webapp `slug`.
             PermissionDeniedError: The token may not update the webapp.
             APIError: OpenHEXA rejected the files, with the reason in the message.
@@ -376,13 +373,11 @@ def package_site(source: Path) -> builtins.list[dict[str, str]]:
     Text files are sent as is, others in base64.
 
     Raises:
-        InvalidInputError: `source` has no `index.html`, or the request would be larger
-            than OpenHEXA accepts.
+        InvalidInputError: `source` has no `index.html`.
     """
     if not (source / "index.html").is_file():
         raise InvalidInputError(f"No index.html at the root of {source}")
     files = []
-    size = REQUEST_OVERHEAD
     for path in sorted(source.rglob("*")):
         relative = path.relative_to(source)
         if not path.is_file() or not _is_site_file(relative.parts):
@@ -396,16 +391,7 @@ def package_site(source: Path) -> builtins.list[dict[str, str]]:
                 "content": base64.b64encode(raw).decode("ascii"),
                 "encoding": "BASE64",
             }
-        size += len(json.dumps(item))
         files.append(item)
-    if size > MAX_REQUEST_SIZE:
-        largest = sorted(files, key=lambda item: len(item["content"]), reverse=True)[:5]
-        sizes = ", ".join(f"{item['path']} ({len(item['content']) // 1024} kB)" for item in largest)
-        raise InvalidInputError(
-            f"The site in {source} is too large to publish: {size // 1024} kB once "
-            f"encoded, over the {MAX_REQUEST_SIZE // (1024 * 1024)} MB OpenHEXA accepts. "
-            f"Largest files: {sizes}. Load large data from a dataset instead."
-        )
     return files
 
 

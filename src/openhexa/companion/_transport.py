@@ -19,6 +19,8 @@ from openhexa.companion.errors import (
 CHUNK_SIZE = 1024 * 1024
 # Items requested per page when walking paginated lists.
 PAGE_SIZE = 100
+# Error code of a request larger than the OpenHEXA instance accepts (HTTP 413).
+REQUEST_TOO_LARGE = "REQUEST_TOO_LARGE"
 
 
 class ByteStream:
@@ -73,7 +75,8 @@ class Transport:
 
         Raises:
             AuthenticationError: OpenHEXA rejected the token.
-            APIError: The request failed, or OpenHEXA returned GraphQL errors.
+            APIError: The request failed, or OpenHEXA returned GraphQL errors. A request
+                larger than the instance accepts has the code `REQUEST_TOO_LARGE`.
         """
         try:
             response = self._api.post(
@@ -83,6 +86,11 @@ class Transport:
             raise APIError(f"Could not reach OpenHEXA at {self.host}: {err}") from err
         if response.status_code in {401, 403}:
             raise self._authentication_error()
+        if response.status_code == 413:
+            raise APIError(
+                f"OpenHEXA at {self.host} rejected a request larger than it accepts",
+                [REQUEST_TOO_LARGE],
+            )
         try:
             body = response.json()
         except ValueError:
@@ -112,7 +120,9 @@ class Transport:
         """Send a mutation and return its result, raising if OpenHEXA reports failure.
 
         OpenHEXA reports mutation failures as error codes in the result rather than as
-        GraphQL errors. The raised exception keeps those codes.
+        GraphQL errors. The raised exception keeps those codes. A request too large for
+        the instance is reported like a mutation failure with code `REQUEST_TOO_LARGE`,
+        so `reasons` can explain it.
 
         Args:
             field: Name of the mutation field holding the result.
@@ -126,7 +136,13 @@ class Transport:
             PermissionDeniedError: The error codes include `PERMISSION_DENIED`.
             APIError: Any other error code.
         """
-        result = self.query(query, variables)[field]
+        result: dict[str, Any]
+        try:
+            result = self.query(query, variables)[field]
+        except APIError as err:
+            if err.codes != (REQUEST_TOO_LARGE,):
+                raise
+            result = {"success": False, "errors": [REQUEST_TOO_LARGE]}
         if result["success"]:
             return result
         codes: list[str] = result.get("errors") or []

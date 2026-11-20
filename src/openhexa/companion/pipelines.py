@@ -126,11 +126,9 @@ DEPLOY_ERRORS = {
     "PIPELINE_CODE_PARSING_ERROR": "OpenHEXA could not read the `@pipeline` declaration",
     "PIPELINE_DOES_NOT_SUPPORT_PARAMETERS": "the pipeline is scheduled, so every parameter "
     "of the new version needs a default",
+    "REQUEST_TOO_LARGE": "the code is larger than this OpenHEXA instance accepts; move "
+    "data files to a dataset or the workspace files",
 }
-# Largest request OpenHEXA accepts by default (Django's DATA_UPLOAD_MAX_MEMORY_SIZE).
-MAX_REQUEST_SIZE = 5 * 1024 * 1024
-# Bytes reserved for the rest of a deployment request besides the encoded source.
-REQUEST_OVERHEAD = 64 * 1024
 # Directory where pipelines mount the workspace files, never part of the source.
 WORKSPACE_DIRECTORY = "workspace"
 
@@ -330,7 +328,7 @@ class Pipelines:
             The first version, whose `pipeline` is the code of the new pipeline.
 
         Raises:
-            InvalidInputError: `source` is not a pipeline directory or is too large.
+            InvalidInputError: `source` is not a pipeline directory.
             PermissionDeniedError: The token may not create pipelines.
             APIError: OpenHEXA rejected the code, with the reason in the message.
         """
@@ -374,7 +372,7 @@ class Pipelines:
             description: What changed in this version.
 
         Raises:
-            InvalidInputError: `source` is not a pipeline directory or is too large.
+            InvalidInputError: `source` is not a pipeline directory.
             NotFoundError: The workspace has no such pipeline.
             PermissionDeniedError: The token may not deploy the pipeline.
             APIError: OpenHEXA rejected the version, with the reason in the message.
@@ -449,8 +447,7 @@ def package_pipeline(source: Path) -> tuple[str, int | None]:
         The base64-encoded archive, and the timeout declared in `@pipeline`, if any.
 
     Raises:
-        InvalidInputError: `source` has no `pipeline.py`, `pipeline.py` is not valid
-            Python, or the request would be larger than OpenHEXA accepts.
+        InvalidInputError: `source` has no `pipeline.py`, or it is not valid Python.
     """
     entrypoint = source / "pipeline.py"
     if not entrypoint.is_file():
@@ -465,16 +462,6 @@ def package_pipeline(source: Path) -> tuple[str, int | None]:
         for path in files:
             archive.write(path, path.relative_to(source).as_posix())
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
-    if len(encoded) + REQUEST_OVERHEAD > MAX_REQUEST_SIZE:
-        largest = sorted(files, key=lambda path: path.stat().st_size, reverse=True)[:5]
-        sizes = ", ".join(
-            f"{path.relative_to(source)} ({path.stat().st_size // 1024} kB)" for path in largest
-        )
-        raise InvalidInputError(
-            f"The pipeline in {source} is too large to deploy: {len(encoded) // 1024} kB "
-            f"once encoded, over the {MAX_REQUEST_SIZE // (1024 * 1024)} MB OpenHEXA "
-            f"accepts. Largest files: {sizes}. Move data to a dataset or the workspace files."
-        )
     try:
         tree = ast.parse(entrypoint.read_text(encoding="utf-8"), filename=str(entrypoint))
     except SyntaxError as err:
