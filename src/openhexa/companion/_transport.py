@@ -127,6 +127,8 @@ class Transport:
         codes: list[str] = result.get("errors") or []
         explanations = [(reasons or {}).get(code, code) for code in codes]
         message = f"Could not {action}: {'; '.join(explanations) or 'no reason given'}"
+        if result.get("details"):
+            message += f" ({result['details']})"
         if "PERMISSION_DENIED" in codes:
             raise PermissionDeniedError(message, codes)
         if any(code.endswith("NOT_FOUND") for code in codes):
@@ -134,17 +136,25 @@ class Transport:
         raise APIError(message, codes)
 
     @staticmethod
-    def paginate(fetch_page: Callable[[int, int], Mapping[str, Any]]) -> Iterator[dict[str, Any]]:
-        """Yield the items of every page.
+    def paginate(
+        fetch_page: Callable[[int, int], Mapping[str, Any]], limit: int | None = None
+    ) -> Iterator[dict[str, Any]]:
+        """Yield the items of every page, or the first `limit` items.
 
         Args:
             fetch_page: Returns the page object (`items` and `totalPages`) for a page
                 number and page size.
+            limit: Maximum number of items to yield.
         """
+        per_page = PAGE_SIZE if limit is None else min(PAGE_SIZE, limit)
+        remaining = limit
         page = 1
-        while True:
-            result = fetch_page(page, PAGE_SIZE)
-            yield from result["items"]
+        while remaining is None or remaining > 0:
+            result = fetch_page(page, per_page)
+            items = result["items"] if remaining is None else result["items"][:remaining]
+            yield from items
+            if remaining is not None:
+                remaining -= len(items)
             if page >= result["totalPages"]:
                 return
             page += 1

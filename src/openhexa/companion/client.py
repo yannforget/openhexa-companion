@@ -7,6 +7,8 @@ import httpx2
 
 from openhexa.companion._transport import Transport
 from openhexa.companion.datasets import Datasets
+from openhexa.companion.pipelines import Pipelines
+from openhexa.companion.runs import Runs
 from openhexa.companion.workspace import Workspace, get_workspace
 
 
@@ -26,6 +28,8 @@ class Client:
         url: Base URL of the OpenHEXA instance.
         workspace: Slug of the workspace.
         datasets: Datasets of the workspace.
+        pipelines: Pipelines of the workspace.
+        runs: Runs of the pipelines of the workspace.
     """
 
     def __init__(
@@ -50,6 +54,8 @@ class Client:
         self.url = self._transport.url
         self.workspace = workspace
         self.datasets = Datasets(self._transport, workspace)
+        self.pipelines = Pipelines(self._transport, workspace)
+        self.runs = Runs(self._transport, workspace, self.pipelines)
 
     def get_workspace(self) -> Workspace:
         """Read the workspace.

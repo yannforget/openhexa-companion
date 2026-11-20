@@ -2,8 +2,7 @@
 
 import builtins
 import mimetypes
-import uuid
-from collections.abc import Generator, Iterable
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -11,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from openhexa.companion._transport import ByteStream, Transport
+from openhexa.companion._util import check_uuid, format_options
 from openhexa.companion.errors import NotFoundError, PermissionDeniedError
 from openhexa.companion.workspace import workspace_not_found
 
@@ -202,8 +202,6 @@ COMPRESSED_CONTENT_TYPES = {
 MIME_TYPES = mimetypes.MimeTypes()
 for _suffix, _content_type in EXTRA_CONTENT_TYPES.items():
     MIME_TYPES.add_type(_content_type, _suffix)
-# Number of valid options listed in "not found" messages.
-MAX_OPTIONS = 20
 
 
 @dataclass(frozen=True)
@@ -354,10 +352,10 @@ class Datasets:
                     return version
             raise NotFoundError(
                 f"Dataset '{dataset}' in workspace '{self._workspace}' has no version "
-                f"'{name}'. Versions, newest first: {_options(v.name for v in versions)}"
+                f"'{name}'. Versions, newest first: {format_options(v.name for v in versions)}"
             )
         if version_id is not None:
-            _check_id(version_id, "version ID")
+            check_uuid(version_id, "version ID")
             data = self._find(VERSION_QUERY, dataset, version=version_id)
             if data["version"] is None:
                 raise NotFoundError(
@@ -608,7 +606,7 @@ class Datasets:
         return NotFoundError(
             f"Dataset '{self._reference(version.workspace, version.dataset)}' version "
             f"'{version.name}' in workspace '{self._workspace}' has no file '{path}'. "
-            f"Files: {_options(paths)}"
+            f"Files: {format_options(paths)}"
         )
 
 
@@ -633,13 +631,6 @@ def _parse_reference(dataset: str) -> tuple[str | None, str]:
     if not owner or not slug or "/" in owner:
         raise ValueError(f"Invalid dataset '{dataset}': expected 'slug' or 'workspace/slug'")
     return owner, slug
-
-
-def _check_id(value: str, what: str) -> None:
-    try:
-        uuid.UUID(value)
-    except ValueError:
-        raise ValueError(f"Invalid {what} '{value}': expected a UUID") from None
 
 
 def _dataset(data: dict[str, Any]) -> Dataset:
@@ -678,13 +669,3 @@ def _file(data: dict[str, Any], version: DatasetVersion) -> DatasetFile:
         id=data["id"],
         version_id=version.id,
     )
-
-
-def _options(items: Iterable[str]) -> str:
-    names = list(items)
-    if not names:
-        return "none"
-    shown = ", ".join(f"'{name}'" for name in names[:MAX_OPTIONS])
-    if len(names) > MAX_OPTIONS:
-        shown += f" and {len(names) - MAX_OPTIONS} more"
-    return shown
