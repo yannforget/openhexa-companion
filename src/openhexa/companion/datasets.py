@@ -4,7 +4,7 @@ import builtins
 import mimetypes
 from collections.abc import Generator
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -50,6 +50,11 @@ query Datasets($workspace: String!, $page: Int!, $perPage: Int!) {{
 """
 
 
+# Datasets of the workspace searched when checking that a dataset is shared with it. The
+# search matches slugs, names and descriptions, so it is set to the server maximum.
+SEARCH_SIZE = 10_000
+
+
 def _dataset_query(name: str, selection: str, variables: str = "") -> str:
     """Build a query reading `selection` from one dataset of the workspace.
 
@@ -69,6 +74,7 @@ query {name}(
       id
       slug
       workspace {{ slug }}
+      targetId
       {selection}
     }}
   }}
@@ -76,13 +82,7 @@ query {name}(
 """
 
 
-# Datasets of the workspace searched when checking that a dataset is shared with it. The
-# search matches slugs, names and descriptions, so it is set to the server maximum.
-SEARCH_SIZE = 10_000
-
 GET_QUERY = _dataset_query("Dataset", DATASET_FIELDS)
-
-TARGET_QUERY = _dataset_query("DatasetTarget", "targetId")
 
 VERSIONS_QUERY = _dataset_query(
     "DatasetVersions",
@@ -373,15 +373,15 @@ class Datasets:
         Raises:
             NotFoundError: The workspace has no such dataset.
         """
-        items = []
+        found: dict[str, Any] = {}
 
         def fetch_page(page: int, per_page: int) -> dict[str, Any]:
             data = self._find(VERSIONS_QUERY, dataset, page=page, perPage=per_page)
-            items.append(data)
+            found.setdefault("dataset", data)
             return data["versions"]
 
         versions = list(self._transport.paginate(fetch_page))
-        return [_version(item, items[0]) for item in versions]
+        return [_version(item, found["dataset"]) for item in versions]
 
     def version(
         self, dataset: str, name: str | None = None, *, version_id: str | None = None
@@ -642,13 +642,10 @@ class Datasets:
             f"'{self._workspace}'",
             reasons={"PERMISSION_DENIED": "the token may not update this dataset"},
         )
-        return DatasetVersion(
-            dataset=version.dataset,
-            workspace=version.workspace,
+        return replace(
+            version,
             name=result["version"]["name"],
             changelog=result["version"]["changelog"] or None,
-            created_at=version.created_at,
-            id=version.id,
         )
 
     def delete_version(self, version: DatasetVersion) -> None:
@@ -685,7 +682,13 @@ class Datasets:
         self._transport.mutate(
             "setMetadataAttribute",
             SET_ATTRIBUTE_MUTATION,
-            {"input": {"targetId": self._target_id(dataset), "key": key, "value": value}},
+            {
+                "input": {
+                    "targetId": self._find(GET_QUERY, dataset)["targetId"],
+                    "key": key,
+                    "value": value,
+                }
+            },
             action=f"set attribute '{key}' of dataset '{dataset}' in workspace '{self._workspace}'",
             reasons={"PERMISSION_DENIED": "the token may not update this dataset"},
         )
@@ -698,7 +701,8 @@ class Datasets:
             NotFoundError: The workspace has no such dataset, or it has no attribute `key`.
             PermissionDeniedError: The token may not update the dataset.
         """
-        current = self.get(dataset)
+        found = self._find(GET_QUERY, dataset)
+        current = _dataset(found)
         if key not in current.attributes:
             raise NotFoundError(
                 f"Dataset '{dataset}' in workspace '{self._workspace}' has no attribute "
@@ -707,7 +711,7 @@ class Datasets:
         self._transport.mutate(
             "deleteMetadataAttribute",
             DELETE_ATTRIBUTE_MUTATION,
-            {"input": {"targetId": self._target_id(dataset), "key": key}},
+            {"input": {"targetId": found["targetId"], "key": key}},
             action=f"delete attribute '{key}' of dataset '{dataset}' in workspace "
             f"'{self._workspace}'",
             reasons={"PERMISSION_DENIED": "the token may not update this dataset"},
@@ -777,10 +781,6 @@ class Datasets:
                 f"workspace '{self._workspace}'"
             )
         return data
-
-    def _target_id(self, dataset: str) -> str:
-        """Get the identifier OpenHEXA uses to attach attributes to a dataset."""
-        return self._find(TARGET_QUERY, dataset)["targetId"]
 
     def _reference(self, workspace: str, slug: str) -> str:
         """Name a dataset by its slug if the workspace owns it, `workspace/slug` otherwise."""
