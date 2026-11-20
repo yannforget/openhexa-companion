@@ -6,16 +6,28 @@ from typing import Any
 from openhexa.companion._transport import Transport
 from openhexa.companion.errors import NotFoundError
 
-WORKSPACE_QUERY = """
-query Workspace($workspace: String!) {
-  workspace(slug: $workspace) {
-    slug
-    name
-    description
-    configuration
-    dockerImage
-  }
-}
+WORKSPACE_FIELDS = """
+  slug
+  name
+  description
+  configuration
+  dockerImage
+"""
+
+WORKSPACE_QUERY = f"""
+query Workspace($workspace: String!) {{
+  workspace(slug: $workspace) {{ {WORKSPACE_FIELDS} }}
+}}
+"""
+
+UPDATE_MUTATION = f"""
+mutation UpdateWorkspace($input: UpdateWorkspaceInput!) {{
+  updateWorkspace(input: $input) {{
+    success
+    errors
+    workspace {{ {WORKSPACE_FIELDS} }}
+  }}
+}}
 """
 
 
@@ -47,6 +59,32 @@ def get_workspace(transport: Transport, slug: str) -> Workspace:
     data = transport.query(WORKSPACE_QUERY, {"workspace": slug})["workspace"]
     if data is None:
         raise workspace_not_found(transport, slug)
+    return _workspace(data)
+
+
+def update_description(transport: Transport, slug: str, description: str) -> Workspace:
+    """Replace the homepage of the workspace `slug` with the Markdown `description`.
+
+    Raises:
+        ValueError: `description` is empty, which OpenHEXA would ignore.
+        PermissionDeniedError: The token may not update the workspace.
+    """
+    if not description.strip():
+        raise ValueError("The workspace homepage cannot be empty")
+    result = transport.mutate(
+        "updateWorkspace",
+        UPDATE_MUTATION,
+        {"input": {"slug": slug, "description": description}},
+        action=f"update the homepage of workspace '{slug}'",
+        reasons={
+            "NOT_FOUND": "the workspace does not exist or the token cannot access it",
+            "PERMISSION_DENIED": "only workspace editors and admins may update the homepage",
+        },
+    )
+    return _workspace(result["workspace"])
+
+
+def _workspace(data: dict[str, Any]) -> Workspace:
     return Workspace(
         slug=data["slug"],
         name=data["name"],

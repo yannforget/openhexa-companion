@@ -13,7 +13,7 @@ from openhexa.companion.files import Files
 from openhexa.companion.pipelines import Pipelines
 from openhexa.companion.runs import Runs
 from openhexa.companion.webapps import Webapps
-from openhexa.companion.workspace import Workspace, get_workspace
+from openhexa.companion.workspace import Workspace, get_workspace, update_description
 
 
 class Client:
@@ -76,6 +76,16 @@ class Client:
             NotFoundError: The workspace does not exist or the token cannot access it.
         """
         return get_workspace(self._transport, self.workspace)
+
+    def update_homepage(self, content: str) -> Workspace:
+        """Replace the workspace homepage, its description in Markdown.
+
+        Raises:
+            ValueError: `content` is empty, which OpenHEXA would ignore.
+            PermissionDeniedError: The token may not update the workspace: only
+                workspace editors and admins can.
+        """
+        return update_description(self._transport, self.workspace, content)
 
     def close(self) -> None:
         """Close the HTTP connections."""

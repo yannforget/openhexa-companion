@@ -21,6 +21,7 @@ DATASET_FIELDS = """
   description
   workspace { slug }
   latestVersion { name }
+  attributes { key value system }
 """
 
 VERSION_FIELDS = """
@@ -80,6 +81,8 @@ query {name}(
 SEARCH_SIZE = 10_000
 
 GET_QUERY = _dataset_query("Dataset", DATASET_FIELDS)
+
+TARGET_QUERY = _dataset_query("DatasetTarget", "targetId")
 
 VERSIONS_QUERY = _dataset_query(
     "DatasetVersions",
@@ -195,6 +198,24 @@ mutation DeleteDatasetVersion($input: DeleteDatasetVersionInput!) {
 }
 """
 
+SET_ATTRIBUTE_MUTATION = """
+mutation SetDatasetAttribute($input: SetMetadataAttributeInput!) {
+  setMetadataAttribute(input: $input) {
+    success
+    errors
+  }
+}
+"""
+
+DELETE_ATTRIBUTE_MUTATION = """
+mutation DeleteDatasetAttribute($input: DeleteMetadataAttributeInput!) {
+  deleteMetadataAttribute(input: $input) {
+    success
+    errors
+  }
+}
+"""
+
 DELETE_MUTATION = """
 mutation DeleteDataset($input: DeleteDatasetInput!) {
   deleteDataset(input: $input) {
@@ -244,6 +265,8 @@ class Dataset:
         name: Display name.
         description: Documentation of the dataset, in Markdown.
         latest_version: Name of the latest version, or `None` if there is none yet.
+        attributes: Custom metadata by key. Values are any JSON value, such as text, a
+            number or a list.
         id: OpenHEXA identifier.
     """
 
@@ -252,6 +275,7 @@ class Dataset:
     name: str
     description: str
     latest_version: str | None
+    attributes: dict[str, Any]
     id: str
 
     @property
@@ -644,6 +668,50 @@ class Datasets:
             reasons={"PERMISSION_DENIED": "the token may not delete versions of this dataset"},
         )
 
+    def set_attribute(self, dataset: str, key: str, value: Any) -> Dataset:
+        """Set the attribute `key` of a dataset to `value`, replacing any previous value.
+
+        Args:
+            dataset: Slug of the dataset, or `workspace/slug`.
+            key: Name of the attribute, such as `source`.
+            value: Any JSON value, such as text, a number or a list.
+
+        Raises:
+            NotFoundError: The workspace has no such dataset.
+            PermissionDeniedError: The token may not update the dataset.
+        """
+        self._transport.mutate(
+            "setMetadataAttribute",
+            SET_ATTRIBUTE_MUTATION,
+            {"input": {"targetId": self._target_id(dataset), "key": key, "value": value}},
+            action=f"set attribute '{key}' of dataset '{dataset}' in workspace '{self._workspace}'",
+            reasons={"PERMISSION_DENIED": "the token may not update this dataset"},
+        )
+        return self.get(dataset)
+
+    def delete_attribute(self, dataset: str, key: str) -> Dataset:
+        """Remove the attribute `key` of a dataset.
+
+        Raises:
+            NotFoundError: The workspace has no such dataset, or it has no attribute `key`.
+            PermissionDeniedError: The token may not update the dataset.
+        """
+        current = self.get(dataset)
+        if key not in current.attributes:
+            raise NotFoundError(
+                f"Dataset '{dataset}' in workspace '{self._workspace}' has no attribute "
+                f"'{key}'. Attributes: {format_options(current.attributes)}"
+            )
+        self._transport.mutate(
+            "deleteMetadataAttribute",
+            DELETE_ATTRIBUTE_MUTATION,
+            {"input": {"targetId": self._target_id(dataset), "key": key}},
+            action=f"delete attribute '{key}' of dataset '{dataset}' in workspace "
+            f"'{self._workspace}'",
+            reasons={"PERMISSION_DENIED": "the token may not update this dataset"},
+        )
+        return self.get(dataset)
+
     def delete(self, dataset: str) -> None:
         """Delete a dataset with all its versions and files.
 
@@ -708,6 +776,10 @@ class Datasets:
             )
         return data
 
+    def _target_id(self, dataset: str) -> str:
+        """Get the identifier OpenHEXA uses to attach attributes to a dataset."""
+        return self._find(TARGET_QUERY, dataset)["targetId"]
+
     def _reference(self, workspace: str, slug: str) -> str:
         """Name a dataset by its slug if the workspace owns it, `workspace/slug` otherwise."""
         return slug if workspace == self._workspace else f"{workspace}/{slug}"
@@ -751,6 +823,10 @@ def _dataset(data: dict[str, Any]) -> Dataset:
         name=data["name"],
         description=data["description"] or "",
         latest_version=data["latestVersion"]["name"] if data["latestVersion"] else None,
+        # System attributes are written by OpenHEXA itself and are not editable.
+        attributes={
+            item["key"]: item["value"] for item in data["attributes"] if not item["system"]
+        },
         id=data["id"],
     )
 

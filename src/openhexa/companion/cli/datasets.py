@@ -1,5 +1,6 @@
 """`hexa datasets` commands."""
 
+import json
 from pathlib import Path
 
 import click
@@ -61,6 +62,10 @@ def show(client: LazyClient, dataset: str, as_json: bool) -> None:
         return
     click.echo(f"{item.name} ({item.reference})")
     click.echo(f"Latest version: {item.latest_version or 'none'}")
+    if item.attributes:
+        click.echo("Attributes:")
+        for key, value in item.attributes.items():
+            click.echo(f"  {key}={json.dumps(value, ensure_ascii=False)}")
     if item.description:
         click.echo()
         click.echo(item.description)
@@ -272,3 +277,40 @@ def delete(client: LazyClient, dataset: str, version_name: str | None, yes: bool
     confirm(f"Delete dataset '{item.reference}' and its {count} version(s)", yes=yes)
     library.datasets.delete(dataset)
     click.echo(f"Deleted dataset {item.reference}", err=True)
+
+
+@datasets.group()
+def attributes() -> None:
+    """Set or delete the custom attributes of a dataset.
+
+    Attributes are key/value metadata, such as source=DHIS2 or year=2025. `hexa
+    datasets show` lists them.
+    """
+
+
+@attributes.command("set")
+@dataset_argument
+@click.argument("key")
+@click.argument("value")
+@pass_client
+def set_attribute(client: LazyClient, dataset: str, key: str, value: str) -> None:
+    """Set the attribute KEY of a dataset to VALUE, replacing any previous value.
+
+    VALUE is read as JSON if it can be (2025, true, ["COD","SEN"]), as text otherwise.
+    """
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        parsed = value
+    item = client.get().datasets.set_attribute(dataset, key, parsed)
+    click.echo(f"Set {key}={json.dumps(parsed, ensure_ascii=False)} on {item.reference}", err=True)
+
+
+@attributes.command("delete")
+@dataset_argument
+@click.argument("key")
+@pass_client
+def delete_attribute(client: LazyClient, dataset: str, key: str) -> None:
+    """Remove the attribute KEY of a dataset."""
+    item = client.get().datasets.delete_attribute(dataset, key)
+    click.echo(f"Removed {key} from {item.reference}", err=True)

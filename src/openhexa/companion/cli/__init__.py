@@ -5,14 +5,14 @@ from pathlib import Path
 import click
 
 from openhexa.companion import OpenHexaError
-from openhexa.companion.cli._context import LazyClient, pass_client
-from openhexa.companion.cli._output import json_option, print_json
+from openhexa.companion.cli._context import LazyClient
 from openhexa.companion.cli.connections import connections, database
 from openhexa.companion.cli.datasets import datasets
 from openhexa.companion.cli.files import files
 from openhexa.companion.cli.pipelines import pipelines
 from openhexa.companion.cli.runs import runs
 from openhexa.companion.cli.webapps import webapps
+from openhexa.companion.cli.workspace import workspace
 
 
 class Group(click.Group):
@@ -42,26 +42,6 @@ def main(ctx: click.Context, env_file: Path) -> None:
     ctx.call_on_close(ctx.obj.close)
 
 
-@main.command()
-@json_option
-@pass_client
-def workspace(client: LazyClient, as_json: bool) -> None:
-    """Show the workspace: name, Docker image, configuration and homepage."""
-    info = client.get().get_workspace()
-    if as_json:
-        print_json(info)
-        return
-    click.echo(f"{info.name} ({info.slug})")
-    click.echo(f"Docker image: {info.docker_image or 'default'}")
-    if info.configuration:
-        click.echo("Configuration:")
-        for key, value in info.configuration.items():
-            click.echo(f"  {key}={value}")
-    if info.description:
-        click.echo()
-        click.echo(info.description)
-
-
 main.add_command(connections)
 main.add_command(database)
 main.add_command(datasets)
@@ -69,3 +49,4 @@ main.add_command(files)
 main.add_command(pipelines)
 main.add_command(runs)
 main.add_command(webapps)
+main.add_command(workspace)

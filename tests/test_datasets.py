@@ -13,9 +13,14 @@ LARGE_DATASET = "large-parquet-range-request-demo-505-mb"
 SHARED_DATASET = "bikes-in-brussels-6f971d"
 
 
-def test_workspace(client: Client):
-    workspace = client.get_workspace()
-    assert workspace.slug == client.workspace
+def test_workspace_homepage(client: Client):
+    original = client.get_workspace().description
+    try:
+        updated = client.update_homepage(original + "\n\nEdited by the companion tests.")
+        assert updated.description.endswith("Edited by the companion tests.")
+    finally:
+        client.update_homepage(original)
+    assert client.get_workspace().description == original
 
 
 def test_read_byte_ranges_of_large_file(client: Client):
@@ -72,6 +77,13 @@ def test_publish_dataset(client: Client, tmp_path: Path):
         assert files["cases.csv"].content_type == "text/csv"
         with client.datasets.read(client.datasets.file(version, "cases.csv")) as stream:
             assert stream.read() == local.read_bytes()
+
+        client.datasets.set_attribute(dataset.slug, "source", "DHIS2")
+        updated = client.datasets.set_attribute(dataset.slug, "countries", ["COD", "SEN"])
+        assert updated.attributes == {"source": "DHIS2", "countries": ["COD", "SEN"]}
+        assert client.datasets.delete_attribute(dataset.slug, "source").attributes == {
+            "countries": ["COD", "SEN"]
+        }
 
         renamed = client.datasets.update_version(version, name="v1-fixed")
         assert client.datasets.update(dataset.slug, description="Cases").description == "Cases"
