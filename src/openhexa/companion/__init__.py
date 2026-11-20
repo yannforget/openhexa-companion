@@ -8,6 +8,7 @@ from openhexa.companion.datasets import Dataset, DatasetFile, DatasetVersion
 from openhexa.companion.errors import (
     APIError,
     AuthenticationError,
+    InvalidInputError,
     NotFoundError,
     OpenHexaError,
     PermissionDeniedError,
@@ -30,6 +31,7 @@ __all__ = [
     "Dataset",
     "DatasetFile",
     "DatasetVersion",
+    "InvalidInputError",
     "NotFoundError",
     "OpenHexaError",
     "PermissionDeniedError",

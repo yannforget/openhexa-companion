@@ -10,7 +10,7 @@ from typing import Any
 
 from openhexa.companion._transport import Transport
 from openhexa.companion._util import format_options
-from openhexa.companion.errors import NotFoundError
+from openhexa.companion.errors import InvalidInputError, NotFoundError
 
 WEBAPP_FIELDS = """
   id
@@ -269,7 +269,7 @@ class Webapps:
                 it, such as `DATASETS_READ`.
 
         Raises:
-            ValueError: `source` is not a site directory or is too large.
+            InvalidInputError: `source` is not a site directory or is too large.
             PermissionDeniedError: The token may not create webapps.
             APIError: OpenHEXA rejected the webapp, with the reason in the message.
         """
@@ -311,7 +311,7 @@ class Webapps:
             message: Description of the change.
 
         Raises:
-            ValueError: `source` is not a site directory or is too large.
+            InvalidInputError: `source` is not a site directory or is too large.
             NotFoundError: The workspace has no webapp `slug`.
             PermissionDeniedError: The token may not update the webapp.
             APIError: OpenHEXA rejected the files, with the reason in the message.
@@ -376,11 +376,11 @@ def package_site(source: Path) -> builtins.list[dict[str, str]]:
     Text files are sent as is, others in base64.
 
     Raises:
-        ValueError: `source` has no `index.html`, or the request would be larger
+        InvalidInputError: `source` has no `index.html`, or the request would be larger
             than OpenHEXA accepts.
     """
     if not (source / "index.html").is_file():
-        raise ValueError(f"No index.html at the root of {source}")
+        raise InvalidInputError(f"No index.html at the root of {source}")
     files = []
     size = REQUEST_OVERHEAD
     for path in sorted(source.rglob("*")):
@@ -401,7 +401,7 @@ def package_site(source: Path) -> builtins.list[dict[str, str]]:
     if size > MAX_REQUEST_SIZE:
         largest = sorted(files, key=lambda item: len(item["content"]), reverse=True)[:5]
         sizes = ", ".join(f"{item['path']} ({len(item['content']) // 1024} kB)" for item in largest)
-        raise ValueError(
+        raise InvalidInputError(
             f"The site in {source} is too large to publish: {size // 1024} kB once "
             f"encoded, over the {MAX_REQUEST_SIZE // (1024 * 1024)} MB OpenHEXA accepts. "
             f"Largest files: {sizes}. Load large data from a dataset instead."

@@ -12,7 +12,7 @@ from typing import Any
 
 from openhexa.companion._transport import Transport
 from openhexa.companion._util import check_uuid, format_options
-from openhexa.companion.errors import NotFoundError
+from openhexa.companion.errors import InvalidInputError, NotFoundError
 
 PIPELINE_FIELDS = """
   id
@@ -262,12 +262,12 @@ class Pipelines:
         `name` matches the name given when deploying, or the number as `v3`.
 
         Raises:
-            ValueError: Both `name` and `version_id` are given, or `version_id` is not
+            InvalidInputError: Both `name` and `version_id` are given, or `version_id` is not
                 an OpenHEXA identifier.
             NotFoundError: The pipeline or version does not exist.
         """
         if name is not None and version_id is not None:
-            raise ValueError("Give either a version name or a version ID, not both")
+            raise InvalidInputError("Give either a version name or a version ID, not both")
         if name is not None:
             versions = self.versions(pipeline)
             for match in (lambda v: v.name == name, lambda v: f"v{v.number}" == name):
@@ -330,7 +330,7 @@ class Pipelines:
             The first version, whose `pipeline` is the code of the new pipeline.
 
         Raises:
-            ValueError: `source` is not a pipeline directory or is too large.
+            InvalidInputError: `source` is not a pipeline directory or is too large.
             PermissionDeniedError: The token may not create pipelines.
             APIError: OpenHEXA rejected the code, with the reason in the message.
         """
@@ -374,7 +374,7 @@ class Pipelines:
             description: What changed in this version.
 
         Raises:
-            ValueError: `source` is not a pipeline directory or is too large.
+            InvalidInputError: `source` is not a pipeline directory or is too large.
             NotFoundError: The workspace has no such pipeline.
             PermissionDeniedError: The token may not deploy the pipeline.
             APIError: OpenHEXA rejected the version, with the reason in the message.
@@ -449,12 +449,12 @@ def package_pipeline(source: Path) -> tuple[str, int | None]:
         The base64-encoded archive, and the timeout declared in `@pipeline`, if any.
 
     Raises:
-        ValueError: `source` has no `pipeline.py`, or the request would be larger
-            than OpenHEXA accepts.
+        InvalidInputError: `source` has no `pipeline.py`, `pipeline.py` is not valid
+            Python, or the request would be larger than OpenHEXA accepts.
     """
     entrypoint = source / "pipeline.py"
     if not entrypoint.is_file():
-        raise ValueError(f"No pipeline.py at the root of {source}")
+        raise InvalidInputError(f"No pipeline.py at the root of {source}")
     files = sorted(
         path
         for path in source.rglob("*")
@@ -470,12 +470,18 @@ def package_pipeline(source: Path) -> tuple[str, int | None]:
         sizes = ", ".join(
             f"{path.relative_to(source)} ({path.stat().st_size // 1024} kB)" for path in largest
         )
-        raise ValueError(
+        raise InvalidInputError(
             f"The pipeline in {source} is too large to deploy: {len(encoded) // 1024} kB "
             f"once encoded, over the {MAX_REQUEST_SIZE // (1024 * 1024)} MB OpenHEXA "
             f"accepts. Largest files: {sizes}. Move data to a dataset or the workspace files."
         )
-    return encoded, _declared_timeout(entrypoint.read_text(encoding="utf-8"))
+    try:
+        tree = ast.parse(entrypoint.read_text(encoding="utf-8"), filename=str(entrypoint))
+    except SyntaxError as err:
+        raise InvalidInputError(
+            f"Cannot deploy {entrypoint}: line {err.lineno}: {err.msg}"
+        ) from err
+    return encoded, _declared_timeout(tree)
 
 
 def _is_source(parts: tuple[str, ...]) -> bool:
@@ -484,9 +490,9 @@ def _is_source(parts: tuple[str, ...]) -> bool:
     return not any(part.startswith(".") or part == "__pycache__" for part in parts)
 
 
-def _declared_timeout(code: str) -> int | None:
+def _declared_timeout(tree: ast.Module) -> int | None:
     """Read the `timeout` argument of the `@pipeline` decorator, if given as a literal."""
-    for node in ast.walk(ast.parse(code)):
+    for node in ast.walk(tree):
         if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             continue
         for decorator in node.decorator_list:

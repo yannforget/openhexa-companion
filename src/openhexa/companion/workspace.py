@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from openhexa.companion._transport import Transport
-from openhexa.companion.errors import NotFoundError
+from openhexa.companion.errors import InvalidInputError, NotFoundError
 
 WORKSPACE_FIELDS = """
   slug
@@ -66,11 +66,11 @@ def update_description(transport: Transport, slug: str, description: str) -> Wor
     """Replace the homepage of the workspace `slug` with the Markdown `description`.
 
     Raises:
-        ValueError: `description` is empty, which OpenHEXA would ignore.
+        InvalidInputError: `description` is empty, which OpenHEXA would ignore.
         PermissionDeniedError: The token may not update the workspace.
     """
     if not description.strip():
-        raise ValueError("The workspace homepage cannot be empty")
+        raise InvalidInputError("The workspace homepage cannot be empty")
     result = transport.mutate(
         "updateWorkspace",
         UPDATE_MUTATION,

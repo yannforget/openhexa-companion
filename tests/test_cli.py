@@ -56,3 +56,14 @@ def test_list_datasets_as_json():
 
     assert result.exit_code == 0, result.output
     assert all("slug" in item and "workspace" in item for item in json.loads(result.output))
+
+
+def test_invalid_input_is_a_clean_error(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("OPENHEXA_URL", "https://openhexa.test")
+    monkeypatch.setenv("OPENHEXA_WORKSPACE", "ws")
+    monkeypatch.setenv("OPENHEXA_TOKEN", "token")
+
+    result = CliRunner().invoke(main, ["runs", "logs", "not-a-uuid"])
+
+    assert result.exit_code == 1
+    assert "Error: Invalid run ID 'not-a-uuid'" in result.output

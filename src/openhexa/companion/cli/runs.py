@@ -70,7 +70,7 @@ def show(client: LazyClient, run_id: str, as_json: bool) -> None:
     Use `hexa runs logs` for the full output of the pipeline.
     """
     library = client.get()
-    run = _get(library, run_id)
+    run = library.runs.get(run_id)
     details = library.runs.details(run_id)
     if as_json:
         print_json(
@@ -164,10 +164,7 @@ def start(
     parameters = _read_parameters(params, params_file)
     library = client.get()
     version = library.pipelines.version(pipeline, version_name)
-    try:
-        run = library.runs.start(version, parameters)
-    except ValueError as err:
-        raise click.ClickException(str(err)) from err
+    run = library.runs.start(version, parameters)
     click.echo(f"Started run {run.id} of {pipeline} version {version.label}", err=True)
     if wait:
         run = _follow(library, run.id, print_logs=not as_json)
@@ -184,17 +181,8 @@ def start(
 @pass_client
 def stop(client: LazyClient, run_id: str) -> None:
     """Stop a run."""
-    library = client.get()
-    _get(library, run_id)
-    library.runs.stop(run_id)
+    client.get().runs.stop(run_id)
     click.echo(f"Stopping run {run_id}", err=True)
-
-
-def _get(library: Client, run_id: str) -> Run:
-    try:
-        return library.runs.get(run_id)
-    except ValueError as err:
-        raise click.ClickException(str(err)) from err
 
 
 def _follow(library: Client, run_id: str, *, print_logs: bool) -> Run:
@@ -202,7 +190,7 @@ def _follow(library: Client, run_id: str, *, print_logs: bool) -> Run:
     printed = 0
     status = None
     while True:
-        run = _get(library, run_id)
+        run = library.runs.get(run_id)
         if print_logs:
             logs = library.runs.details(run_id).logs
             # Logs only grow; print what was added since the last check.

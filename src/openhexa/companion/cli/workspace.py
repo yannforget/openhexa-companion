@@ -50,9 +50,5 @@ def homepage(client: LazyClient, source: TextIO | None) -> None:
         # Printed as stored, so that saving it to a file and editing it back is exact.
         click.echo(library.get_workspace().description, nl=False)
         return
-    content = source.read()
-    try:
-        library.update_homepage(content)
-    except ValueError as err:
-        raise click.ClickException(str(err)) from err
+    library.update_homepage(source.read())
     click.echo(f"Updated the homepage of workspace {library.workspace}", err=True)

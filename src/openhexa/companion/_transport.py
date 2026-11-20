@@ -10,6 +10,7 @@ import httpx2
 from openhexa.companion.errors import (
     APIError,
     AuthenticationError,
+    InvalidInputError,
     NotFoundError,
     PermissionDeniedError,
 )
@@ -39,6 +40,8 @@ class Transport:
 
     Storage requests use a separate HTTP client so that the token never reaches signed
     URLs. Neither client follows redirects, which could forward the token elsewhere.
+    The storage client asks for uncompressed responses: downloads are streamed raw, and
+    OpenHEXA's own file view (filesystem storage) would otherwise gzip them.
     """
 
     def __init__(
@@ -57,7 +60,9 @@ class Transport:
             timeout=timeout,
             transport=http_transport,
         )
-        self._storage = httpx2.Client(timeout=timeout, transport=http_transport)
+        self._storage = httpx2.Client(
+            headers={"Accept-Encoding": "identity"}, timeout=timeout, transport=http_transport
+        )
 
     def close(self) -> None:
         self._api.close()
@@ -174,8 +179,13 @@ class Transport:
             length: Number of bytes to read, or `None` to read to the end.
 
         Raises:
+            InvalidInputError: `offset` is negative or `length` is not positive.
             APIError: Storage failed or did not honour the byte range.
         """
+        if offset < 0 or (length is not None and length < 1):
+            raise InvalidInputError(
+                f"Invalid byte range for {what}: offset must be at least 0 and length at least 1"
+            )
         headers = {}
         if offset or length is not None:
             end = "" if length is None else offset + length - 1

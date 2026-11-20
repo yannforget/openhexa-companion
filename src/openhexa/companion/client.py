@@ -81,7 +81,7 @@ class Client:
         """Replace the workspace homepage, its description in Markdown.
 
         Raises:
-            ValueError: `content` is empty, which OpenHEXA would ignore.
+            InvalidInputError: `content` is empty, which OpenHEXA would ignore.
             PermissionDeniedError: The token may not update the workspace: only
                 workspace editors and admins can.
         """

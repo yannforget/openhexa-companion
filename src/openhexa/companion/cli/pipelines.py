@@ -167,17 +167,14 @@ def deploy(
     if (pipeline is None) == (create_name is None):
         raise click.UsageError("Give either PIPELINE or --create NAME")
     library = client.get()
-    try:
-        if pipeline is None:
-            version = library.pipelines.create(
-                create_name or "", source_dir, description=description, version_name=version_name
-            )
-        else:
-            version = library.pipelines.deploy(
-                pipeline, source_dir, version_name=version_name, description=description
-            )
-    except ValueError as err:
-        raise click.ClickException(str(err)) from err
+    if pipeline is None:
+        version = library.pipelines.create(
+            create_name or "", source_dir, description=description, version_name=version_name
+        )
+    else:
+        version = library.pipelines.deploy(
+            pipeline, source_dir, version_name=version_name, description=description
+        )
     if as_json:
         print_json(version)
         return

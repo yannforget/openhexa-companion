@@ -165,22 +165,19 @@ def publish(
     """
     if (webapp is None) == (create_name is None):
         raise click.UsageError("Give either WEBAPP or --create NAME")
+    if webapp is not None and (description or public or scopes):
+        raise click.UsageError("--description, --public and --scope need --create")
     library = client.get()
-    try:
-        if webapp is None:
-            result = library.webapps.create(
-                create_name or "",
-                source_dir,
-                description=description,
-                public=public,
-                scopes=[scope.upper() for scope in scopes],
-            )
-        else:
-            if description or public or scopes:
-                raise click.UsageError("--description, --public and --scope need --create")
-            result = library.webapps.publish(webapp, source_dir, message=message)
-    except ValueError as err:
-        raise click.ClickException(str(err)) from err
+    if webapp is None:
+        result = library.webapps.create(
+            create_name or "",
+            source_dir,
+            description=description,
+            public=public,
+            scopes=[scope.upper() for scope in scopes],
+        )
+    else:
+        result = library.webapps.publish(webapp, source_dir, message=message)
     _report(result, as_json=as_json)
 
 

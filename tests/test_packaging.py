@@ -3,6 +3,9 @@ import io
 import zipfile
 from pathlib import Path
 
+import pytest
+
+from openhexa.companion import InvalidInputError
 from openhexa.companion.pipelines import package_pipeline
 
 
@@ -25,3 +28,10 @@ def test_package_pipeline_skips_local_files(tmp_path: Path):
     with zipfile.ZipFile(io.BytesIO(base64.b64decode(encoded))) as archive:
         assert sorted(archive.namelist()) == ["lib/helpers.py", "pipeline.py"]
     assert timeout == 120
+
+
+def test_package_pipeline_reports_syntax_errors(tmp_path: Path):
+    (tmp_path / "pipeline.py").write_text("def broken(:\n")
+
+    with pytest.raises(InvalidInputError, match="line 1"):
+        package_pipeline(tmp_path)

@@ -7,7 +7,7 @@ from typing import Any
 
 from openhexa.companion._transport import Transport
 from openhexa.companion._util import check_uuid
-from openhexa.companion.errors import NotFoundError
+from openhexa.companion.errors import InvalidInputError, NotFoundError
 from openhexa.companion.pipelines import Pipelines, PipelineVersion, find_pipeline
 
 # Statuses after which a run no longer changes.
@@ -232,7 +232,7 @@ class Runs:
         """Get a run, to check its status.
 
         Raises:
-            ValueError: `run_id` is not a run ID.
+            InvalidInputError: `run_id` is not a run ID.
             NotFoundError: The workspace has no such run.
         """
         return _run(self._find(GET_QUERY, run_id))
@@ -241,7 +241,7 @@ class Runs:
         """Get the logs, messages and outputs of a run.
 
         Raises:
-            ValueError: `run_id` is not a run ID.
+            InvalidInputError: `run_id` is not a run ID.
             NotFoundError: The workspace has no such run.
         """
         data = self._find(DETAILS_QUERY, run_id)
@@ -278,7 +278,7 @@ class Runs:
             send_notifications: Email the pipeline's recipients when the run finishes.
 
         Raises:
-            ValueError: `parameters` includes codes the version does not declare.
+            InvalidInputError: `parameters` includes codes the version does not declare.
             PermissionDeniedError: The token may not run the pipeline.
             APIError: OpenHEXA refused to start the run, with the reason in the message.
         """
@@ -286,7 +286,7 @@ class Runs:
         declared = {parameter.code for parameter in version.parameters}
         unknown = sorted(parameters.keys() - declared)
         if unknown:
-            raise ValueError(
+            raise InvalidInputError(
                 f"Version '{version.label}' of pipeline '{version.pipeline}' has no parameter "
                 f"{', '.join(repr(code) for code in unknown)}. Parameters: "
                 f"{', '.join(repr(code) for code in sorted(declared)) or 'none'}"
@@ -313,7 +313,7 @@ class Runs:
         """Ask OpenHEXA to stop a run; its status becomes `terminating`, then `stopped`.
 
         Raises:
-            ValueError: `run_id` is not a run ID.
+            InvalidInputError: `run_id` is not a run ID.
             NotFoundError: The workspace has no such run.
             PermissionDeniedError: The token may not stop the run.
             APIError: The run has already finished or is stopping.

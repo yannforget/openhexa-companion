@@ -15,6 +15,10 @@ class OpenHexaError(Exception):
         self.codes = tuple(codes)
 
 
+class InvalidInputError(OpenHexaError, ValueError):
+    """An argument is invalid, so no request was sent or the operation cannot proceed."""
+
+
 class AuthenticationError(OpenHexaError):
     """OpenHEXA rejected the token."""
 

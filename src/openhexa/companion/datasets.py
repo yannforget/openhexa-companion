@@ -11,7 +11,7 @@ from typing import Any
 
 from openhexa.companion._transport import ByteStream, Transport
 from openhexa.companion._util import check_uuid, format_options
-from openhexa.companion.errors import NotFoundError, PermissionDeniedError
+from openhexa.companion.errors import InvalidInputError, NotFoundError, PermissionDeniedError
 from openhexa.companion.workspace import workspace_not_found
 
 DATASET_FIELDS = """
@@ -392,12 +392,12 @@ class Datasets:
         does not, so use `version_id` to find again a version found earlier.
 
         Raises:
-            ValueError: Both `name` and `version_id` are given, or `version_id` is not
+            InvalidInputError: Both `name` and `version_id` are given, or `version_id` is not
                 an OpenHEXA identifier.
             NotFoundError: The dataset or version does not exist.
         """
         if name is not None and version_id is not None:
-            raise ValueError("Give either a version name or a version ID, not both")
+            raise InvalidInputError("Give either a version name or a version ID, not both")
         if name is not None:
             versions = self.versions(dataset)
             for version in versions:
@@ -464,12 +464,14 @@ class Datasets:
             ```
 
         Raises:
-            ValueError: `offset` is past the end of the file.
+            InvalidInputError: `offset` is past the end of the file.
             NotFoundError: The file no longer exists.
             PermissionDeniedError: The token may not download this dataset.
         """
         if offset and offset >= file.size:
-            raise ValueError(f"Offset {offset} is past the end of {file.size}-byte '{file.path}'")
+            raise InvalidInputError(
+                f"Offset {offset} is past the end of {file.size}-byte '{file.path}'"
+            )
         dataset = self._reference(file.workspace, file.dataset)
         data = self._find(DOWNLOAD_URL_QUERY, dataset, version=file.version_id, path=file.path)
         if data["version"] is None or data["version"]["fileByName"] is None:
@@ -558,7 +560,7 @@ class Datasets:
         """
         if path is None:
             if not isinstance(source, Path):
-                raise ValueError("`path` is required when uploading bytes")
+                raise InvalidInputError("`path` is required when uploading bytes")
             path = source.name
         content_type = content_type or guess_content_type(path)
         dataset = self._reference(version.workspace, version.dataset)
@@ -812,7 +814,7 @@ def _parse_reference(dataset: str) -> tuple[str | None, str]:
     if not separator:
         return None, dataset
     if not owner or not slug or "/" in owner:
-        raise ValueError(f"Invalid dataset '{dataset}': expected 'slug' or 'workspace/slug'")
+        raise InvalidInputError(f"Invalid dataset '{dataset}': expected 'slug' or 'workspace/slug'")
     return owner, slug
 
 

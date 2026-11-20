@@ -3,16 +3,18 @@
 import uuid
 from collections.abc import Iterable
 
+from openhexa.companion.errors import InvalidInputError
+
 # Number of valid options listed in error messages.
 MAX_OPTIONS = 20
 
 
 def check_uuid(value: str, what: str) -> None:
-    """Raise `ValueError` unless `value` is a UUID, which OpenHEXA requires for IDs."""
+    """Raise `InvalidInputError` unless `value` is a UUID, which OpenHEXA requires for IDs."""
     try:
         uuid.UUID(value)
     except ValueError:
-        raise ValueError(f"Invalid {what} '{value}': expected a UUID") from None
+        raise InvalidInputError(f"Invalid {what} '{value}': expected a UUID") from None
 
 
 def format_options(items: Iterable[str]) -> str:
