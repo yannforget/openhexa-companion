@@ -88,6 +88,7 @@ Tests are code we'll have to maintain: write few, high-value ones.
 - Test behavior through public interfaces, not implementation. Tests should
   survive refactors and fail only when behavior breaks.
 - Don't test trivial code, or third-party libraries.
+- Cover the main path and the failures that matter. Don't test every edge case.
 - Mock only when needed - don't create huge mocks for API requests that don't
   protect us when the upstream API change anyway.
 - Mark tests that require a running dev/server instance with `@pytest.mark`.
