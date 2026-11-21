@@ -4,12 +4,14 @@ Configuration comes from the `COMPANION_*` environment variables.
 """
 
 import argparse
+import logging
 import sys
 
 import uvicorn
 
 from openhexa.companion.server.app import build_app
 from openhexa.companion.server.config import Config, ConfigError
+from openhexa.companion.server.gateway import RedactFileTokens
 from openhexa.companion.server.store import Store
 
 
@@ -22,6 +24,9 @@ def main() -> None:
         config = Config.from_env()
     except ConfigError as err:
         sys.exit(f"Error: {err}")
+    # File URLs are credentials; uvicorn logs request paths and httpx2 logs URLs.
+    for name in ("uvicorn.access", "httpx2"):
+        logging.getLogger(name).addFilter(RedactFileTokens())
     store = Store(config.database, config.fernet_key())
     try:
         uvicorn.run(build_app(config, store), host=args.host, port=args.port)

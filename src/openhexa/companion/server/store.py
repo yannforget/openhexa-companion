@@ -381,11 +381,14 @@ class Store:
         ]
 
     def workspace_access(self, grant_id: str, slug: str) -> WorkspaceAccess | None:
-        """Return the token of a workspace in a grant."""
+        """Return the token of a workspace in a grant that is neither revoked nor idle."""
+        now = int(time.time())
         with self._transaction() as db:
             row = db.execute(
-                "SELECT token, rejected_at FROM grant_workspaces WHERE grant_id = ? AND slug = ?",
-                (grant_id, slug),
+                "SELECT token, rejected_at FROM grant_workspaces JOIN grants USING (grant_id) "
+                "WHERE grant_id = ? AND slug = ? "
+                "AND grants.revoked_at IS NULL AND grants.last_used_at > ?",
+                (grant_id, slug, now - IDLE_LIFETIME),
             ).fetchone()
         if row is None:
             return None

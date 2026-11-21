@@ -1,18 +1,10 @@
 """Tools listing and reading the workspaces of a grant."""
 
-from typing import Annotated
-
 from mcp.server.mcpserver import MCPServer
-from mcp_types import ToolAnnotations
 from pydantic import BaseModel, Field
 
 from openhexa.companion.server.tools._access import Access
-
-# Describes the `workspace` argument shared by every workspace tool.
-WorkspaceArg = Annotated[
-    str,
-    Field(description="Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces."),
-]
+from openhexa.companion.server.tools._shared import READ_ONLY, WorkspaceArg
 
 
 class WorkspaceSummary(BaseModel):
@@ -44,9 +36,7 @@ def register(server: MCPServer, access: Access) -> None:
     @server.tool(
         name="openhexa_list_workspaces",
         title="List OpenHEXA workspaces",
-        annotations=ToolAnnotations(
-            read_only_hint=True, idempotent_hint=True, open_world_hint=False
-        ),
+        annotations=READ_ONLY,
     )
     async def list_workspaces() -> WorkspaceList:
         """List the OpenHEXA workspaces this connector can access, by slug and name."""
@@ -60,9 +50,7 @@ def register(server: MCPServer, access: Access) -> None:
     @server.tool(
         name="openhexa_get_workspace",
         title="Get an OpenHEXA workspace",
-        annotations=ToolAnnotations(
-            read_only_hint=True, idempotent_hint=True, open_world_hint=False
-        ),
+        annotations=READ_ONLY,
     )
     async def get_workspace(workspace: WorkspaceArg) -> WorkspaceDetails:
         """Read an OpenHEXA workspace: its name, Docker image and homepage.

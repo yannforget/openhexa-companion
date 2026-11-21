@@ -17,11 +17,15 @@ from mcp import Client as MCPClient
 from mcp.client.streamable_http import streamable_http_client
 from mcp_types import CallToolResult, TextContent
 
+from openhexa.companion import Client
+from openhexa.companion.server import gateway
 from openhexa.companion.server.app import build_app
 from openhexa.companion.server.config import Config
 from openhexa.companion.server.store import Store
 
 PUBLIC_URL = "https://companion.test"
+# Small dataset of the demo workspace, read by the end-to-end test.
+DEMO_DATASET = "demo-monthly-sales-parquet"
 REDIRECT_URI = "https://client.test/callback"
 # Tokens the fake OpenHEXA accepts: the user they belong to and the workspaces they open.
 FAKE_TOKENS = {
@@ -31,10 +35,18 @@ FAKE_TOKENS = {
 }
 
 
+# The only dataset file of the fake OpenHEXA: `stats.csv` in dataset `stats` of `cases`.
+FILE_CONTENT = b"district,cases\n" + b"".join(b"d%d,%d\n" % (i, i * 7) for i in range(500))
+VERSION_ID = "6f1d2c1e-8c4b-4f6e-9a57-0d1f3b0b6a11"
+STORAGE_URL = "https://storage.test/stats.csv"
+
+
 def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
     """An OpenHEXA instance that knows the users and workspaces of `FAKE_TOKENS`."""
 
     def handle(request: httpx2.Request) -> httpx2.Response:
+        if str(request.url) == STORAGE_URL:
+            return _storage(request)
         token = request.headers["Authorization"].removeprefix("Bearer ")
         if token not in FAKE_TOKENS or token in revoked:
             return httpx2.Response(401)
@@ -42,6 +54,8 @@ def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
         body = json.loads(request.content)
         if "me {" in body["query"]:
             return _data({"me": {"user": {"id": user, "email": f"{user}@example.org"}}})
+        if "datasetLinkBySlug" in body["query"]:
+            return _data({"datasetLinkBySlug": _dataset(body["variables"], workspaces)})
         slug = body["variables"]["workspace"]
         workspace = None
         if slug in workspaces:
@@ -55,6 +69,49 @@ def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
         return _data({"workspace": workspace})
 
     return httpx2.MockTransport(handle)
+
+
+def _dataset(variables: Mapping[str, Any], workspaces: set[str]) -> dict[str, Any] | None:
+    """The `stats` dataset with every field the library's dataset queries select."""
+    if "cases" not in workspaces or (variables["owner"], variables["slug"]) != ("cases", "stats"):
+        return None
+    version: dict[str, Any] = {
+        "id": VERSION_ID,
+        "name": "v1",
+        "changelog": None,
+        "createdAt": "2026-11-01T10:00:00+00:00",
+        "fileByName": None,
+    }
+    if variables.get("path") == "stats.csv":
+        version["fileByName"] = {
+            "id": "file-1",
+            "uri": f"dataset-id/{VERSION_ID}/stats.csv",
+            "size": len(FILE_CONTENT),
+            "contentType": "text/csv",
+            "downloadUrl": STORAGE_URL,
+        }
+    return {
+        "dataset": {
+            "id": "dataset-id",
+            "slug": "stats",
+            "workspace": {"slug": "cases"},
+            "targetId": "dataset-id",
+            "latestVersion": version,
+            "version": version if variables.get("version") == VERSION_ID else None,
+        }
+    }
+
+
+def _storage(request: httpx2.Request) -> httpx2.Response:
+    """Serve `FILE_CONTENT`, honouring `bytes=start-end` ranges like cloud storage.
+
+    The body is an iterator so that it is streamed like a real response, not pre-read.
+    """
+    if "Range" not in request.headers:
+        return httpx2.Response(200, content=iter([FILE_CONTENT]))
+    start, end = request.headers["Range"].removeprefix("bytes=").split("-")
+    content = FILE_CONTENT[int(start) : int(end) + 1 if end else None]
+    return httpx2.Response(206, content=iter([content]))
 
 
 def _data(data: Mapping[str, Any]) -> httpx2.Response:
@@ -320,6 +377,50 @@ async def test_tool_errors_explain_what_to_do():
         assert listed.structured_content["workspaces"][0]["token_rejected"] is True
 
 
+@pytest.mark.anyio
+async def test_file_urls_stream_files_until_revoked(monkeypatch: pytest.MonkeyPatch):
+    async with running_connector() as connector:
+        client, tokens = await connect(connector.http, [("cases", "alice-cases")])
+        async with mcp_session(connector, tokens["access_token"]) as mcp:
+            result = await mcp.call_tool(
+                "openhexa_get_dataset_file_url",
+                {"workspace": "cases", "dataset": "stats", "path": "stats.csv"},
+            )
+            monkeypatch.setattr(gateway, "FILE_URL_LIFETIME", -1)
+            expired = await mcp.call_tool(
+                "openhexa_get_dataset_file_url",
+                {"workspace": "cases", "dataset": "stats", "path": "stats.csv"},
+            )
+        info = result.structured_content
+        url = info["url"]
+        token = urlsplit(url).path.split("/")[2]
+        tampered = url.replace(token, token[:-2] + ("AA" if token[-2:] != "AA" else "BB"))
+
+        whole = await connector.http.get(url)
+        part = await connector.http.get(url, headers={"Range": "bytes=10-19"})
+        tail = await connector.http.get(url, headers={"Range": "bytes=-5"})
+
+        assert info["version_id"] == VERSION_ID
+        assert "alice-cases" not in url
+        assert whole.content == FILE_CONTENT
+        assert whole.headers["Content-Disposition"].startswith('attachment; filename="stats.csv"')
+        assert (part.status_code, part.content) == (206, FILE_CONTENT[10:20])
+        assert part.headers["Content-Range"] == f"bytes 10-19/{len(FILE_CONTENT)}"
+        assert tail.content == FILE_CONTENT[-5:]
+        assert (await connector.http.get(tampered)).status_code == 404
+        assert (await connector.http.get(expired.structured_content["url"])).status_code == 404
+
+        await connector.http.post(
+            "/revoke",
+            data={
+                "token": tokens["refresh_token"],
+                "client_id": client.client_id,
+                "client_secret": client.client_secret,
+            },
+        )
+        assert (await connector.http.get(url)).status_code == 404
+
+
 @pytest.mark.workspace
 @pytest.mark.anyio
 async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
@@ -334,6 +435,29 @@ async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
             workspace = await mcp.call_tool(
                 "openhexa_get_workspace", {"workspace": env["OPENHEXA_WORKSPACE"]}
             )
+            datasets = await mcp.call_tool(
+                "openhexa_list_datasets", {"workspace": env["OPENHEXA_WORKSPACE"]}
+            )
+            files = await mcp.call_tool(
+                "openhexa_list_dataset_files",
+                {"workspace": env["OPENHEXA_WORKSPACE"], "dataset": DEMO_DATASET},
+            )
+            path = files.structured_content["files"][0]["path"]
+            file_url = await mcp.call_tool(
+                "openhexa_get_dataset_file_url",
+                {"workspace": env["OPENHEXA_WORKSPACE"], "dataset": DEMO_DATASET, "path": path},
+            )
+        url = file_url.structured_content["url"]
+        whole = await connector.http.get(url)
+        part = await connector.http.get(url, headers={"Range": "bytes=100-199"})
+
+    with Client(env["OPENHEXA_URL"], env["OPENHEXA_WORKSPACE"], env["OPENHEXA_TOKEN"]) as library:
+        file = library.datasets.file(library.datasets.version(DEMO_DATASET), path)
+        with library.datasets.read(file) as stream:
+            expected = stream.read()
+    assert whole.content == expected
+    assert part.content == expected[100:200]
+    assert DEMO_DATASET in {d["dataset"] for d in datasets.structured_content["datasets"]}
 
     assert [ws["slug"] for ws in listed.structured_content["workspaces"]] == [
         env["OPENHEXA_WORKSPACE"]

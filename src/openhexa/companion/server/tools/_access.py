@@ -25,7 +25,7 @@ class Access:
 
     async def workspaces(self) -> list[GrantWorkspace]:
         """List the workspaces of the caller's grant."""
-        return await anyio.to_thread.run_sync(self._store.grant_workspaces, _grant_id())
+        return await anyio.to_thread.run_sync(self._store.grant_workspaces, grant_id())
 
     async def run[T](self, workspace: str, operation: Callable[[Client], T]) -> T:
         """Call `operation` with a client for `workspace`, in a worker thread.
@@ -35,8 +35,8 @@ class Access:
                 message is the library's, with a pointer to the account page when
                 OpenHEXA rejected the token.
         """
-        grant_id = _grant_id()
-        access = await anyio.to_thread.run_sync(self._store.workspace_access, grant_id, workspace)
+        grant = grant_id()
+        access = await anyio.to_thread.run_sync(self._store.workspace_access, grant, workspace)
         if access is None:
             slugs = [ws.slug for ws in await self.workspaces()]
             raise ToolError(
@@ -58,7 +58,7 @@ class Access:
         except AuthenticationError as err:
             if not access.token_rejected:
                 await anyio.to_thread.run_sync(
-                    self._store.set_token_rejected, grant_id, workspace, True
+                    self._store.set_token_rejected, grant, workspace, True
                 )
             raise ToolError(
                 f"{err}. The OpenHEXA token stored for workspace '{workspace}' no longer "
@@ -67,14 +67,12 @@ class Access:
         except OpenHexaError as err:
             raise ToolError(str(err)) from err
         if access.token_rejected:
-            await anyio.to_thread.run_sync(
-                self._store.set_token_rejected, grant_id, workspace, False
-            )
+            await anyio.to_thread.run_sync(self._store.set_token_rejected, grant, workspace, False)
         return result
 
 
-def _grant_id() -> str:
-    """Return the grant of the current request, which the bearer middleware authenticated."""
+def grant_id() -> str:
+    """Return the grant of the current MCP request, which the bearer middleware authenticated."""
     token = get_access_token()
     if token is None or token.subject is None:
         raise RuntimeError("Tool called without an authenticated grant")
