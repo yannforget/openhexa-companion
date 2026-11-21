@@ -13,6 +13,13 @@ dependencies = [
 [project.scripts]
 hexa = "openhexa.companion.cli:main"
 
+[project.optional-dependencies]
+server = [
+    "cryptography>=50.0.2",
+    "mcp>=2.3.0",
+    "uvicorn>=0.54.0",
+]
+
 [build-system]
 requires = ["uv_build>=0.13.9,<0.14.0"]
 build-backend = "uv_build"
@@ -20,8 +27,12 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "openhexa.companion"
 
+[tool.uv.sources]
+openhexa-companion = { workspace = true }
+
 [dependency-groups]
 dev = [
+    "openhexa-companion[server]",
     "pyrefly>=1.5.0",
     "pytest>=9.2.0",
     "ruff>=0.17.6",

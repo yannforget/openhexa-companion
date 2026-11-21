@@ -12,6 +12,7 @@ from openhexa.companion.datasets import Datasets
 from openhexa.companion.files import Files
 from openhexa.companion.pipelines import Pipelines
 from openhexa.companion.runs import Runs
+from openhexa.companion.user import User, get_user
 from openhexa.companion.webapps import Webapps
 from openhexa.companion.workspace import Workspace, get_workspace, update_description
 
@@ -76,6 +77,13 @@ class Client:
             NotFoundError: The workspace does not exist or the token cannot access it.
         """
         return get_workspace(self._transport, self.workspace)
+
+    def get_user(self) -> User:
+        """Read the OpenHEXA user the token belongs to.
+
+        A workspace token is issued to a user, so this identifies who holds it.
+        """
+        return get_user(self._transport)
 
     def update_homepage(self, content: str) -> Workspace:
         """Replace the workspace homepage, its description in Markdown.

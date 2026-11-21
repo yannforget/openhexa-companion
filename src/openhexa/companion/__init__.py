@@ -16,6 +16,7 @@ from openhexa.companion.errors import (
 from openhexa.companion.files import WorkspaceFile
 from openhexa.companion.pipelines import Pipeline, PipelineParameter, PipelineVersion
 from openhexa.companion.runs import Run, RunDatasetVersion, RunDetails, RunMessage, RunOutput
+from openhexa.companion.user import User
 from openhexa.companion.webapps import Publication, Webapp, WebappFile, WebappVersion
 from openhexa.companion.workspace import Workspace
 
@@ -44,6 +45,7 @@ __all__ = [
     "RunDetails",
     "RunMessage",
     "RunOutput",
+    "User",
     "Webapp",
     "WebappFile",
     "WebappVersion",

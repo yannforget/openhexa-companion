@@ -18,10 +18,16 @@ def _read_env() -> dict[str, str]:
 
 
 @pytest.fixture(scope="session")
-def client() -> Iterator[Client]:
-    """A client for the demo workspace configured in `.env`."""
+def demo_env() -> dict[str, str]:
+    """The demo workspace credentials in `.env`: OPENHEXA_URL, _WORKSPACE and _TOKEN."""
     if not ENV_FILE.exists():
         pytest.skip(".env with demo workspace credentials is missing")
-    env = _read_env()
+    return _read_env()
+
+
+@pytest.fixture(scope="session")
+def client(demo_env: dict[str, str]) -> Iterator[Client]:
+    """A client for the demo workspace configured in `.env`."""
+    env = demo_env
     with Client(env["OPENHEXA_URL"], env["OPENHEXA_WORKSPACE"], env["OPENHEXA_TOKEN"]) as client:
         yield client
