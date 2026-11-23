@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex">
+<title>{{ title }} · OpenHEXA Companion</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="stylesheet" href="/static/style.css?v={{ version }}">
+<script src="/static/pages.js?v={{ version }}" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+<div>
+<span class="brand"><img src="/static/logo.svg" alt="" width="28" height="32">OpenHEXA <span>Companion</span></span>
+{% block header %}{% endblock %}
+</div>
+</header>
+<main id="main">
+<h1>{{ title }}</h1>
+{% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+OpenHEXA Companion {{ version }} · <a href="https://docs.openhexa.com/">OpenHEXA documentation</a>
+</footer>
+</body>
+</html>

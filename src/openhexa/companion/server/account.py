@@ -9,7 +9,7 @@ import hashlib
 import hmac
 import secrets
 from datetime import UTC, datetime
-from html import escape
+from typing import Any
 from urllib.parse import urlsplit
 
 import anyio.to_thread
@@ -28,7 +28,6 @@ from openhexa.companion.server.pages import (
     message_page,
     page,
     sign_csrf,
-    template,
     verify_token,
 )
 from openhexa.companion.server.store import (
@@ -148,22 +147,23 @@ class Account:
     async def _show(
         self, browser: str, session: Session | None, *, error: str | None, status: int = 200
     ) -> Response:
-        csrf = sign_csrf(self._csrf_key, f"account:{browser}", CSRF_LIFETIME)
-        hidden = f'<input type="hidden" name="csrf" value="{csrf}">'
-        signed_in = ""
+        workspaces: list[StoredWorkspace] = []
+        grants: list[UserGrant] = []
         if session is not None:
             workspaces, grants = await anyio.to_thread.run_sync(self._user_state, session)
-            signed_in = _signed_in(session, workspaces, grants, hidden)
-        body = template("account.html").substitute(
-            openhexa_host=escape(urlsplit(self._config.openhexa_url).netloc),
-            error=f'<p class="error" role="alert">{escape(error)}</p>' if error else "",
-            action=escape(f"{self._config.public_url}/account"),
-            csrf=hidden,
-            enter_title="Sign in" if session is None else "Add a workspace or replace a token",
-            enter_label="Sign in" if session is None else "Add",
-            signed_in=signed_in,
+        return page(
+            "account.html",
+            "Your OpenHEXA Companion",
+            status=status,
+            openhexa_host=urlsplit(self._config.openhexa_url).netloc,
+            openhexa_url=self._config.openhexa_url,
+            error_message=error,
+            action=f"{self._config.public_url}/account",
+            csrf=sign_csrf(self._csrf_key, f"account:{browser}", CSRF_LIFETIME),
+            session=session,
+            workspaces=workspaces,
+            grants=[_grant_view(grant) for grant in grants],
         )
-        return page("Your OpenHEXA Companion", body, status=status)
 
     def _user_state(self, session: Session) -> tuple[list[StoredWorkspace], list[UserGrant]]:
         return (
@@ -196,102 +196,18 @@ class Account:
         return hmac.new(self._session_key, session_id.encode(), hashlib.sha256).hexdigest()
 
 
-def _signed_in(
-    session: Session, workspaces: list[StoredWorkspace], grants: list[UserGrant], hidden: str
-) -> str:
-    return (
-        f'<form method="post">{hidden}Signed in as <strong>{escape(session.user_email)}</strong>. '
-        '<button type="submit" name="action" value="logout">Sign out</button></form>'
-        f"{_access_table(workspaces, grants, hidden)}"
-    )
-
-
-def _access_table(workspaces: list[StoredWorkspace], grants: list[UserGrant], hidden: str) -> str:
-    """The workspaces as rows and the clients as columns, with a checkbox per access.
-
-    Forget and disconnect buttons submit their own small forms, linked with the `form`
-    attribute because HTML forms cannot nest.
-    """
-    if not workspaces:
-        return "<p>You have not given the companion any workspace token yet.</p>"
-    actions = []
-    header = []
-    for index, grant in enumerate(grants):
-        form_id = f"disconnect-{index}"
-        actions.append(
-            f'<form id="{form_id}" method="post">{hidden}'
-            '<input type="hidden" name="action" value="disconnect">'
-            f'<input type="hidden" name="grant" value="{escape(grant.grant_id)}"></form>'
-        )
-        header.append(
-            f"<th>{_client_label(grant)}<br><small>Connected {_date(grant.created_at)}, "
-            f"used {_date(grant.last_used_at)}</small><br>"
-            f'<button type="submit" form="{form_id}">Disconnect</button></th>'
-        )
-    rows = []
-    for index, workspace in enumerate(workspaces):
-        form_id = f"forget-{index}"
-        actions.append(
-            f'<form id="{form_id}" method="post">{hidden}'
-            '<input type="hidden" name="action" value="forget">'
-            f'<input type="hidden" name="slug" value="{escape(workspace.slug)}"></form>'
-        )
-        warning = (
-            '<br><span class="warning">OpenHEXA rejected this token: enter a new one.</span>'
-            if workspace.token_rejected
-            else ""
-        )
-        cells = "".join(
-            '<td class="check"><input type="checkbox" name="access" '
-            f'value="{escape(grant.grant_id)}:{escape(workspace.slug)}" '
-            f'aria-label="{escape(workspace.slug)} for {escape(_client_name(grant))}"'
-            f"{' checked' if workspace.slug in grant.workspaces else ''}></td>"
-            for grant in grants
-        )
-        rows.append(
-            f'<tr><th scope="row">{escape(workspace.name)} '
-            f"(<code>{escape(workspace.slug)}</code>){warning}<br>"
-            f'<button type="submit" form="{form_id}">Forget</button>'
-            f'<input type="hidden" name="slug" value="{escape(workspace.slug)}"></th>'
-            f"{cells}</tr>"
-        )
-    grant_fields = "".join(
-        f'<input type="hidden" name="grant" value="{escape(grant.grant_id)}">' for grant in grants
-    )
-    no_clients = (
-        "<p>No AI client is connected. Connect one from your AI client: it can then be "
-        "given access to these workspaces here.</p>"
-        if not grants
-        else ""
-    )
-    save = (
-        '<div class="actions"><button type="submit" class="primary">Save</button></div>'
-        if grants
-        else ""
-    )
-    return (
-        "<h2>Workspaces and AI clients</h2>"
-        "<p>Tick the workspaces each AI client may use. <em>Forget</em> deletes the "
-        "companion's copy of a token, and <em>Disconnect</em> revokes a client's access "
-        "entirely. Neither revokes the token in OpenHEXA: if a token may have leaked, "
-        "revoke it in OpenHEXA too.</p>"
-        f"{no_clients}"
-        f'<form method="post">{hidden}<input type="hidden" name="action" value="save">'
-        f'{grant_fields}<div class="table"><table><thead><tr><th scope="col">Workspace</th>'
-        f"{''.join(header)}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>"
-        f"{save}</form>{''.join(actions)}"
-    )
-
-
-def _client_label(grant: UserGrant) -> str:
+def _grant_view(grant: UserGrant) -> dict[str, Any]:
+    """What the account page shows of a client's grant."""
     client = OAuthClientInformationFull.model_validate_json(grant.client_info)
     hosts = sorted({urlsplit(str(uri)).netloc for uri in client.redirect_uris or []})
-    return f"{escape(_client_name(grant))} <small>({escape(', '.join(hosts))})</small>"
-
-
-def _client_name(grant: UserGrant) -> str:
-    client = OAuthClientInformationFull.model_validate_json(grant.client_info)
-    return client.client_name or "An unnamed application"
+    return {
+        "id": grant.grant_id,
+        "name": client.client_name or "An unnamed application",
+        "hosts": ", ".join(hosts),
+        "created": _date(grant.created_at),
+        "used": _date(grant.last_used_at),
+        "workspaces": grant.workspaces,
+    }
 
 
 def _date(timestamp: int) -> str:

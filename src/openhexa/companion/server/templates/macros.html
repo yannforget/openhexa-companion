@@ -1,0 +1,25 @@
+{% macro token_help(openhexa_url) -%}
+To get a workspace token, open the workspace on
+<a href="{{ openhexa_url }}" target="_blank" rel="noopener noreferrer">OpenHEXA</a>, go to
+<em>Pipelines</em> and select <em>Create</em>: the token is shown in the dialog.
+{%- endmacro %}
+
+{% macro workspace_row(slug="", required=true) -%}
+<div class="workspace-row">
+<div>
+<label>Workspace slug
+<input type="text" name="slug" value="{{ slug }}" autocomplete="off" autocapitalize="none" spellcheck="false"{% if required %} required{% endif %}>
+</label>
+</div>
+<div>
+<label>Workspace token
+<input type="password" name="token" autocomplete="off"{% if required %} required{% endif %}>
+</label>
+</div>
+<button type="button" class="link remove" data-remove-row aria-label="Remove this workspace" hidden>Remove</button>
+</div>
+{%- endmacro %}
+
+{% macro error(message) -%}
+{% if message %}<div class="alert error" role="alert">{{ message }}</div>{% endif %}
+{%- endmacro %}

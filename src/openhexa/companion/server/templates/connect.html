@@ -1,33 +1,26 @@
-<p><strong>$client_name</strong> asks for access to your OpenHEXA workspaces on
-<strong>$openhexa_host</strong>. After you connect, you will return to <code>$redirect_host</code>.</p>
-<p>For each workspace, enter its slug and a workspace token. To get the token, open the
-workspace on OpenHEXA, go to <em>Pipelines</em> and select <em>Create</em>: the token is
-shown in the dialog. The connector can then do in each workspace what the token allows.</p>
-$error
-<form method="post" action="$action">
-<input type="hidden" name="request" value="$request_id">
-<input type="hidden" name="csrf" value="$csrf">
-<div id="rows">
-$rows
-</div>
-<template id="row-template">
-<div class="row">
-<input name="slug" placeholder="Workspace slug" autocomplete="off" aria-label="Workspace slug">
-<input name="token" type="password" placeholder="Workspace token" autocomplete="off" aria-label="Workspace token">
-</div>
-</template>
-<p><button type="button" id="add-row" hidden>Add another workspace</button></p>
+{% extends "base.html" %}
+{% from "macros.html" import token_help, workspace_row, error %}
+{% block content %}
+<p class="lead"><strong>{{ client_name }}</strong> asks for access to your OpenHEXA workspaces on
+<strong>{{ openhexa_host }}</strong>. After you connect, you will return to <code>{{ redirect_host }}</code>.</p>
+{{ error(error_message) }}
+<form method="post" action="{{ action }}" class="card" data-workspace-rows>
+<input type="hidden" name="request" value="{{ request_id }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<h2>Workspaces</h2>
+<p class="muted">For each workspace, enter its slug and a workspace token. {{ token_help(openhexa_url) }}
+The connector can then do in each workspace what the token allows.</p>
+<fieldset data-rows>
+<legend class="visually-hidden">Workspaces to connect</legend>
+{% for slug in slugs %}{{ workspace_row(slug) }}
+{% endfor %}
+</fieldset>
+<template data-row-template>{{ workspace_row(required=false) }}</template>
+<button type="button" class="link" data-add-row hidden>+ Add another workspace</button>
 <div class="actions">
-<button type="submit" name="action" value="connect" class="primary">Connect</button>
 <button type="submit" name="action" value="cancel" formnovalidate>Cancel</button>
+<button type="submit" name="action" value="connect" class="primary">Connect</button>
 </div>
 </form>
-<p><small>The companion stores your tokens encrypted and never shows them to the AI client.</small></p>
-<script nonce="$nonce">
-const button = document.getElementById("add-row");
-button.hidden = false;
-button.addEventListener("click", () => {
-  const row = document.getElementById("row-template").content.cloneNode(true);
-  document.getElementById("rows").appendChild(row);
-});
-</script>
+<p class="muted">The companion stores your tokens encrypted and never shows them to the AI client.</p>
+{% endblock %}

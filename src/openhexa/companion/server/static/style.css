@@ -1,0 +1,478 @@
+/* Styles of the companion's pages, matching the OpenHEXA app's Tailwind look. */
+
+:root {
+  color-scheme: light;
+  --brand: #ec4899;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --red-50: #fef2f2;
+  --red-200: #fecaca;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+  --green-50: #f0fdf4;
+  --green-200: #bbf7d0;
+  --green-800: #166534;
+  --amber-50: #fffbeb;
+  --amber-200: #fde68a;
+  --amber-800: #92400e;
+  --radius: 0.375rem;
+  --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  font-family: "Inter var", Inter, ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.5;
+  color: var(--gray-800);
+  background: var(--gray-50);
+  -webkit-text-size-adjust: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--blue-600);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--blue-700);
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: 1rem;
+  inset-block-start: -3rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border-radius: var(--radius);
+  z-index: 1;
+}
+
+.skip-link:focus {
+  inset-block-start: 0.5rem;
+}
+
+/* Header bar, like the app's dark sidebar. */
+.site-header {
+  background: var(--gray-800);
+  color: white;
+}
+
+.site-header > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 0.75rem 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.brand:hover {
+  color: white;
+}
+
+.brand img {
+  width: 1.75rem;
+  height: auto;
+}
+
+.brand span {
+  color: var(--gray-400);
+  font-weight: 400;
+}
+
+.site-header form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--gray-300);
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 2rem 1rem 3rem;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+.lead {
+  color: var(--gray-600);
+}
+
+.muted,
+small {
+  color: var(--gray-500);
+  font-size: 0.875rem;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+  background: var(--gray-100);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.card {
+  margin-block: 1.5rem;
+  padding: 1.5rem;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow);
+}
+
+.card > :last-child {
+  margin-bottom: 0;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Alerts */
+.alert {
+  margin-block: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
+
+.alert.error {
+  background: var(--red-50);
+  border-color: var(--red-200);
+  color: var(--red-700);
+}
+
+.alert.success {
+  background: var(--green-50);
+  border-color: var(--green-200);
+  color: var(--green-800);
+}
+
+.alert.warning {
+  background: var(--amber-50);
+  border-color: var(--amber-200);
+  color: var(--amber-800);
+}
+
+/* Forms */
+label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: inherit;
+  background: white;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+input[type="text"]:focus-visible,
+input[type="password"]:focus-visible {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 1px var(--blue-500);
+}
+
+input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--blue-600);
+}
+
+.hint {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+.workspace-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.workspace-row:has(> .remove[hidden]) {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+}
+
+/* The first row stays, so it keeps the space of its remove button but hides it. */
+.workspace-row:first-child .remove {
+  visibility: hidden;
+}
+
+@media (width < 36rem) {
+  .workspace-row {
+    grid-template-columns: 1fr auto;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .workspace-row > div:nth-child(2) {
+    grid-column: 1;
+  }
+
+  .workspace-row .remove {
+    grid-row: 1;
+    grid-column: 2;
+  }
+}
+
+.checks {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checks label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Buttons, like the app's `Button` variants. */
+button,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--gray-800);
+  background: white;
+  border: 1px solid var(--gray-400);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+button:hover {
+  background: var(--gray-50);
+}
+
+button.primary {
+  color: white;
+  background: var(--blue-600);
+  border-color: transparent;
+}
+
+button.primary:hover {
+  background: var(--blue-700);
+}
+
+button.danger {
+  color: var(--red-700);
+  border-color: var(--red-200);
+}
+
+button.danger:hover {
+  background: var(--red-50);
+}
+
+button.link {
+  padding: 0.25rem 0.5rem;
+  color: var(--gray-600);
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+button.link:hover {
+  color: var(--gray-900);
+  background: var(--gray-100);
+}
+
+.site-header button.link {
+  color: var(--gray-300);
+}
+
+.site-header button.link:hover {
+  color: white;
+  background: var(--gray-600);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* Lists of workspaces and clients on the account page. */
+.items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.items > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.75rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.items > li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.items > li:last-child {
+  padding-bottom: 0;
+}
+
+.items > li.top {
+  align-items: flex-start;
+}
+
+.items form,
+.items > li > button {
+  flex-shrink: 0;
+}
+
+.badge {
+  display: inline-block;
+  margin-inline-start: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--red-700);
+  background: var(--red-50);
+  border-radius: 999px;
+}
+
+.site-footer {
+  padding: 1.5rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

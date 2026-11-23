@@ -2,6 +2,7 @@
 
 import base64
 import hashlib
+import html
 import json
 import re
 import secrets
@@ -466,9 +467,26 @@ async def test_connect_page_rejects_bad_submissions():
         assert unknown.status_code == 404
         assert forged.status_code == 400
         assert "belongs to another OpenHEXA user" in mixed.text
-        assert "Workspace &#x27;stock&#x27; not found" in wrong.text
+        assert "Workspace 'stock' not found" in html.unescape(wrong.text)
         assert "alice-cases" not in mixed.text + wrong.text
         assert unknown.headers["X-Frame-Options"] == "DENY"
+        assert "script-src 'self';" in unknown.headers["Content-Security-Policy"]
+
+
+@pytest.mark.anyio
+async def test_pages_serve_their_static_files():
+    async with running_connector() as connector:
+        page = await connector.http.get("/connect?request=unknown")
+        paths = re.findall(r'(?:href|src)="(/static/[^"?]+)', page.text)
+        responses = [await connector.http.get(path) for path in paths]
+
+    assert sorted(paths) == [
+        "/static/favicon.png",
+        "/static/logo.svg",
+        "/static/pages.js",
+        "/static/style.css",
+    ]
+    assert all(response.status_code == 200 for response in responses)
 
 
 @pytest.mark.anyio

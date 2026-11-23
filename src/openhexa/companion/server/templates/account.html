@@ -1,20 +1,111 @@
-<p>Choose which OpenHEXA workspaces on <strong>$openhexa_host</strong> your connected AI
-clients can reach. You do not need this page to connect a client: connect from the AI client
+{% extends "base.html" %}
+{% from "macros.html" import token_help, workspace_row, error %}
+{% block header %}
+{% if session %}
+<form method="post" action="{{ action }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<span>Signed in as <strong>{{ session.user_email }}</strong></span>
+<button type="submit" name="action" value="logout" class="link">Sign out</button>
+</form>
+{% endif %}
+{% endblock %}
+{% block content %}
+<p class="lead">Choose which OpenHEXA workspaces on <strong>{{ openhexa_host }}</strong> your connected
+AI clients can reach. You do not need this page to connect a client: connect from the AI client
 itself.</p>
-$error
-$signed_in
-<h2>$enter_title</h2>
-<p>Enter a workspace slug and its token. The token identifies you, signs you in and is stored
-for that workspace, replacing any previous one. To get a token, open the workspace on
-OpenHEXA, go to <em>Pipelines</em> and select <em>Create</em>: the token is shown in the
-dialog.</p>
-<form method="post" action="$action">
-$csrf
-<div class="row">
-<input name="slug" placeholder="Workspace slug" autocomplete="off" aria-label="Workspace slug" required>
-<input name="token" type="password" placeholder="Workspace token" autocomplete="off" aria-label="Workspace token" required>
+{{ error(error_message) }}
+
+{% if session %}
+<section class="card" aria-labelledby="clients-title">
+<div class="card-header">
+<div>
+<h2 id="clients-title">AI clients</h2>
+<p class="muted">Tick the workspaces each AI client may use. <em>Disconnect</em> revokes a
+client's access entirely: connect it again from the AI client to restore it.</p>
 </div>
+</div>
+{% if not grants %}
+<p>No AI client is connected. Connect one from your AI client: you can then choose its
+workspaces here.</p>
+{% elif not workspaces %}
+<p>Add a workspace below to give your AI clients access to it.</p>
+{% else %}
+<form method="post" action="{{ action }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="action" value="save">
+{% for workspace in workspaces %}<input type="hidden" name="slug" value="{{ workspace.slug }}">
+{% endfor %}
+<ul class="items">
+{% for grant in grants %}
+<li class="top">
+<fieldset>
+<input type="hidden" name="grant" value="{{ grant.id }}">
+<legend><h3>{{ grant.name }}</h3></legend>
+<p class="muted">{{ grant.hosts }} · connected {{ grant.created }}, last used {{ grant.used }}</p>
+<ul class="checks">
+{% for workspace in workspaces %}
+<li><label><input type="checkbox" name="access" value="{{ grant.id }}:{{ workspace.slug }}"{% if workspace.slug in grant.workspaces %} checked{% endif %}>
+<span>{{ workspace.name }} <code>{{ workspace.slug }}</code></span></label></li>
+{% endfor %}
+</ul>
+</fieldset>
+<button type="submit" form="disconnect-{{ loop.index }}" class="danger"
+data-confirm="Disconnect {{ grant.name }}? It loses access to all your workspaces until you connect it again.">Disconnect</button>
+</li>
+{% endfor %}
+</ul>
 <div class="actions">
-<button type="submit" name="action" value="enter" class="primary">$enter_label</button>
+<button type="submit" class="primary">Save changes</button>
 </div>
 </form>
+{% endif %}
+{% for grant in grants %}
+<form id="disconnect-{{ loop.index }}" method="post" action="{{ action }}" hidden>
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="action" value="disconnect">
+<input type="hidden" name="grant" value="{{ grant.id }}">
+</form>
+{% endfor %}
+</section>
+
+<section class="card" aria-labelledby="workspaces-title">
+<h2 id="workspaces-title">Workspaces</h2>
+<p class="muted">The workspaces you gave the companion a token for. <em>Forget</em> deletes the
+companion's copy of a token, so no AI client can use that workspace. It does not revoke the token
+in OpenHEXA: if a token may have leaked, revoke it in OpenHEXA too.</p>
+{% if workspaces %}
+<ul class="items">
+{% for workspace in workspaces %}
+<li>
+<div>
+<strong>{{ workspace.name }}</strong> <code>{{ workspace.slug }}</code>
+{% if workspace.token_rejected %}<span class="badge">Token rejected: enter a new one</span>{% endif %}
+</div>
+<form method="post" action="{{ action }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="action" value="forget">
+<input type="hidden" name="slug" value="{{ workspace.slug }}">
+<button type="submit" class="danger" data-confirm="Forget the token of {{ workspace.name }}? Your AI clients lose access to it.">Forget</button>
+</form>
+</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>You have not given the companion any workspace token yet.</p>
+{% endif %}
+</section>
+{% endif %}
+
+<section class="card" aria-labelledby="enter-title">
+<h2 id="enter-title">{% if session %}Add a workspace or replace a token{% else %}Sign in{% endif %}</h2>
+<p class="muted">Enter a workspace slug and its token. The token identifies you, signs you in and
+is stored for that workspace, replacing any previous one. {{ token_help(openhexa_url) }}</p>
+<form method="post" action="{{ action }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+{{ workspace_row() }}
+<div class="actions">
+<button type="submit" name="action" value="enter" class="primary">{% if session %}Add workspace{% else %}Sign in{% endif %}</button>
+</div>
+</form>
+</section>
+{% endblock %}
