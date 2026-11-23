@@ -1,6 +1,5 @@
 """Tools reading datasets, and issuing URLs to download their files."""
 
-import uuid
 from datetime import datetime
 from typing import Annotated, Any
 
@@ -15,6 +14,8 @@ from openhexa.companion.server.tools._shared import (
     DatasetArg,
     VersionArg,
     WorkspaceArg,
+    is_uuid,
+    truncation_note,
 )
 
 # Versions listed when no limit is given.
@@ -156,7 +157,7 @@ def register(server: MCPServer, access: Access, gateway: Gateway) -> None:
             dataset=dataset,
             versions=[_version(v) for v in versions[:limit]],
             total=len(versions),
-            note=_truncation_note(len(versions), limit, "versions"),
+            note=truncation_note(len(versions), limit, "versions"),
         )
 
     @server.tool(
@@ -189,7 +190,7 @@ def register(server: MCPServer, access: Access, gateway: Gateway) -> None:
             version_id=found.id,
             files=items[:limit],
             total=len(items),
-            note=_truncation_note(len(items), limit, "files"),
+            note=truncation_note(len(items), limit, "files"),
         )
 
     @server.tool(
@@ -233,17 +234,9 @@ def _find_version(client: Client, dataset: str, version: str | None) -> DatasetV
     """Find a version by ID if `version` is one, by name otherwise, or the latest one."""
     if version is None:
         return client.datasets.version(dataset)
-    if _is_uuid(version):
+    if is_uuid(version):
         return client.datasets.version(dataset, version_id=version)
     return client.datasets.version(dataset, version)
-
-
-def _is_uuid(value: str) -> bool:
-    try:
-        uuid.UUID(value)
-    except ValueError:
-        return False
-    return True
 
 
 def _summary(workspace: str, dataset: Dataset) -> DatasetSummary:
@@ -262,9 +255,3 @@ def _version(version: DatasetVersion) -> VersionSummary:
         changelog=version.changelog,
         created_at=version.created_at,
     )
-
-
-def _truncation_note(total: int, limit: int, what: str) -> str | None:
-    if total <= limit:
-        return None
-    return f"Showing {limit} of {total} {what}. Call again with a higher limit to see more."

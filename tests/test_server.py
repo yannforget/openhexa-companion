@@ -39,6 +39,10 @@ FAKE_TOKENS = {
 FILE_CONTENT = b"district,cases\n" + b"".join(b"d%d,%d\n" % (i, i * 7) for i in range(500))
 VERSION_ID = "6f1d2c1e-8c4b-4f6e-9a57-0d1f3b0b6a11"
 STORAGE_URL = "https://storage.test/stats.csv"
+# The only run of the fake OpenHEXA, of pipeline `etl` in `cases`, with a secret parameter.
+RUN_ID = "0b3c0a52-3f4e-4d8c-9a0e-5c1b7e2d9f10"
+PIPELINE_VERSION_ID = "9a7e6b2c-1d3f-4e5a-8b9c-0d1e2f3a4b5c"
+RUN_LOGS = "".join(f"line {i}\n" for i in range(1000))
 
 
 def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
@@ -56,6 +60,8 @@ def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
             return _data({"me": {"user": {"id": user, "email": f"{user}@example.org"}}})
         if "datasetLinkBySlug" in body["query"]:
             return _data({"datasetLinkBySlug": _dataset(body["variables"], workspaces)})
+        if "pipelineRun(" in body["query"] or "pipelineVersion(" in body["query"]:
+            return _data(_pipeline_object(body, workspaces))
         slug = body["variables"]["workspace"]
         workspace = None
         if slug in workspaces:
@@ -98,6 +104,65 @@ def _dataset(variables: Mapping[str, Any], workspaces: set[str]) -> dict[str, An
             "targetId": "dataset-id",
             "latestVersion": version,
             "version": version if variables.get("version") == VERSION_ID else None,
+        }
+    }
+
+
+def _pipeline_object(body: Mapping[str, Any], workspaces: set[str]) -> dict[str, Any]:
+    """Answer the library's run and pipeline version queries with the run `RUN_ID`."""
+    pipeline = {"code": "etl", "workspace": {"slug": "cases"}}
+    if "pipelineVersion(" in body["query"]:
+        found = "cases" in workspaces and body["variables"]["id"] == PIPELINE_VERSION_ID
+        version = {
+            "id": PIPELINE_VERSION_ID,
+            "name": None,
+            "versionNumber": 1,
+            "description": None,
+            "createdAt": "2026-11-01T10:00:00+00:00",
+            "timeout": None,
+            "config": {"api_key": "configured-secret"},
+            "parameters": [
+                {
+                    "code": code,
+                    "name": code,
+                    "type": kind,
+                    "required": True,
+                    "multiple": False,
+                    "default": None,
+                    "choices": None,
+                    "help": None,
+                }
+                for code, kind in (("year", "int"), ("api_key", "secret"))
+            ],
+            "pipeline": pipeline,
+        }
+        return {"pipelineVersion": version if found else None}
+    if "cases" not in workspaces or body["variables"]["id"] != RUN_ID:
+        return {"pipelineRun": None}
+    if "logs" in body["query"]:
+        return {
+            "pipelineRun": {
+                "pipeline": pipeline,
+                "logs": RUN_LOGS,
+                "messages": [],
+                "outputs": [],
+                "datasetVersions": [
+                    {"id": VERSION_ID, "name": "v1", "dataset": pipeline | {"slug": "stats"}}
+                ],
+            }
+        }
+    return {
+        "pipelineRun": {
+            "id": RUN_ID,
+            "status": "failed",
+            "executionDate": "2026-11-02T10:00:00+00:00",
+            "duration": 12,
+            "triggerMode": "manual",
+            "progress": 100,
+            "config": {"year": 2025, "api_key": "run-secret"},
+            "user": None,
+            "version": {"id": PIPELINE_VERSION_ID, "name": None, "versionNumber": 1},
+            "pipeline": pipeline,
         }
     }
 
@@ -421,6 +486,33 @@ async def test_file_urls_stream_files_until_revoked(monkeypatch: pytest.MonkeyPa
         assert (await connector.http.get(url)).status_code == 404
 
 
+@pytest.mark.anyio
+async def test_runs_hide_secrets_and_page_logs():
+    async with running_connector() as connector:
+        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
+        async with mcp_session(connector, tokens["access_token"]) as mcp:
+            run = await mcp.call_tool(
+                "openhexa_get_pipeline_run", {"workspace": "cases", "run": RUN_ID}
+            )
+            tail = await mcp.call_tool(
+                "openhexa_get_pipeline_run_logs",
+                {"workspace": "cases", "run": RUN_ID, "length": 100},
+            )
+            start = tail.structured_content["offset"] - 100
+            earlier = await mcp.call_tool(
+                "openhexa_get_pipeline_run_logs",
+                {"workspace": "cases", "run": RUN_ID, "offset": start, "length": 100},
+            )
+
+        info = run.structured_content
+        assert info["parameters"] == {"year": 2025, "api_key": "<secret>"}
+        assert "run-secret" not in text(run)
+        assert info["published_dataset_versions"][0]["version_id"] == VERSION_ID
+        assert tail.structured_content["logs"] == RUN_LOGS[-100:]
+        assert f"offset={start}" in tail.structured_content["note"]
+        assert earlier.structured_content["logs"] == RUN_LOGS[start : start + 100]
+
+
 @pytest.mark.workspace
 @pytest.mark.anyio
 async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
@@ -447,6 +539,7 @@ async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
                 "openhexa_get_dataset_file_url",
                 {"workspace": env["OPENHEXA_WORKSPACE"], "dataset": DEMO_DATASET, "path": path},
             )
+            reads = await _call_remaining_reads(mcp, env["OPENHEXA_WORKSPACE"])
         url = file_url.structured_content["url"]
         whole = await connector.http.get(url)
         part = await connector.http.get(url, headers={"Range": "bytes=100-199"})
@@ -464,3 +557,28 @@ async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
     ]
     assert not workspace.is_error, text(workspace)
     assert workspace.structured_content["workspace"] == env["OPENHEXA_WORKSPACE"]
+    for result in reads:
+        assert not result.is_error, text(result)
+
+
+async def _call_remaining_reads(mcp: MCPClient, workspace: str) -> list[CallToolResult]:
+    """Call the pipeline, run, database and webapp tools on whatever the workspace holds."""
+    results = [
+        await mcp.call_tool("openhexa_list_database_tables", {"workspace": workspace}),
+        webapps := await mcp.call_tool("openhexa_list_webapps", {"workspace": workspace}),
+        pipelines := await mcp.call_tool("openhexa_list_pipelines", {"workspace": workspace}),
+    ]
+    for webapp in webapps.structured_content["webapps"][:1]:
+        args = {"workspace": workspace, "webapp": webapp["slug"]}
+        results.append(await mcp.call_tool("openhexa_get_webapp", args))
+    for pipeline in pipelines.structured_content["pipelines"]:
+        args = {"workspace": workspace, "pipeline": pipeline["code"]}
+        results.append(await mcp.call_tool("openhexa_get_pipeline", args))
+        runs = await mcp.call_tool("openhexa_list_pipeline_runs", {**args, "limit": 1})
+        results.append(runs)
+        if runs.structured_content["runs"]:
+            run = {"workspace": workspace, "run": runs.structured_content["runs"][0]["run_id"]}
+            results.append(await mcp.call_tool("openhexa_get_pipeline_run", run))
+            results.append(await mcp.call_tool("openhexa_get_pipeline_run_logs", run))
+            break
+    return results

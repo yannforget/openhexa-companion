@@ -60,7 +60,7 @@ query PipelineRunDetails($id: UUID!) {
       ... on DatabaseTable { tableName: name }
       ... on GenericOutput { genericName: name genericType: type uri }
     }
-    datasetVersions { name dataset { slug workspace { slug } } }
+    datasetVersions { id name dataset { slug workspace { slug } } }
   }
 }
 """
@@ -175,11 +175,13 @@ class RunDatasetVersion:
         dataset: Slug of the dataset.
         workspace: Slug of the workspace that owns the dataset.
         version: Name of the version.
+        version_id: OpenHEXA identifier of the version.
     """
 
     dataset: str
     workspace: str
     version: str
+    version_id: str
 
 
 @dataclass(frozen=True)
@@ -259,6 +261,7 @@ class Runs:
                     dataset=item["dataset"]["slug"],
                     workspace=item["dataset"]["workspace"]["slug"],
                     version=item["name"],
+                    version_id=item["id"],
                 )
                 for item in data["datasetVersions"]
             ],

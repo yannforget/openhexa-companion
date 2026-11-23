@@ -104,6 +104,9 @@ WEBAPP_ERRORS = {
     "REQUEST_TOO_LARGE": "the files are larger than this OpenHEXA instance accepts; load "
     "large data from a dataset instead",
 }
+# Versions requested per page: OpenHEXA reads them from Forgejo, which silently caps
+# larger pages (at 50 by default), so a short page reliably means the last one.
+VERSIONS_PAGE_SIZE = 20
 # Directories that are never part of a static site, even if not hidden.
 EXCLUDED_DIRECTORIES = frozenset({"node_modules", "__pycache__"})
 
@@ -227,13 +230,25 @@ class Webapps:
         data = self._find(FILES_QUERY, slug, **variables)["files"] or []
         return [_file(item) for item in data if item["type"] == "file"]
 
-    def versions(self, slug: str, *, limit: int = 20) -> builtins.list[WebappVersion]:
+    def versions(self, slug: str, *, limit: int | None = 20) -> builtins.list[WebappVersion]:
         """List the versions of a static webapp, newest first.
+
+        Args:
+            slug: Slug of the webapp.
+            limit: Maximum number of versions, or `None` for all of them.
 
         Raises:
             NotFoundError: The workspace has no webapp `slug`.
         """
-        data = self._find(VERSIONS_QUERY, slug, page=1, perPage=limit)["versions"]
+        items: builtins.list[dict[str, Any]] = []
+        page = 1
+        while limit is None or len(items) < limit:
+            data = self._find(VERSIONS_QUERY, slug, page=page, perPage=VERSIONS_PAGE_SIZE)
+            batch = data["versions"]["items"] if data["versions"] else []
+            items.extend(batch)
+            if len(batch) < VERSIONS_PAGE_SIZE:
+                break
+            page += 1
         return [
             WebappVersion(
                 id=item["id"],
@@ -241,7 +256,7 @@ class Webapps:
                 created_at=datetime.fromisoformat(item["date"]),
                 author=item["authorName"],
             )
-            for item in (data["items"] if data else [])
+            for item in items[:limit]
         ]
 
     def create(
