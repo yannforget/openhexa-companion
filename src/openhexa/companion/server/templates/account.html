@@ -1,0 +1,20 @@
+<p>Choose which OpenHEXA workspaces on <strong>$openhexa_host</strong> your connected AI
+clients can reach. You do not need this page to connect a client: connect from the AI client
+itself.</p>
+$error
+$signed_in
+<h2>$enter_title</h2>
+<p>Enter a workspace slug and its token. The token identifies you, signs you in and is stored
+for that workspace, replacing any previous one. To get a token, open the workspace on
+OpenHEXA, go to <em>Pipelines</em> and select <em>Create</em>: the token is shown in the
+dialog.</p>
+<form method="post" action="$action">
+$csrf
+<div class="row">
+<input name="slug" placeholder="Workspace slug" autocomplete="off" aria-label="Workspace slug" required>
+<input name="token" type="password" placeholder="Workspace token" autocomplete="off" aria-label="Workspace token" required>
+</div>
+<div class="actions">
+<button type="submit" name="action" value="enter" class="primary">$enter_label</button>
+</div>
+</form>

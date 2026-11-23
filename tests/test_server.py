@@ -560,6 +560,78 @@ async def test_runs_hide_secrets_and_page_logs():
         assert earlier.structured_content["logs"] == RUN_LOGS[start : start + 100]
 
 
+async def account_form(http: httpx2.AsyncClient, *fields: tuple[str, str]) -> httpx2.Response:
+    """Load the account page and submit a form of it with `fields` and its CSRF token."""
+    page = await http.get("/account")
+    csrf = re.search(r'name="csrf" value="([^"]*)"', page.text)
+    assert csrf, page.text
+    return await http.post(
+        "/account",
+        content=urlencode([("csrf", csrf[1]), *fields]),
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+
+
+async def access_state(http: httpx2.AsyncClient) -> tuple[list[str], dict[str, bool]]:
+    """The grant IDs of the account page, newest first, and its access checkboxes."""
+    page = await http.get("/account")
+    grants = list(dict.fromkeys(re.findall(r'name="grant" value="([^"]*)"', page.text)))
+    boxes = re.findall(r'name="access" value="([^"]*)"[^>]*?( checked)?>', page.text)
+    return grants, {value: bool(checked) for value, checked in boxes}
+
+
+@pytest.mark.anyio
+async def test_account_page_manages_access():
+    async with running_connector() as connector:
+        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
+        _other, other_tokens = await connect(connector.http, [("cases", "alice-cases")])
+        http = connector.http
+
+        forged = await http.post("/account", data={"csrf": "1.forged", "action": "logout"})
+        signed_out = await account_form(http, ("action", "forget"), ("slug", "cases"))
+        await account_form(http, ("action", "enter"), ("slug", "stock"), ("token", "alice-stock"))
+        (newest, oldest), boxes = await access_state(http)
+        # Give the oldest client `stock` instead of `cases`.
+        await account_form(
+            http,
+            ("action", "save"),
+            *[("grant", grant) for grant in (newest, oldest)],
+            *[("slug", slug) for slug in ("cases", "stock")],
+            ("access", f"{newest}:cases"),
+            ("access", f"{oldest}:stock"),
+        )
+        async with mcp_session(connector, tokens["access_token"]) as mcp:
+            listed = await mcp.call_tool("openhexa_list_workspaces", {})
+        await account_form(http, ("action", "forget"), ("slug", "stock"))
+        await account_form(http, ("action", "disconnect"), ("grant", newest))
+        async with mcp_session(connector, tokens["access_token"]) as mcp:
+            forgotten = await mcp.call_tool("openhexa_list_workspaces", {})
+
+        # Bob's token signs the browser in as Bob, who cannot touch Alice's grants.
+        await account_form(http, ("action", "enter"), ("slug", "stock"), ("token", "bob-stock"))
+        bob_page = await http.get("/account")
+        await account_form(http, ("action", "disconnect"), ("grant", oldest))
+        await account_form(http, ("action", "logout"))
+
+        assert forged.status_code == 400
+        assert signed_out.status_code == 400
+        assert boxes == {
+            f"{newest}:cases": True,
+            f"{newest}:stock": False,
+            f"{oldest}:cases": True,
+            f"{oldest}:stock": False,
+        }
+        assert [ws["slug"] for ws in listed.structured_content["workspaces"]] == ["stock"]
+        assert forgotten.structured_content["workspaces"] == []
+        assert await mcp_status(connector, other_tokens["access_token"]) == 401
+        assert "bob@example.org" in bob_page.text
+        assert oldest not in bob_page.text
+        assert await mcp_status(connector, tokens["access_token"]) == 200
+        assert "Signed in" not in (await http.get("/account")).text
+        assert "alice-stock" not in bob_page.text
+        assert bob_page.headers["X-Frame-Options"] == "DENY"
+
+
 @pytest.mark.anyio
 async def test_write_tools():
     async with running_connector() as connector:

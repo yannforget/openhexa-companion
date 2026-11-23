@@ -10,7 +10,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from openhexa.companion import AuthenticationError, Client, OpenHexaError
 from openhexa.companion._util import format_options
 from openhexa.companion.server.config import Config
-from openhexa.companion.server.store import GrantWorkspace, Store
+from openhexa.companion.server.store import Store, StoredWorkspace
 
 
 class Access:
@@ -23,7 +23,7 @@ class Access:
         self._store = store
         self._http_transport = http_transport
 
-    async def workspaces(self) -> list[GrantWorkspace]:
+    async def workspaces(self) -> list[StoredWorkspace]:
         """List the workspaces of the caller's grant."""
         return await anyio.to_thread.run_sync(self._store.grant_workspaces, grant_id())
 

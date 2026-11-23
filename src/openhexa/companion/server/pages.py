@@ -1,4 +1,4 @@
-"""Browser pages of the companion: the connect page that completes OAuth authorization."""
+"""The connect page that completes OAuth authorization, and helpers shared by pages."""
 
 import hashlib
 import hmac
@@ -68,8 +68,8 @@ class Pages:
             return await self._show(request_id, rows=[Row("", "")], error=None)
         form = await request.form()
         request_id = str(form.get("request", ""))
-        if not self._valid_csrf(request_id, str(form.get("csrf", ""))):
-            return _message_page(
+        if not check_csrf(self._csrf_key, f"connect:{request_id}", str(form.get("csrf", ""))):
+            return message_page(
                 "Request expired", "Go back to your AI client and connect again.", 400
             )
         pending = await anyio.to_thread.run_sync(self._store.get_pending, request_id)
@@ -118,18 +118,18 @@ class Pages:
             "</div>"
             for row in rows or [Row("", "")]
         )
-        body = _template("connect.html").substitute(
+        body = template("connect.html").substitute(
             client_name=escape(client.client_name or "An unnamed application"),
             redirect_host=escape(urlsplit(str(params.redirect_uri)).netloc),
             openhexa_host=escape(urlsplit(self._config.openhexa_url).netloc),
             error=f'<p class="error" role="alert">{escape(error)}</p>' if error else "",
             action=escape(f"{self._config.public_url}/connect"),
             request_id=escape(request_id),
-            csrf=self._csrf_token(request_id),
+            csrf=sign_csrf(self._csrf_key, f"connect:{request_id}", PENDING_AUTHORIZATION_LIFETIME),
             rows=rows_html,
             nonce=nonce,
         )
-        return _page("Connect to OpenHEXA", body, nonce=nonce)
+        return page("Connect to OpenHEXA", body, nonce=nonce)
 
     def _verify(self, rows: list[Row]) -> tuple[User, list[NewWorkspace]]:
         """Check each workspace token with OpenHEXA and that all belong to one user.
@@ -149,23 +149,14 @@ class Pages:
         user: User | None = None
         workspaces = []
         for row in rows:
-            if not row.slug or not row.token:
-                raise FormError("Enter both a slug and a token for each workspace.")
-            with Client(
-                self._config.openhexa_url, row.slug, row.token, http_transport=self._http_transport
-            ) as client:
-                try:
-                    info = client.get_workspace()
-                    owner = client.get_user()
-                except OpenHexaError as err:
-                    raise FormError(f"Workspace '{row.slug}': {err}") from err
+            owner, workspace = verify_token(self._config, self._http_transport, row.slug, row.token)
             if user is not None and owner.id != user.id:
                 raise FormError(
                     f"The token for workspace '{row.slug}' belongs to another OpenHEXA user "
                     "than the other tokens. All tokens must be your own."
                 )
             user = owner
-            workspaces.append(NewWorkspace(info.slug, info.name, row.token))
+            workspaces.append(workspace)
         if user is None:
             raise FormError("Enter at least one workspace slug and token.")
         return user, workspaces
@@ -177,27 +168,48 @@ class Pages:
         )
         return RedirectResponse(url, status_code=303, headers=PAGE_HEADERS)
 
-    def _csrf_token(self, request_id: str) -> str:
-        """Sign the request ID with an expiry, so only our form can submit it."""
-        expires = int(time.time()) + PENDING_AUTHORIZATION_LIFETIME
-        return f"{expires}.{self._csrf_signature(request_id, expires)}"
 
-    def _valid_csrf(self, request_id: str, token: str) -> bool:
-        expires, _, signature = token.partition(".")
-        if not expires.isdigit() or int(expires) < time.time():
-            return False
-        return hmac.compare_digest(signature, self._csrf_signature(request_id, int(expires)))
+def verify_token(
+    config: Config, http_transport: httpx2.BaseTransport | None, slug: str, token: str
+) -> tuple[User, NewWorkspace]:
+    """Check with OpenHEXA that `token` opens workspace `slug`, and find its user.
 
-    def _csrf_signature(self, request_id: str, expires: int) -> str:
-        message = f"connect:{request_id}:{expires}".encode()
-        return hmac.new(self._csrf_key, message, hashlib.sha256).hexdigest()
+    Raises:
+        FormError: The slug or token is missing, or OpenHEXA refused them.
+    """
+    if not slug or not token:
+        raise FormError("Enter both a slug and a token for each workspace.")
+    with Client(config.openhexa_url, slug, token, http_transport=http_transport) as client:
+        try:
+            info = client.get_workspace()
+            user = client.get_user()
+        except OpenHexaError as err:
+            raise FormError(f"Workspace '{slug}': {err}") from err
+    return user, NewWorkspace(info.slug, info.name, token)
 
 
-def _template(name: str) -> Template:
+def sign_csrf(key: bytes, purpose: str, lifetime: int) -> str:
+    """Sign `purpose` with an expiry, so only a form we served can submit it."""
+    expires = int(time.time()) + lifetime
+    return f"{expires}.{_csrf_signature(key, purpose, expires)}"
+
+
+def check_csrf(key: bytes, purpose: str, token: str) -> bool:
+    expires, _, signature = token.partition(".")
+    if not expires.isdigit() or int(expires) < time.time():
+        return False
+    return hmac.compare_digest(signature, _csrf_signature(key, purpose, int(expires)))
+
+
+def _csrf_signature(key: bytes, purpose: str, expires: int) -> str:
+    return hmac.new(key, f"{purpose}:{expires}".encode(), hashlib.sha256).hexdigest()
+
+
+def template(name: str) -> Template:
     return Template((TEMPLATES / name).read_text(encoding="utf-8"))
 
 
-def _page(title: str, body: str, *, status: int = 200, nonce: str | None = None) -> Response:
+def page(title: str, body: str, *, status: int = 200, nonce: str | None = None) -> Response:
     script = f"'nonce-{nonce}'" if nonce else "'none'"
     headers = PAGE_HEADERS | {
         "Content-Security-Policy": (
@@ -206,16 +218,16 @@ def _page(title: str, body: str, *, status: int = 200, nonce: str | None = None)
             "frame-ancestors 'none'; base-uri 'none'"
         )
     }
-    html = _template("page.html").substitute(title=escape(title), body=body)
+    html = template("page.html").substitute(title=escape(title), body=body)
     return HTMLResponse(html, status_code=status, headers=headers)
 
 
-def _message_page(title: str, message: str, status: int) -> Response:
-    return _page(title, f"<p>{escape(message)}</p>", status=status)
+def message_page(title: str, message: str, status: int) -> Response:
+    return page(title, f"<p>{escape(message)}</p>", status=status)
 
 
 def _expired_page() -> Response:
-    return _message_page(
+    return message_page(
         "Request expired",
         "This connection request is unknown or has expired. Go back to your AI client "
         "and connect again.",
