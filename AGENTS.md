@@ -65,6 +65,8 @@ uv run pyrefly check
 ```
 
 - Use demo workspace credentials in `.env` for testing (OPENHEXA_URL, OPENHEXA_WORKSPACE, OPENHEXA_TOKEN).
+- To test the MCP connector with an AI client such as Claude, see
+  [docs/local-development.md](docs/local-development.md).
 
 ## Commit conventions
 
