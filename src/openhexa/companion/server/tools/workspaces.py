@@ -1,10 +1,13 @@
 """Tools listing and reading the workspaces of a grant."""
 
+from typing import Annotated
+
 from mcp.server.mcpserver import MCPServer
 from pydantic import BaseModel, Field
 
+from openhexa.companion import Workspace
 from openhexa.companion.server.tools._access import Access
-from openhexa.companion.server.tools._shared import READ_ONLY, WorkspaceArg
+from openhexa.companion.server.tools._shared import DESTRUCTIVE, READ_ONLY, WorkspaceArg
 
 
 class WorkspaceSummary(BaseModel):
@@ -58,10 +61,36 @@ def register(server: MCPServer, access: Access) -> None:
         The homepage is Markdown written by workspace members, often describing the
         workspace's purpose, data sources and conventions.
         """
-        info = await access.run(workspace, lambda client: client.get_workspace())
-        return WorkspaceDetails(
-            workspace=info.slug,
-            name=info.name,
-            homepage=info.description,
-            docker_image=info.docker_image,
+        return _details(await access.run(workspace, lambda client: client.get_workspace()))
+
+
+def register_writes(server: MCPServer, access: Access) -> None:
+    @server.tool(
+        name="openhexa_update_workspace_homepage",
+        title="Replace the homepage of an OpenHEXA workspace",
+        annotations=DESTRUCTIVE,
+    )
+    async def update_workspace_homepage(
+        workspace: WorkspaceArg,
+        homepage: Annotated[
+            str,
+            Field(min_length=1, description="The complete new homepage, in Markdown."),
+        ],
+    ) -> WorkspaceDetails:
+        """Replace the whole homepage of an OpenHEXA workspace with new Markdown.
+
+        The previous content is overwritten, not merged, and OpenHEXA keeps no history of
+        it. Only workspace editors and admins may change the homepage.
+        """
+        return _details(
+            await access.run(workspace, lambda client: client.update_homepage(homepage))
         )
+
+
+def _details(info: Workspace) -> WorkspaceDetails:
+    return WorkspaceDetails(
+        workspace=info.slug,
+        name=info.name,
+        homepage=info.description,
+        docker_image=info.docker_image,
+    )

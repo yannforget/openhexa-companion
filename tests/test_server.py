@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 import secrets
+import uuid
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -62,19 +63,36 @@ def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
             return _data({"datasetLinkBySlug": _dataset(body["variables"], workspaces)})
         if "pipelineRun(" in body["query"] or "pipelineVersion(" in body["query"]:
             return _data(_pipeline_object(body, workspaces))
+        if "Pipeline(" in body["query"] or "pipelineByCode(" in body["query"]:
+            return _data(_pipeline_change(body, workspaces))
+        if "updateWorkspace(" in body["query"]:
+            slug, homepage = (
+                body["variables"]["input"]["slug"],
+                body["variables"]["input"]["description"],
+            )
+            return _data(
+                {
+                    "updateWorkspace": {
+                        "success": True,
+                        "errors": [],
+                        "workspace": _workspace(slug, homepage),
+                    }
+                }
+            )
         slug = body["variables"]["workspace"]
-        workspace = None
-        if slug in workspaces:
-            workspace = {
-                "slug": slug,
-                "name": slug.title(),
-                "description": f"# {slug}",
-                "configuration": {"SECRET": "hidden"},
-                "dockerImage": None,
-            }
-        return _data({"workspace": workspace})
+        return _data({"workspace": _workspace(slug, f"# {slug}") if slug in workspaces else None})
 
     return httpx2.MockTransport(handle)
+
+
+def _workspace(slug: str, homepage: str) -> dict[str, Any]:
+    return {
+        "slug": slug,
+        "name": slug.title(),
+        "description": homepage,
+        "configuration": {"SECRET": "hidden"},
+        "dockerImage": None,
+    }
 
 
 def _dataset(variables: Mapping[str, Any], workspaces: set[str]) -> dict[str, Any] | None:
@@ -113,30 +131,7 @@ def _pipeline_object(body: Mapping[str, Any], workspaces: set[str]) -> dict[str,
     pipeline = {"code": "etl", "workspace": {"slug": "cases"}}
     if "pipelineVersion(" in body["query"]:
         found = "cases" in workspaces and body["variables"]["id"] == PIPELINE_VERSION_ID
-        version = {
-            "id": PIPELINE_VERSION_ID,
-            "name": None,
-            "versionNumber": 1,
-            "description": None,
-            "createdAt": "2026-11-01T10:00:00+00:00",
-            "timeout": None,
-            "config": {"api_key": "configured-secret"},
-            "parameters": [
-                {
-                    "code": code,
-                    "name": code,
-                    "type": kind,
-                    "required": True,
-                    "multiple": False,
-                    "default": None,
-                    "choices": None,
-                    "help": None,
-                }
-                for code, kind in (("year", "int"), ("api_key", "secret"))
-            ],
-            "pipeline": pipeline,
-        }
-        return {"pipelineVersion": version if found else None}
+        return {"pipelineVersion": _pipeline_version() if found else None}
     if "cases" not in workspaces or body["variables"]["id"] != RUN_ID:
         return {"pipelineRun": None}
     if "logs" in body["query"]:
@@ -151,19 +146,71 @@ def _pipeline_object(body: Mapping[str, Any], workspaces: set[str]) -> dict[str,
                 ],
             }
         }
+    return {"pipelineRun": _run("failed", {"year": 2025, "api_key": "run-secret"})}
+
+
+def _pipeline_change(body: Mapping[str, Any], workspaces: set[str]) -> dict[str, Any]:
+    """Answer the pipeline lookup, start and stop that starting or stopping a run makes."""
+    if "runPipeline(" in body["query"]:
+        config = body["variables"]["input"]["config"]
+        return {"runPipeline": {"success": True, "errors": [], "run": _run("queued", config)}}
+    if "stopPipeline(" in body["query"]:
+        return {"stopPipeline": {"success": True, "errors": []}}
+    if "cases" not in workspaces or body["variables"]["code"] != "etl":
+        return {"pipelineByCode": None}
     return {
-        "pipelineRun": {
-            "id": RUN_ID,
-            "status": "failed",
-            "executionDate": "2026-11-02T10:00:00+00:00",
-            "duration": 12,
-            "triggerMode": "manual",
-            "progress": 100,
-            "config": {"year": 2025, "api_key": "run-secret"},
-            "user": None,
-            "version": {"id": PIPELINE_VERSION_ID, "name": None, "versionNumber": 1},
-            "pipeline": pipeline,
+        "pipelineByCode": {
+            "id": "pipeline-id",
+            "code": "etl",
+            "name": "ETL",
+            "description": "",
+            "type": "zipFile",
+            "schedule": None,
+            "currentVersion": _pipeline_version(),
+            "versions": {"totalPages": 1, "items": [_pipeline_version()]},
         }
+    }
+
+
+def _pipeline_version() -> dict[str, Any]:
+    """The only version of pipeline `etl`, with a secret parameter `api_key`."""
+    return {
+        "id": PIPELINE_VERSION_ID,
+        "name": None,
+        "versionNumber": 1,
+        "description": None,
+        "createdAt": "2026-11-01T10:00:00+00:00",
+        "timeout": None,
+        "config": {"api_key": "configured-secret"},
+        "parameters": [
+            {
+                "code": code,
+                "name": code,
+                "type": kind,
+                "required": True,
+                "multiple": False,
+                "default": None,
+                "choices": None,
+                "help": None,
+            }
+            for code, kind in (("year", "int"), ("api_key", "secret"))
+        ],
+        "pipeline": {"code": "etl", "workspace": {"slug": "cases"}},
+    }
+
+
+def _run(status: str, config: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "id": RUN_ID,
+        "status": status,
+        "executionDate": "2026-11-02T10:00:00+00:00",
+        "duration": 12,
+        "triggerMode": "manual",
+        "progress": 100,
+        "config": config,
+        "user": None,
+        "version": {"id": PIPELINE_VERSION_ID, "name": None, "versionNumber": 1},
+        "pipeline": {"code": "etl", "workspace": {"slug": "cases"}},
     }
 
 
@@ -513,6 +560,43 @@ async def test_runs_hide_secrets_and_page_logs():
         assert earlier.structured_content["logs"] == RUN_LOGS[start : start + 100]
 
 
+@pytest.mark.anyio
+async def test_write_tools():
+    async with running_connector() as connector:
+        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
+        async with mcp_session(connector, tokens["access_token"]) as mcp:
+            homepage = await mcp.call_tool(
+                "openhexa_update_workspace_homepage",
+                {"workspace": "cases", "homepage": "# New homepage"},
+            )
+            started = await mcp.call_tool(
+                "openhexa_start_pipeline_run",
+                {
+                    "workspace": "cases",
+                    "pipeline": "etl",
+                    "version": "v1",
+                    "parameters": {"year": 2026, "api_key": "typed-secret"},
+                },
+            )
+            unknown = await mcp.call_tool(
+                "openhexa_start_pipeline_run",
+                {"workspace": "cases", "pipeline": "etl", "parameters": {"month": 1}},
+            )
+            stopped = await mcp.call_tool(
+                "openhexa_stop_pipeline_run", {"workspace": "cases", "run": RUN_ID}
+            )
+
+        assert homepage.structured_content["homepage"] == "# New homepage"
+        assert started.structured_content["run_id"] == RUN_ID
+        assert started.structured_content["status"] == "queued"
+        assert started.structured_content["parameters"] == {"year": 2026, "api_key": "<secret>"}
+        assert "typed-secret" not in text(started)
+        assert unknown.is_error
+        assert "has no parameter 'month'" in text(unknown)
+        assert not stopped.is_error, text(stopped)
+        assert "run-secret" not in text(stopped)
+
+
 @pytest.mark.workspace
 @pytest.mark.anyio
 async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
@@ -559,6 +643,43 @@ async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
     assert workspace.structured_content["workspace"] == env["OPENHEXA_WORKSPACE"]
     for result in reads:
         assert not result.is_error, text(result)
+
+
+@pytest.mark.workspace
+@pytest.mark.anyio
+async def test_dataset_write_tools_with_demo_workspace(demo_env: dict[str, str]):
+    env = demo_env
+    workspace = env["OPENHEXA_WORKSPACE"]
+    with Client(env["OPENHEXA_URL"], workspace, env["OPENHEXA_TOKEN"]) as library:
+        dataset = library.datasets.create(f"companion test {uuid.uuid4().hex[:8]}", "Temporary")
+        try:
+            async with running_connector(env["OPENHEXA_URL"], httpx2.HTTPTransport()) as connector:
+                _client, tokens = await connect(
+                    connector.http, [(workspace, env["OPENHEXA_TOKEN"])]
+                )
+                async with mcp_session(connector, tokens["access_token"]) as mcp:
+                    args = {"workspace": workspace, "dataset": dataset.slug}
+                    updated = await mcp.call_tool(
+                        "openhexa_update_dataset",
+                        {**args, "name": f"{dataset.name} renamed", "description": "# Docs"},
+                    )
+                    await mcp.call_tool(
+                        "openhexa_set_dataset_attribute", {**args, "key": "a", "value": [1, 2]}
+                    )
+                    set_ = await mcp.call_tool(
+                        "openhexa_set_dataset_attribute", {**args, "key": "b", "value": "x"}
+                    )
+                    deleted = await mcp.call_tool(
+                        "openhexa_delete_dataset_attribute", {**args, "key": "a"}
+                    )
+        finally:
+            library.datasets.delete(dataset.slug)
+
+    assert not updated.is_error, text(updated)
+    assert updated.structured_content["name"] == f"{dataset.name} renamed"
+    assert updated.structured_content["description"] == "# Docs"
+    assert set_.structured_content["attributes"] == {"a": [1, 2], "b": "x"}
+    assert deleted.structured_content["attributes"] == {"b": "x"}
 
 
 async def _call_remaining_reads(mcp: MCPClient, workspace: str) -> list[CallToolResult]:

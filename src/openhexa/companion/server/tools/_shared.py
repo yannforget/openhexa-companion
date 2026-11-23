@@ -8,6 +8,11 @@ from pydantic import Field
 
 # Annotations of tools that only read from OpenHEXA.
 READ_ONLY = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=False)
+# Annotations of tools that overwrite or remove something in OpenHEXA. Repeating a call
+# changes nothing more, so they are idempotent.
+DESTRUCTIVE = ToolAnnotations(
+    read_only_hint=False, destructive_hint=True, idempotent_hint=True, open_world_hint=False
+)
 
 WorkspaceArg = Annotated[
     str,

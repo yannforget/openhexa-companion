@@ -4,11 +4,13 @@ from datetime import datetime
 from typing import Annotated, Any
 
 from mcp.server.mcpserver import MCPServer
-from pydantic import BaseModel, Field
+from mcp_types import ToolAnnotations
+from pydantic import BaseModel, Field, JsonValue
 
 from openhexa.companion import Client, Pipeline, PipelineVersion, Run, RunDetails
 from openhexa.companion.server.tools._access import Access
 from openhexa.companion.server.tools._shared import (
+    DESTRUCTIVE,
     READ_ONLY,
     PipelineArg,
     RunArg,
@@ -29,6 +31,20 @@ DEFAULT_LOG_LENGTH = 20_000
 SECRET_MASK = "<secret>"
 # Parameter type whose values are hidden.
 SECRET_TYPE = "secret"
+# Annotations of the tool starting runs: each call starts another run.
+START_RUN = ToolAnnotations(
+    read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False
+)
+# Note returned with a run just started or stopped.
+RUN_STATUS_NOTE = (
+    "The run continues in OpenHEXA; openhexa_get_pipeline_run returns its current status, "
+    "messages and outputs."
+)
+
+PipelineVersionArg = Annotated[
+    str | None,
+    Field(description="Version label, name or ID, such as 'v3'. Defaults to the latest version."),
+]
 
 
 class PipelineSummary(BaseModel):
@@ -155,6 +171,15 @@ class RunInfo(RunSummary):
     note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
+class RunChange(RunSummary):
+    workspace: str = Field(description="Slug of the workspace.")
+    pipeline: str = Field(description="Code of the pipeline.")
+    parameters: dict[str, Any] = Field(
+        description="Parameter values of the run. Secrets are masked."
+    )
+    note: str = Field(description="How to follow the run.")
+
+
 class RunLogs(BaseModel):
     workspace: str = Field(description="Slug of the workspace.")
     run_id: str = Field(description="ID of the run.")
@@ -184,13 +209,7 @@ def register(server: MCPServer, access: Access) -> None:
     async def get_pipeline(
         workspace: WorkspaceArg,
         pipeline: PipelineArg,
-        version: Annotated[
-            str | None,
-            Field(
-                description="Version label, name or ID, such as 'v3'. Defaults to the "
-                "latest version."
-            ),
-        ] = None,
+        version: PipelineVersionArg = None,
         version_limit: Annotated[
             int, Field(ge=1, description="Maximum number of versions to list, newest first.")
         ] = DEFAULT_VERSION_LIMIT,
@@ -204,12 +223,7 @@ def register(server: MCPServer, access: Access) -> None:
             versions = client.pipelines.versions(pipeline)
             if version is None:
                 return found, versions, versions[0] if versions else None
-            for item in versions:
-                if item.label == version:
-                    return found, versions, item
-            if is_uuid(version):
-                return found, versions, client.pipelines.version(pipeline, version_id=version)
-            return found, versions, client.pipelines.version(pipeline, version)
+            return found, versions, _find_version(client, pipeline, version, versions)
 
         found, versions, selected = await access.run(workspace, read)
         return PipelineDetails(
@@ -268,12 +282,7 @@ def register(server: MCPServer, access: Access) -> None:
 
         def read(client: Client) -> tuple[Run, RunDetails, set[str]]:
             found = client.runs.get(run)
-            details = client.runs.details(run)
-            secrets: set[str] = set()
-            if found.version_id is not None:
-                ran = client.pipelines.version(found.pipeline, version_id=found.version_id)
-                secrets = _secret_codes(ran)
-            return found, details, secrets
+            return found, client.runs.details(run), _run_secret_codes(client, found)
 
         found, details, secrets = await access.run(workspace, read)
         messages = details.messages[-message_limit:]
@@ -351,6 +360,83 @@ def register(server: MCPServer, access: Access) -> None:
         )
 
 
+def register_writes(server: MCPServer, access: Access) -> None:
+    @server.tool(
+        name="openhexa_start_pipeline_run",
+        title="Start an OpenHEXA pipeline run",
+        annotations=START_RUN,
+    )
+    async def start_pipeline_run(
+        workspace: WorkspaceArg,
+        pipeline: PipelineArg,
+        version: PipelineVersionArg = None,
+        parameters: Annotated[
+            dict[str, JsonValue] | None,
+            Field(
+                description="Parameter values by parameter code, as listed by "
+                "openhexa_get_pipeline. Parameters without a value use the value "
+                "configured in OpenHEXA, then their default."
+            ),
+        ] = None,
+    ) -> RunChange:
+        """Start a run of an OpenHEXA pipeline and return its ID and initial status.
+
+        Returns once OpenHEXA has queued the run, without waiting for it to finish.
+        """
+
+        def start(client: Client) -> tuple[Run, set[str]]:
+            selected = (
+                client.pipelines.version(pipeline)
+                if version is None
+                else _find_version(client, pipeline, version, client.pipelines.versions(pipeline))
+            )
+            return client.runs.start(selected, parameters), _secret_codes(selected)
+
+        run, secrets = await access.run(workspace, start)
+        return _run_change(workspace, run, secrets)
+
+    @server.tool(
+        name="openhexa_stop_pipeline_run",
+        title="Stop an OpenHEXA pipeline run",
+        annotations=DESTRUCTIVE,
+    )
+    async def stop_pipeline_run(workspace: WorkspaceArg, run: RunArg) -> RunChange:
+        """Stop a queued or running OpenHEXA pipeline run.
+
+        OpenHEXA marks the run 'terminating', then 'stopped' once the process has ended.
+        """
+
+        def stop(client: Client) -> tuple[Run, set[str]]:
+            client.runs.stop(run)
+            stopped = client.runs.get(run)
+            return stopped, _run_secret_codes(client, stopped)
+
+        stopped, secrets = await access.run(workspace, stop)
+        return _run_change(workspace, stopped, secrets)
+
+
+def _find_version(
+    client: Client, pipeline: str, version: str, versions: list[PipelineVersion]
+) -> PipelineVersion:
+    """Find a version by its label among `versions`, else by ID or name."""
+    for item in versions:
+        if item.label == version:
+            return item
+    if is_uuid(version):
+        return client.pipelines.version(pipeline, version_id=version)
+    return client.pipelines.version(pipeline, version)
+
+
+def _run_change(workspace: str, run: Run, secrets: set[str]) -> RunChange:
+    return RunChange(
+        **_run_fields(run),
+        workspace=workspace,
+        pipeline=run.pipeline,
+        parameters=_mask(run.parameters, secrets),
+        note=RUN_STATUS_NOTE,
+    )
+
+
 def _pipeline(pipeline: Pipeline) -> PipelineSummary:
     return PipelineSummary(
         code=pipeline.code,
@@ -395,6 +481,13 @@ def _version_details(version: PipelineVersion) -> VersionDetails:
 
 def _secret_codes(version: PipelineVersion) -> set[str]:
     return {p.code for p in version.parameters if p.type == SECRET_TYPE}
+
+
+def _run_secret_codes(client: Client, run: Run) -> set[str]:
+    """Codes of the secret parameters of the version that `run` ran."""
+    if run.version_id is None:
+        return set()
+    return _secret_codes(client.pipelines.version(run.pipeline, version_id=run.version_id))
 
 
 def _mask(values: dict[str, Any], secrets: set[str]) -> dict[str, Any]:

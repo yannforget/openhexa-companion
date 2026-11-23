@@ -14,6 +14,9 @@ def register_tools(server: MCPServer, access: Access, gateway: Gateway) -> None:
     pipelines.register(server, access)
     database.register(server, access)
     webapps.register(server, access)
+    pipelines.register_writes(server, access)
+    workspaces.register_writes(server, access)
+    datasets.register_writes(server, access)
 
 
 __all__ = ["Access", "register_tools"]

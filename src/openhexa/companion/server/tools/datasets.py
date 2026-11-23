@@ -4,12 +4,14 @@ from datetime import datetime
 from typing import Annotated, Any
 
 from mcp.server.mcpserver import MCPServer
-from pydantic import BaseModel, Field
+from mcp.server.mcpserver.exceptions import ToolError
+from pydantic import BaseModel, Field, JsonValue
 
 from openhexa.companion import Client, Dataset, DatasetVersion
 from openhexa.companion.server.gateway import Gateway
 from openhexa.companion.server.tools._access import Access, grant_id
 from openhexa.companion.server.tools._shared import (
+    DESTRUCTIVE,
     READ_ONLY,
     DatasetArg,
     VersionArg,
@@ -131,12 +133,7 @@ def register(server: MCPServer, access: Access, gateway: Gateway) -> None:
     async def get_dataset(workspace: WorkspaceArg, dataset: DatasetArg) -> DatasetDetails:
         """Read an OpenHEXA dataset: its description, attributes and latest version."""
         item = await access.run(workspace, lambda client: client.datasets.get(dataset))
-        return DatasetDetails(
-            **_summary(workspace, item).model_dump(),
-            workspace=workspace,
-            description=item.description,
-            attributes=item.attributes,
-        )
+        return _details(workspace, item)
 
     @server.tool(
         name="openhexa_list_dataset_versions",
@@ -230,6 +227,77 @@ def register(server: MCPServer, access: Access, gateway: Gateway) -> None:
         )
 
 
+def register_writes(server: MCPServer, access: Access) -> None:
+    @server.tool(
+        name="openhexa_update_dataset",
+        title="Update an OpenHEXA dataset",
+        annotations=DESTRUCTIVE,
+    )
+    async def update_dataset(
+        workspace: WorkspaceArg,
+        dataset: DatasetArg,
+        name: Annotated[
+            str | None,
+            Field(min_length=1, description="New display name. Unchanged if omitted."),
+        ] = None,
+        description: Annotated[
+            str | None,
+            Field(
+                description="New description in Markdown, replacing the whole current one. "
+                "Unchanged if omitted."
+            ),
+        ] = None,
+    ) -> DatasetDetails:
+        """Rename an OpenHEXA dataset or replace its description.
+
+        The slug, which identifies the dataset in tools, does not change with the name.
+        """
+        if name is None and description is None:
+            raise ToolError("Give a new name, a new description or both")
+        item = await access.run(
+            workspace,
+            lambda client: client.datasets.update(dataset, name=name, description=description),
+        )
+        return _details(workspace, item)
+
+    @server.tool(
+        name="openhexa_set_dataset_attribute",
+        title="Set an attribute of an OpenHEXA dataset",
+        annotations=DESTRUCTIVE,
+    )
+    async def set_dataset_attribute(
+        workspace: WorkspaceArg,
+        dataset: DatasetArg,
+        key: Annotated[
+            str, Field(min_length=1, description="Name of the attribute, such as 'source'.")
+        ],
+        value: Annotated[
+            JsonValue, Field(description="Any JSON value, such as text, a number or a list.")
+        ],
+    ) -> DatasetDetails:
+        """Set a custom metadata attribute of an OpenHEXA dataset, replacing any previous value."""
+        item = await access.run(
+            workspace, lambda client: client.datasets.set_attribute(dataset, key, value)
+        )
+        return _details(workspace, item)
+
+    @server.tool(
+        name="openhexa_delete_dataset_attribute",
+        title="Delete an attribute of an OpenHEXA dataset",
+        annotations=DESTRUCTIVE,
+    )
+    async def delete_dataset_attribute(
+        workspace: WorkspaceArg,
+        dataset: DatasetArg,
+        key: Annotated[str, Field(description="Name of the attribute to remove.")],
+    ) -> DatasetDetails:
+        """Remove a custom metadata attribute from an OpenHEXA dataset."""
+        item = await access.run(
+            workspace, lambda client: client.datasets.delete_attribute(dataset, key)
+        )
+        return _details(workspace, item)
+
+
 def _find_version(client: Client, dataset: str, version: str | None) -> DatasetVersion:
     """Find a version by ID if `version` is one, by name otherwise, or the latest one."""
     if version is None:
@@ -245,6 +313,15 @@ def _summary(workspace: str, dataset: Dataset) -> DatasetSummary:
         name=dataset.name,
         owner_workspace=dataset.workspace,
         latest_version=dataset.latest_version,
+    )
+
+
+def _details(workspace: str, dataset: Dataset) -> DatasetDetails:
+    return DatasetDetails(
+        **_summary(workspace, dataset).model_dump(),
+        workspace=workspace,
+        description=dataset.description,
+        attributes=dataset.attributes,
     )
 
 
