@@ -56,6 +56,7 @@ Read the relevant guidelines before changing code:
 - [guidelines/library.md](guidelines/library.md): the library, outside `cli/` and `server/`.
 - [guidelines/cli.md](guidelines/cli.md): the `hexa` CLI, in `cli/`.
 - [guidelines/mcp.md](guidelines/mcp.md): the MCP connector, in `server/`.
+- [guidelines/skills.md](guidelines/skills.md): the agent skills, in `skills/`.
 
 For Python changes, run:
 
