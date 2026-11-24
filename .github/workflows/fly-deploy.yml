@@ -1,0 +1,24 @@
+# Deploys the MCP server to Fly.io when a release is published, after the tests pass.
+# Needs a FLY_API_TOKEN secret: `fly tokens create deploy --app openhexa-companion`.
+name: Deploy
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.4.0
+      - name: Run the tests
+        run: uv run pytest -q
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy
+        run: flyctl deploy --remote-only --ha=false
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
