@@ -452,6 +452,24 @@ class Datasets:
             raise InvalidInputError(
                 f"Offset {offset} is past the end of {file.size}-byte '{file.path}'"
             )
+        url = self.download_url(file)
+        what = (
+            f"'{file.path}' of dataset '{self._reference(file.workspace, file.dataset)}' "
+            f"version '{file.version}'"
+        )
+        with self._transport.download(url, what=what, offset=offset, length=length) as stream:
+            yield stream
+
+    def download_url(self, file: DatasetFile) -> str:
+        """Get a signed storage URL that downloads a dataset file without authentication.
+
+        The URL grants access to the file until it expires, after 10 minutes to 1 hour
+        depending on the storage. Treat it as a credential.
+
+        Raises:
+            NotFoundError: The file no longer exists.
+            PermissionDeniedError: The token may not download this dataset.
+        """
         dataset = self._reference(file.workspace, file.dataset)
         data = self._find(DOWNLOAD_URL_QUERY, dataset, version=file.version_id, path=file.path)
         if data["version"] is None or data["version"]["fileByName"] is None:
@@ -465,9 +483,7 @@ class Datasets:
                 f"The token may not download files of dataset '{dataset}' in "
                 f"workspace '{self._workspace}'"
             )
-        what = f"'{file.path}' of dataset '{dataset}' version '{file.version}'"
-        with self._transport.download(url, what=what, offset=offset, length=length) as stream:
-            yield stream
+        return url
 
     def create(self, name: str, description: str = "") -> Dataset:
         """Create a dataset, with no version, in the workspace.

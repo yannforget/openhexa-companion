@@ -43,7 +43,7 @@ Each use case will be supported through the CLI, the MCP connector or both, whic
 | --- | --- |
 | **Python library** | A workspace-scoped client usable directly from Python. Given explicit credentials, it performs workspace operations, such as reading a file from a dataset version. It does not decide how credentials are collected, how results are displayed or where the bytes go. |
 | **CLI** | The local interface: loads configuration, presents results, works with files on disk and runs pipelines locally. It calls the library directly and works without the companion service. |
-| **MCP connector and file gateway** | The hosted interface for AI clients. It calls the same library directly, not through a shell, and is deployed separately. |
+| **MCP connector** | The hosted interface for AI clients. It calls the same library directly, not through a shell, and is deployed separately. |
 
 The project starts as one Python distribution, with the service’s dependencies optional.
 
@@ -57,13 +57,13 @@ A workspace token proves access to a workspace, not an individual OpenHEXA ident
 
 ### Full files without hosted compute
 
-When the assistant selects a dataset file, the companion gives it a short-lived URL for that file in that exact version. On fetch, the gateway checks the grant and streams the original bytes. The URL is a temporary bearer credential: it must not expose the OpenHEXA token or the storage URL.
+When the assistant selects a dataset file, the companion returns the signed download URL that OpenHEXA issues for that file in that exact version. The AI client downloads it from storage directly, so file bytes never pass through the companion. The URL is a temporary bearer credential that expires within minutes (10 on GCS); it never contains the OpenHEXA token.
 
 The AI client’s own Python environment downloads and analyses the file. A follow-up question can reuse the same file, and the answer can cite the dataset version and path. The companion runs no analysis itself.
 
 The CLI shares the same library operation, but saves the bytes to disk.
 
-**Main risk:** the design assumes that the AI client’s execution environment can reach the gateway. A working MCP connection does not prove this, so it must be verified early on the target Claude plans.
+**Main risk:** the AI client’s execution environment must reach the storage host, such as `storage.googleapis.com` on hosted OpenHEXA. Claude’s sandbox blocks it by default: users, or Team and Enterprise admins, must allow it. Storage that only OpenHEXA can reach, such as filesystem storage or a private MinIO, is not supported.
 
 ## Left for later
 

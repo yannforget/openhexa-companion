@@ -16,7 +16,7 @@ architecture.
 - `src/openhexa/companion/`: the library. `openhexa` is a namespace package
   shared with `openhexa.sdk`, so never add `src/openhexa/__init__.py`.
 - `src/openhexa/companion/cli/`: the `hexa` CLI.
-- `src/openhexa/companion/server/`: the MCP connector and file gateway. Its
+- `src/openhexa/companion/server/`: the MCP connector. Its
   dependencies are in an optional `server` extra; the library and CLI must not
   import it.
 - `tests/`: tests.

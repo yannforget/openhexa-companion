@@ -1,1 +1,1 @@
-"""MCP connector and file gateway."""
+"""MCP connector."""

@@ -2,7 +2,6 @@
 
 from mcp.server.mcpserver import MCPServer
 
-from openhexa.companion.server.gateway import Gateway
 from openhexa.companion.server.tools import (
     database,
     datasets,
@@ -15,11 +14,11 @@ from openhexa.companion.server.tools import (
 from openhexa.companion.server.tools._access import Access
 
 
-def register_tools(server: MCPServer, access: Access, gateway: Gateway) -> None:
+def register_tools(server: MCPServer, access: Access) -> None:
     """Add every tool to `server`, in the order clients list them."""
     workspaces.register(server, access)
     search.register(server, access)
-    datasets.register(server, access, gateway)
+    datasets.register(server, access)
     pipelines.register(server, access)
     database.register(server, access)
     saved_queries.register(server, access)

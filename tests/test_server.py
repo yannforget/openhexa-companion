@@ -22,7 +22,6 @@ from mcp.client.streamable_http import streamable_http_client
 from mcp_types import CallToolResult, TextContent
 
 from openhexa.companion import Client
-from openhexa.companion.server import gateway
 from openhexa.companion.server.app import build_app
 from openhexa.companion.server.config import Config
 from openhexa.companion.server.store import Store
@@ -67,8 +66,6 @@ def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
     """An OpenHEXA instance that knows the users and workspaces of `FAKE_TOKENS`."""
 
     def handle(request: httpx2.Request) -> httpx2.Response:
-        if str(request.url) == STORAGE_URL:
-            return _storage(request)
         token = request.headers["Authorization"].removeprefix("Bearer ")
         if token not in FAKE_TOKENS or token in revoked:
             return httpx2.Response(401)
@@ -300,18 +297,6 @@ def _sql(body: Mapping[str, Any]) -> dict[str, Any]:
         "durationMs": 3,
     }
     return {"workspace": {"database": {"executeSQL": result}}}
-
-
-def _storage(request: httpx2.Request) -> httpx2.Response:
-    """Serve `FILE_CONTENT`, honouring `bytes=start-end` ranges like cloud storage.
-
-    The body is an iterator so that it is streamed like a real response, not pre-read.
-    """
-    if "Range" not in request.headers:
-        return httpx2.Response(200, content=iter([FILE_CONTENT]))
-    start, end = request.headers["Range"].removeprefix("bytes=").split("-")
-    content = FILE_CONTENT[int(start) : int(end) + 1 if end else None]
-    return httpx2.Response(206, content=iter([content]))
 
 
 def _data(data: Mapping[str, Any]) -> httpx2.Response:
@@ -595,47 +580,23 @@ async def test_tool_errors_explain_what_to_do():
 
 
 @pytest.mark.anyio
-async def test_file_urls_stream_files_until_revoked(monkeypatch: pytest.MonkeyPatch):
+async def test_file_urls_point_to_storage():
     async with running_connector() as connector:
-        client, tokens = await connect(connector.http, [("cases", "alice-cases")])
+        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
         async with mcp_session(connector, tokens["access_token"]) as mcp:
             result = await mcp.call_tool(
                 "openhexa_get_dataset_file_url",
                 {"workspace": "cases", "dataset": "stats", "path": "stats.csv"},
             )
-            monkeypatch.setattr(gateway, "FILE_URL_LIFETIME", -1)
-            expired = await mcp.call_tool(
-                "openhexa_get_dataset_file_url",
-                {"workspace": "cases", "dataset": "stats", "path": "stats.csv"},
-            )
-        info = result.structured_content
-        url = info["url"]
-        token = urlsplit(url).path.split("/")[2]
-        tampered = url.replace(token, token[:-2] + ("AA" if token[-2:] != "AA" else "BB"))
 
-        whole = await connector.http.get(url)
-        part = await connector.http.get(url, headers={"Range": "bytes=10-19"})
-        tail = await connector.http.get(url, headers={"Range": "bytes=-5"})
-
-        assert info["version_id"] == VERSION_ID
-        assert "alice-cases" not in url
-        assert whole.content == FILE_CONTENT
-        assert whole.headers["Content-Disposition"].startswith('attachment; filename="stats.csv"')
-        assert (part.status_code, part.content) == (206, FILE_CONTENT[10:20])
-        assert part.headers["Content-Range"] == f"bytes 10-19/{len(FILE_CONTENT)}"
-        assert tail.content == FILE_CONTENT[-5:]
-        assert (await connector.http.get(tampered)).status_code == 404
-        assert (await connector.http.get(expired.structured_content["url"])).status_code == 404
-
-        await connector.http.post(
-            "/revoke",
-            data={
-                "token": tokens["refresh_token"],
-                "client_id": client.client_id,
-                "client_secret": client.client_secret,
-            },
-        )
-        assert (await connector.http.get(url)).status_code == 404
+    info = result.structured_content
+    assert info["url"] == STORAGE_URL
+    assert (info["version_id"], info["path"], info["size"]) == (
+        VERSION_ID,
+        "stats.csv",
+        len(FILE_CONTENT),
+    )
+    assert "alice-cases" not in text(result)
 
 
 @pytest.mark.anyio
@@ -879,10 +840,12 @@ async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
                 {"workspace": env["OPENHEXA_WORKSPACE"], "dataset": DEMO_DATASET, "path": path},
             )
             reads = await _call_remaining_reads(mcp, env["OPENHEXA_WORKSPACE"])
-        url = file_url.structured_content["url"]
-        whole = await connector.http.get(url)
-        part = await connector.http.get(url, headers={"Range": "bytes=100-199"})
 
+    # Downloaded the way a sandbox would: without any OpenHEXA credential.
+    url = file_url.structured_content["url"]
+    async with httpx2.AsyncClient() as anonymous:
+        whole = await anonymous.get(url)
+        part = await anonymous.get(url, headers={"Range": "bytes=100-199"})
     with Client(env["OPENHEXA_URL"], env["OPENHEXA_WORKSPACE"], env["OPENHEXA_TOKEN"]) as library:
         file = library.datasets.file(library.datasets.version(DEMO_DATASET), path)
         with library.datasets.read(file) as stream:

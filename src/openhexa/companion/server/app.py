@@ -1,4 +1,4 @@
-"""Assembles the companion's ASGI application: OAuth, pages, MCP and file gateway."""
+"""Assembles the companion's ASGI application: OAuth, pages and MCP."""
 
 from importlib.metadata import version
 
@@ -13,7 +13,6 @@ from starlette.routing import Route
 
 from openhexa.companion.server.account import Account
 from openhexa.companion.server.config import Config
-from openhexa.companion.server.gateway import Gateway
 from openhexa.companion.server.oauth import Provider
 from openhexa.companion.server.pages import Pages
 from openhexa.companion.server.store import Store
@@ -54,8 +53,7 @@ def build_app(
         auth_server_provider=Provider(config, store),
         auth=auth,
     )
-    gateway = Gateway(config, store, http_transport)
-    register_tools(server, Access(config, store, http_transport), gateway)
+    register_tools(server, Access(config, store, http_transport))
     app = server.streamable_http_app(
         stateless_http=True,
         json_response=True,
@@ -77,5 +75,4 @@ def build_app(
     )
     app.router.routes.extend(Pages(config, store, http_transport).routes())
     app.router.routes.extend(Account(config, store, http_transport).routes())
-    app.router.routes.extend(gateway.routes())
     return app

@@ -7,9 +7,8 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel, Field, JsonValue
 
-from openhexa.companion import Client, Dataset, DatasetVersion
-from openhexa.companion.server.gateway import Gateway
-from openhexa.companion.server.tools._access import Access, grant_id
+from openhexa.companion import Client, Dataset, DatasetFile, DatasetVersion
+from openhexa.companion.server.tools._access import Access
 from openhexa.companion.server.tools._shared import (
     DESTRUCTIVE,
     READ_ONLY,
@@ -26,10 +25,15 @@ DEFAULT_VERSION_LIMIT = 20
 DEFAULT_FILE_LIMIT = 200
 # Note returned with each file URL.
 FILE_URL_NOTE = (
-    "The URL is a short-lived credential: it downloads the complete file, without "
-    "authentication, until it expires. Download it from a code environment rather than "
-    "displaying it. A downloaded copy can be reused for later questions only while it "
-    "matches the same version ID."
+    "The URL is a signed storage URL: it downloads the complete file without "
+    "authentication, and expires after about 10 minutes. Save the file to disk from a "
+    "code environment right away, then analyse the local copy rather than querying the "
+    "URL again. Don't display the URL, and never embed it in an artifact, web app or "
+    "saved code: an OpenHEXA web app must request `downloadUrl` from its own /graphql/ "
+    "endpoint when it needs the file. If the download fails with HTTP 400 or 403, call "
+    "this tool again for a new URL; if the code environment cannot reach the URL's "
+    "host, the user must allow that host for it. A downloaded copy can be reused for "
+    "later questions only while it matches the same version ID."
 )
 
 
@@ -94,7 +98,6 @@ class FileList(BaseModel):
 
 class FileUrl(BaseModel):
     url: str = Field(description="Short-lived URL downloading the complete file.")
-    expires_at: datetime = Field(description="When the URL stops working.")
     workspace: str = Field(description="Slug of the workspace.")
     dataset: str = Field(description="The dataset.")
     version: str = Field(description="Name of the version.")
@@ -105,7 +108,7 @@ class FileUrl(BaseModel):
     note: str = Field(description="How to use the URL.")
 
 
-def register(server: MCPServer, access: Access, gateway: Gateway) -> None:
+def register(server: MCPServer, access: Access) -> None:
     @server.tool(
         name="openhexa_list_datasets",
         title="List OpenHEXA datasets",
@@ -205,17 +208,18 @@ def register(server: MCPServer, access: Access, gateway: Gateway) -> None:
     ) -> FileUrl:
         """Get a short-lived URL that downloads a complete file of an OpenHEXA dataset.
 
-        The URL is pinned to one dataset version and works without authentication until
-        it expires, so code can download and analyse the whole file.
+        The URL points to the storage of OpenHEXA, is pinned to one dataset version and
+        works without authentication for about 10 minutes, so code can download and
+        analyse the whole file.
         """
-        file = await access.run(
-            workspace,
-            lambda client: client.datasets.file(_find_version(client, dataset, version), path),
-        )
-        url, expires_at = gateway.url(grant_id(), workspace, file)
+
+        def file_url(client: Client) -> tuple[DatasetFile, str]:
+            file = client.datasets.file(_find_version(client, dataset, version), path)
+            return file, client.datasets.download_url(file)
+
+        file, url = await access.run(workspace, file_url)
         return FileUrl(
             url=url,
-            expires_at=expires_at,
             workspace=workspace,
             dataset=dataset,
             version=file.version,
