@@ -13,6 +13,7 @@ from openhexa.companion.cli.pipelines import pipelines
 from openhexa.companion.cli.queries import queries
 from openhexa.companion.cli.run import run
 from openhexa.companion.cli.runs import runs
+from openhexa.companion.cli.search import search
 from openhexa.companion.cli.webapps import webapps
 from openhexa.companion.cli.workspace import workspace
 
@@ -52,5 +53,6 @@ main.add_command(pipelines)
 main.add_command(queries)
 main.add_command(run)
 main.add_command(runs)
+main.add_command(search)
 main.add_command(webapps)
 main.add_command(workspace)

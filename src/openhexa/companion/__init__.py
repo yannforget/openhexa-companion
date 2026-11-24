@@ -22,6 +22,14 @@ from openhexa.companion.files import WorkspaceFile
 from openhexa.companion.pipelines import Pipeline, PipelineParameter, PipelineVersion
 from openhexa.companion.runs import Run, RunDatasetVersion, RunDetails, RunMessage, RunOutput
 from openhexa.companion.saved_queries import SavedQuery, SavedQuerySummary
+from openhexa.companion.search import (
+    Catalog,
+    CatalogItem,
+    ItemType,
+    SearchHit,
+    SearchResult,
+    search,
+)
 from openhexa.companion.user import User
 from openhexa.companion.webapps import Publication, Webapp, WebappFile, WebappVersion
 from openhexa.companion.workspace import Workspace
@@ -30,6 +38,8 @@ __all__ = [
     "APIError",
     "AuthenticationError",
     "ByteStream",
+    "Catalog",
+    "CatalogItem",
     "Client",
     "Connection",
     "ConnectionField",
@@ -39,6 +49,7 @@ __all__ = [
     "DatasetFile",
     "DatasetVersion",
     "InvalidInputError",
+    "ItemType",
     "NotFoundError",
     "OpenHexaError",
     "PermissionDeniedError",
@@ -54,6 +65,8 @@ __all__ = [
     "RunOutput",
     "SavedQuery",
     "SavedQuerySummary",
+    "SearchHit",
+    "SearchResult",
     "TableColumn",
     "User",
     "Webapp",
@@ -61,4 +74,5 @@ __all__ = [
     "WebappVersion",
     "Workspace",
     "WorkspaceFile",
+    "search",
 ]

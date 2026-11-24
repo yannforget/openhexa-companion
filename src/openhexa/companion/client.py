@@ -1,5 +1,6 @@
 """Client for one OpenHEXA workspace."""
 
+from collections.abc import Iterable
 from types import TracebackType
 from typing import Self
 
@@ -13,6 +14,7 @@ from openhexa.companion.files import Files
 from openhexa.companion.pipelines import Pipelines
 from openhexa.companion.runs import Runs
 from openhexa.companion.saved_queries import SavedQueries
+from openhexa.companion.search import Catalog, fetch_catalog
 from openhexa.companion.user import User, get_user
 from openhexa.companion.webapps import Webapps
 from openhexa.companion.workspace import Workspace, get_workspace, update_description
@@ -97,6 +99,23 @@ class Client:
                 workspace editors and admins can.
         """
         return update_description(self._transport, self.workspace, content)
+
+    def catalog(self, types: Iterable[str] | None = None) -> Catalog:
+        """List the datasets, pipelines, webapps and database tables of the workspace.
+
+        Pass the items to `search` to find those matching keywords. Datasets include
+        those shared with the workspace. Tables are only named; if the workspace database
+        cannot be read, the other items are returned and `errors` says why.
+
+        Args:
+            types: Only list items of these types: `dataset`, `pipeline`, `webapp` or
+                `table`.
+
+        Raises:
+            InvalidInputError: A type is unknown.
+            NotFoundError: The workspace does not exist or the token cannot access it.
+        """
+        return fetch_catalog(self._transport, self.workspace, types)
 
     def close(self) -> None:
         """Close the HTTP connections."""

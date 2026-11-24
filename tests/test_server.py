@@ -60,6 +60,8 @@ def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
         body = json.loads(request.content)
         if "me {" in body["query"]:
             return _data({"me": {"user": {"id": user, "email": f"{user}@example.org"}}})
+        if "query Catalog" in body["query"]:
+            return _catalog(body, workspaces)
         if "datasetLinkBySlug" in body["query"]:
             return _data({"datasetLinkBySlug": _dataset(body["variables"], workspaces)})
         if "pipelineRun(" in body["query"] or "pipelineVersion(" in body["query"]:
@@ -98,6 +100,37 @@ def _workspace(slug: str, homepage: str) -> dict[str, Any]:
     }
 
 
+def _catalog(body: Mapping[str, Any], workspaces: set[str]) -> httpx2.Response:
+    """List dataset `stats` and pipeline `etl` of `cases`; its database is unavailable."""
+    if "database" in body["query"]:
+        return httpx2.Response(200, json={"errors": [{"message": "database unavailable"}]})
+    if "cases" not in workspaces:
+        return _data({"workspace": None, "pipelines": {"items": []}, "webapps": {"items": []}})
+    dataset = {
+        "id": "dataset-id",
+        "slug": "stats",
+        "name": "District statistics",
+        "description": "Monthly malaria cases by district.",
+        "updatedAt": "2026-11-01T10:00:00+00:00",
+        "workspace": {"slug": "cases"},
+    }
+    pipeline = {
+        "id": "pipeline-id",
+        "code": "etl",
+        "name": "ETL",
+        "description": "Loads cases from DHIS2.",
+        "tags": [{"name": "malaria"}],
+        "updatedAt": None,
+    }
+    return _data(
+        {
+            "workspace": {"slug": "cases", "datasets": {"items": [{"dataset": dataset}]}},
+            "pipelines": {"items": [pipeline]},
+            "webapps": {"items": []},
+        }
+    )
+
+
 def _dataset(variables: Mapping[str, Any], workspaces: set[str]) -> dict[str, Any] | None:
     """The `stats` dataset with every field the library's dataset queries select."""
     if "cases" not in workspaces or (variables["owner"], variables["slug"]) != ("cases", "stats"):
@@ -123,6 +156,9 @@ def _dataset(variables: Mapping[str, Any], workspaces: set[str]) -> dict[str, An
             "slug": "stats",
             "workspace": {"slug": "cases"},
             "targetId": "dataset-id",
+            "name": "District statistics",
+            "description": None,
+            "attributes": [],
             "latestVersion": version,
             "version": version if variables.get("version") == VERSION_ID else None,
         }
@@ -746,6 +782,33 @@ async def test_sql_tools():
         assert not saved.structured_content["shared"]
 
 
+@pytest.mark.anyio
+async def test_search_finds_items_for_the_read_tools():
+    async with running_connector() as connector:
+        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
+        async with mcp_session(connector, tokens["access_token"]) as mcp:
+            found = await mcp.call_tool(
+                "openhexa_search", {"workspace": "cases", "query": "malaria district", "limit": 1}
+            )
+            hits = found.structured_content["hits"]
+            dataset = await mcp.call_tool(
+                "openhexa_get_dataset", {"workspace": "cases", "dataset": hits[0]["reference"]}
+            )
+
+        assert not found.is_error, text(found)
+        assert hits[0]["type"] == "dataset"
+        assert hits[0]["extract"] == "Monthly **malaria** cases by **district**."
+        assert found.structured_content["matches"] == {
+            "dataset": 1,
+            "pipeline": 1,
+            "webapp": 0,
+            "table": 0,
+        }
+        assert "Could not search tables" in found.structured_content["note"]
+        assert "Showing 1 of 2 matches" in found.structured_content["note"]
+        assert not dataset.is_error, text(dataset)
+
+
 @pytest.mark.workspace
 @pytest.mark.anyio
 async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
@@ -834,6 +897,7 @@ async def test_dataset_write_tools_with_demo_workspace(demo_env: dict[str, str])
 async def _call_remaining_reads(mcp: MCPClient, workspace: str) -> list[CallToolResult]:
     """Call the remaining read tools on whatever the workspace holds."""
     results = [
+        await mcp.call_tool("openhexa_search", {"workspace": workspace, "query": "data"}),
         await mcp.call_tool("openhexa_list_database_tables", {"workspace": workspace}),
         await mcp.call_tool("openhexa_query_database", {"workspace": workspace, "sql": "select 1"}),
         await mcp.call_tool("openhexa_list_saved_queries", {"workspace": workspace}),
