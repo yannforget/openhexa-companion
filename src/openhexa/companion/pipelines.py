@@ -453,13 +453,7 @@ def package_pipeline(source: Path) -> tuple[str, int | None]:
         InvalidInputError: `source` has no `pipeline.py`, or it is not valid Python.
     """
     entrypoint = source / "pipeline.py"
-    if not entrypoint.is_file():
-        raise InvalidInputError(f"No pipeline.py at the root of {source}")
-    files = sorted(
-        path
-        for path in source.rglob("*")
-        if path.is_file() and _is_source(path.relative_to(source).parts)
-    )
+    files = source_files(source)
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in files:
@@ -472,6 +466,24 @@ def package_pipeline(source: Path) -> tuple[str, int | None]:
             f"Cannot deploy {entrypoint}: line {err.lineno}: {err.msg}"
         ) from err
     return encoded, _declared_timeout(tree)
+
+
+def source_files(source: Path) -> list[Path]:
+    """List the files of the pipeline in `source` that a deployment sends, sorted.
+
+    Hidden files and directories (such as `.env`, `.git` or `.venv`), `__pycache__`
+    directories and the `workspace` directory are left out.
+
+    Raises:
+        InvalidInputError: `source` has no `pipeline.py`.
+    """
+    if not (source / "pipeline.py").is_file():
+        raise InvalidInputError(f"No pipeline.py at the root of {source}")
+    return sorted(
+        path
+        for path in source.rglob("*")
+        if path.is_file() and _is_source(path.relative_to(source).parts)
+    )
 
 
 def _is_source(parts: tuple[str, ...]) -> bool:

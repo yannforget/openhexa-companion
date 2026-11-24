@@ -3,7 +3,6 @@
 import json
 import time
 from pathlib import Path
-from typing import Any
 
 import click
 
@@ -16,6 +15,7 @@ from openhexa.companion.cli._output import (
     print_json,
     print_table,
 )
+from openhexa.companion.cli._parameters import parameter_options, read_parameters
 
 # Seconds between two checks of a run that is followed.
 POLL_INTERVAL = 5
@@ -128,20 +128,7 @@ def logs(client: LazyClient, run_id: str, follow: bool) -> None:
     "version_name",
     help="Version name or number, such as v3. Defaults to the latest version.",
 )
-@click.option(
-    "-p",
-    "--param",
-    "params",
-    multiple=True,
-    metavar="CODE=VALUE",
-    help="Value of a parameter. VALUE is read as JSON if it can be (42, true, "
-    '["a","b"]), as a string otherwise. Repeat for each parameter.',
-)
-@click.option(
-    "--params-file",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help="JSON file with parameter values by code; --param values take precedence.",
-)
+@parameter_options
 @click.option("--wait", is_flag=True, help="Wait for the run to end, printing its logs.")
 @json_option
 @pass_client
@@ -161,7 +148,7 @@ def start(
     declared in the code. With --wait, the command exits with code 2 if the run does
     not succeed.
     """
-    parameters = _read_parameters(params, params_file)
+    parameters = read_parameters(params, params_file)
     library = client.get()
     version = library.pipelines.version(pipeline, version_name)
     run = library.runs.start(version, parameters)
@@ -207,24 +194,3 @@ def _follow(library: Client, run_id: str, *, print_logs: bool) -> Run:
 def _exit_on_failure(run: Run) -> None:
     if run.status != "success":
         raise click.exceptions.Exit(RUN_FAILED_EXIT_CODE)
-
-
-def _read_parameters(params: tuple[str, ...], params_file: Path | None) -> dict[str, Any]:
-    parameters: dict[str, Any] = {}
-    if params_file is not None:
-        try:
-            loaded = json.loads(params_file.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as err:
-            raise click.BadParameter(f"{params_file} is not valid JSON: {err}") from err
-        if not isinstance(loaded, dict):
-            raise click.BadParameter(f"{params_file} must hold a JSON object")
-        parameters.update(loaded)
-    for param in params:
-        code, separator, raw = param.partition("=")
-        if not separator or not code:
-            raise click.BadParameter(f"Expected CODE=VALUE, got '{param}'")
-        try:
-            parameters[code] = json.loads(raw)
-        except json.JSONDecodeError:
-            parameters[code] = raw
-    return parameters

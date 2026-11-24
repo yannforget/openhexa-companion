@@ -5,7 +5,13 @@ from pathlib import Path, PurePosixPath
 import click
 
 from openhexa.companion.cli._context import LazyClient, pass_client
-from openhexa.companion.cli._local import check_targets, local_path, save_stream, upload_pairs
+from openhexa.companion.cli._local import (
+    check_targets,
+    local_path,
+    local_workspace,
+    save_stream,
+    upload_pairs,
+)
 from openhexa.companion.cli._output import (
     format_size,
     format_time,
@@ -54,38 +60,44 @@ def list_files(client: LazyClient, directory: str, recursive: bool, as_json: boo
     "-o",
     "--output",
     type=click.Path(file_okay=False, path_type=Path),
-    default=".",
-    show_default=True,
-    help="Directory to save the files in. Files keep their path below a downloaded "
-    "directory, or just their name.",
+    help="Directory to save the files in, instead of the local workspace used by `hexa "
+    "run`. Files keep their path below a downloaded directory, or just their name.",
 )
 @click.option("--force", is_flag=True, help="Replace local files that already exist.")
 @pass_client
-def download(client: LazyClient, paths: tuple[str, ...], output: Path, force: bool) -> None:
+def download(client: LazyClient, paths: tuple[str, ...], output: Path | None, force: bool) -> None:
     """Download the files or directories at PATHS.
 
-    Existing local files are left untouched unless --force is given; the command stops
-    before downloading anything if one exists.
+    Files go to the local workspace in the current directory, .hexa/workspace/files/,
+    keeping their full path: `hexa run` gives that folder to pipelines as the workspace
+    files. Use --output to save them elsewhere. Existing local files are left untouched
+    unless --force is given; the command stops before downloading anything if one
+    exists.
     """
+    local = output is None
+    root = local_workspace("files") if output is None else output
     library = client.get()
     targets = []
     for path in paths:
         item = library.files.get(path)
         if item.is_directory:
             parent = PurePosixPath(item.path).parent.as_posix()
-            base = "" if parent == "." else f"{parent}/"
+            base = "" if local or parent == "." else f"{parent}/"
             targets += [
-                (file.path, file.size, local_path(output, file.path.removeprefix(base)))
+                (file.path, file.size, local_path(root, file.path.removeprefix(base)))
                 for file in library.files.list(item.path, recursive=True)
             ]
         else:
-            targets.append((item.path, item.size, local_path(output, PurePosixPath(path).name)))
+            name = item.path if local else PurePosixPath(path).name
+            targets.append((item.path, item.size, local_path(root, name)))
     check_targets((target for _, _, target in targets), force=force)
     for path, size, target in targets:
         with library.files.read(path) as stream:
             save_stream(stream, target)
         click.echo(f"{target} ({format_size(size)})", err=True)
-    click.echo(f"Downloaded {len(targets)} file(s)", err=True)
+    click.echo(f"Downloaded {len(targets)} file(s) to {root}", err=True)
+    if local:
+        click.echo("`hexa run` gives pipelines this folder as the workspace files.", err=True)
 
 
 @files.command()

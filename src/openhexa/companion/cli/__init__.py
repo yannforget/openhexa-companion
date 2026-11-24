@@ -10,6 +10,7 @@ from openhexa.companion.cli.connections import connections, database
 from openhexa.companion.cli.datasets import datasets
 from openhexa.companion.cli.files import files
 from openhexa.companion.cli.pipelines import pipelines
+from openhexa.companion.cli.run import run
 from openhexa.companion.cli.runs import runs
 from openhexa.companion.cli.webapps import webapps
 from openhexa.companion.cli.workspace import workspace
@@ -47,6 +48,7 @@ main.add_command(database)
 main.add_command(datasets)
 main.add_command(files)
 main.add_command(pipelines)
+main.add_command(run)
 main.add_command(runs)
 main.add_command(webapps)
 main.add_command(workspace)

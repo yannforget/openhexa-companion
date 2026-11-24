@@ -5,6 +5,23 @@ from pathlib import Path, PurePosixPath
 
 import click
 
+# Local copy of parts of the workspace, used by `hexa run`, relative to the project root.
+LOCAL_WORKSPACE = Path(".hexa") / "workspace"
+
+
+def local_workspace(kind: str) -> Path:
+    """Create the folder of the local workspace holding `kind`, such as `files`.
+
+    The local workspace gets a `.gitignore` excluding it from Git, since it holds data
+    and connection secrets.
+    """
+    folder = LOCAL_WORKSPACE / kind
+    folder.mkdir(parents=True, exist_ok=True)
+    ignore = LOCAL_WORKSPACE / ".gitignore"
+    if not ignore.exists():
+        ignore.write_text("# Local copy of the workspace, for `hexa run`.\n*\n", encoding="utf-8")
+    return folder
+
 
 def local_path(output: Path, path: str) -> Path:
     """Place the remote `path` under `output`, refusing paths that would escape it."""

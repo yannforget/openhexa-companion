@@ -33,6 +33,7 @@ openhexa-companion = { workspace = true }
 
 [dependency-groups]
 dev = [
+    "graphql-core>=3.2,<3.3",
     "openhexa-companion[server]",
     "pyrefly>=1.5.0",
     "pytest>=9.2.0",
@@ -41,9 +42,10 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-m 'not workspace'"
+addopts = "-m 'not workspace and not container'"
 markers = [
     "workspace: needs the demo workspace credentials in .env",
+    "container: runs a pipeline in a container, with Docker or Podman",
 ]
 
 [tool.pyrefly]
@@ -121,6 +123,10 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
+# Run with the Python of the pipeline image (3.13), not the companion's.
+"src/openhexa/companion/cli/_runtime/**" = [
+    "UP037", # quoted annotations: Python 3.13 evaluates them
+]
 "tests/**" = [
     "S101",    # assert is how pytest works
     "SLF001",  # tests may access private members

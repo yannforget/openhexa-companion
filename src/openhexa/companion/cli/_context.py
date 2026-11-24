@@ -5,7 +5,7 @@ from pathlib import Path
 import click
 
 from openhexa.companion import Client
-from openhexa.companion.cli._config import load_config
+from openhexa.companion.cli._config import Config, load_config
 
 
 class LazyClient:
@@ -15,9 +15,12 @@ class LazyClient:
         self._env_file = env_file
         self._client: Client | None = None
 
+    def config(self) -> Config:
+        return load_config(self._env_file)
+
     def get(self) -> Client:
         if self._client is None:
-            config = load_config(self._env_file)
+            config = self.config()
             self._client = Client(config.url, config.workspace, config.token)
         return self._client
 
