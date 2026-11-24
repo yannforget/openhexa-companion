@@ -1,4 +1,5 @@
 import json
+import uuid
 from pathlib import Path
 
 import pytest
@@ -67,3 +68,22 @@ def test_invalid_input_is_a_clean_error(monkeypatch: pytest.MonkeyPatch):
 
     assert result.exit_code == 1
     assert "Error: Invalid run ID 'not-a-uuid'" in result.output
+
+
+@pytest.mark.workspace
+def test_save_list_and_show_query(saved_query_slugs: list[str]):
+    name = f"companion test {uuid.uuid4().hex[:8]}"
+    env = ["--env-file", str(ENV_FILE)]
+    runner = CliRunner()
+    created = runner.invoke(
+        main, [*env, "queries", "create", name, "-", "--json"], input="select 1 as one\n"
+    )
+    assert created.exit_code == 0, created.output
+    slug = json.loads(created.output)["slug"]
+    saved_query_slugs.append(slug)
+
+    listed = runner.invoke(main, [*env, "queries", "list", "--search", name])
+    shown = runner.invoke(main, [*env, "queries", "show", slug])
+
+    assert slug in listed.output
+    assert shown.stdout == "select 1 as one\n"

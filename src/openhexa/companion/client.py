@@ -12,6 +12,7 @@ from openhexa.companion.datasets import Datasets
 from openhexa.companion.files import Files
 from openhexa.companion.pipelines import Pipelines
 from openhexa.companion.runs import Runs
+from openhexa.companion.saved_queries import SavedQueries
 from openhexa.companion.user import User, get_user
 from openhexa.companion.webapps import Webapps
 from openhexa.companion.workspace import Workspace, get_workspace, update_description
@@ -36,6 +37,7 @@ class Client:
         files: Files of the workspace, shared by its pipelines and notebooks.
         connections: Connections of the workspace, including secret values.
         database: The workspace database.
+        saved_queries: SQL queries saved in the Data Studio of the workspace.
         pipelines: Pipelines of the workspace.
         runs: Runs of the pipelines of the workspace.
         webapps: Webapps of the workspace.
@@ -66,6 +68,7 @@ class Client:
         self.files = Files(self._transport, workspace)
         self.connections = Connections(self._transport, workspace)
         self.database = Database(self._transport, workspace)
+        self.saved_queries = SavedQueries(self._transport, workspace)
         self.pipelines = Pipelines(self._transport, workspace)
         self.runs = Runs(self._transport, workspace, self.pipelines)
         self.webapps = Webapps(self._transport, workspace)

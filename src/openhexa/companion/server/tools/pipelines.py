@@ -4,12 +4,12 @@ from datetime import datetime
 from typing import Annotated, Any
 
 from mcp.server.mcpserver import MCPServer
-from mcp_types import ToolAnnotations
 from pydantic import BaseModel, Field, JsonValue
 
 from openhexa.companion import Client, Pipeline, PipelineVersion, Run, RunDetails
 from openhexa.companion.server.tools._access import Access
 from openhexa.companion.server.tools._shared import (
+    CREATE,
     DESTRUCTIVE,
     READ_ONLY,
     PipelineArg,
@@ -31,10 +31,6 @@ DEFAULT_LOG_LENGTH = 20_000
 SECRET_MASK = "<secret>"
 # Parameter type whose values are hidden.
 SECRET_TYPE = "secret"
-# Annotations of the tool starting runs: each call starts another run.
-START_RUN = ToolAnnotations(
-    read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False
-)
 # Note returned with a run just started or stopped.
 RUN_STATUS_NOTE = (
     "The run continues in OpenHEXA; openhexa_get_pipeline_run returns its current status, "
@@ -364,7 +360,7 @@ def register_writes(server: MCPServer, access: Access) -> None:
     @server.tool(
         name="openhexa_start_pipeline_run",
         title="Start an OpenHEXA pipeline run",
-        annotations=START_RUN,
+        annotations=CREATE,
     )
     async def start_pipeline_run(
         workspace: WorkspaceArg,

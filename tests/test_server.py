@@ -66,6 +66,8 @@ def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
             return _data(_pipeline_object(body, workspaces))
         if "Pipeline(" in body["query"] or "pipelineByCode(" in body["query"]:
             return _data(_pipeline_change(body, workspaces))
+        if "executeSQL(" in body["query"] or "createSavedQuery(" in body["query"]:
+            return _data(_sql(body))
         if "updateWorkspace(" in body["query"]:
             slug, homepage = (
                 body["variables"]["input"]["slug"],
@@ -213,6 +215,36 @@ def _run(status: str, config: Mapping[str, Any]) -> dict[str, Any]:
         "version": {"id": PIPELINE_VERSION_ID, "name": None, "versionNumber": 1},
         "pipeline": {"code": "etl", "workspace": {"slug": "cases"}},
     }
+
+
+def _sql(body: Mapping[str, Any]) -> dict[str, Any]:
+    """Answer a query with `maxRows` rows of 200 characters, the first one of 600."""
+    if "createSavedQuery(" in body["query"]:
+        query = body["variables"]["input"]
+        saved = {
+            "slug": "cases",
+            "name": query["name"],
+            "description": query["description"],
+            "visibility": query["visibility"],
+            "createdBy": {"displayName": "Alice"},
+            "updatedAt": "2026-11-24T08:00:00+00:00",
+            "content": query["content"],
+        }
+        return {"createSavedQuery": {"success": True, "errors": [], "savedQuery": saved}}
+    rows = [
+        {"n": i, "label": "x" * (600 if i == 0 else 200)}
+        for i in range(body["variables"]["maxRows"])
+    ]
+    result = {
+        "success": True,
+        "errors": [],
+        "errorMessage": None,
+        "columns": ["n", "label"],
+        "rows": rows,
+        "truncated": True,
+        "durationMs": 3,
+    }
+    return {"workspace": {"database": {"executeSQL": result}}}
 
 
 def _storage(request: httpx2.Request) -> httpx2.Response:
@@ -687,6 +719,33 @@ async def test_write_tools():
         assert "run-secret" not in text(stopped)
 
 
+@pytest.mark.anyio
+async def test_sql_tools():
+    async with running_connector() as connector:
+        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
+        async with mcp_session(connector, tokens["access_token"]) as mcp:
+            few = await mcp.call_tool(
+                "openhexa_query_database", {"workspace": "cases", "sql": "select", "max_rows": 2}
+            )
+            many = await mcp.call_tool(
+                "openhexa_query_database",
+                {"workspace": "cases", "sql": "select", "max_rows": 1000},
+            )
+            saved = await mcp.call_tool(
+                "openhexa_create_saved_query",
+                {"workspace": "cases", "name": "Cases", "sql": "select 1"},
+            )
+
+        assert few.structured_content["rows"][0][1].endswith("…[cut]")
+        assert len(few.structured_content["rows"][0][1]) < 600
+        assert "do not present this result as complete" in few.structured_content["note"]
+        assert many.structured_content["truncated"]
+        assert 0 < many.structured_content["row_count"] < 1000
+        assert "the result was too large" in many.structured_content["note"]
+        assert saved.structured_content["sql"] == "select 1"
+        assert not saved.structured_content["shared"]
+
+
 @pytest.mark.workspace
 @pytest.mark.anyio
 async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
@@ -773,9 +832,11 @@ async def test_dataset_write_tools_with_demo_workspace(demo_env: dict[str, str])
 
 
 async def _call_remaining_reads(mcp: MCPClient, workspace: str) -> list[CallToolResult]:
-    """Call the pipeline, run, database and webapp tools on whatever the workspace holds."""
+    """Call the remaining read tools on whatever the workspace holds."""
     results = [
         await mcp.call_tool("openhexa_list_database_tables", {"workspace": workspace}),
+        await mcp.call_tool("openhexa_query_database", {"workspace": workspace, "sql": "select 1"}),
+        await mcp.call_tool("openhexa_list_saved_queries", {"workspace": workspace}),
         webapps := await mcp.call_tool("openhexa_list_webapps", {"workspace": workspace}),
         pipelines := await mcp.call_tool("openhexa_list_pipelines", {"workspace": workspace}),
     ]
