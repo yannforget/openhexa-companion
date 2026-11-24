@@ -43,16 +43,7 @@ def saved_query_slugs(client: Client) -> Iterator[list[str]]:
     slugs: list[str] = []
     yield slugs
     for slug in slugs:
-        # The library cannot delete saved queries, and deleting needs the ID.
-        found = client._transport.query(
-            "query($slug: String!) { savedQueryBySlug(slug: $slug) { id } }", {"slug": slug}
-        )["savedQueryBySlug"]
-        if found:
-            client._transport.query(
-                "mutation($input: DeleteSavedQueryInput!) "
-                "{ deleteSavedQuery(input: $input) { success } }",
-                {"input": {"id": found["id"]}},
-            )
+        client.saved_queries.delete(slug)
 
 
 # Answers a GraphQL request body with the `data` of the response, or an HTTP response.

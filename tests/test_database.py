@@ -108,3 +108,15 @@ def test_save_and_read_query(client: Client, saved_query_slugs: list[str]):
     found = client.saved_queries.list(search=name)
     assert [query.slug for query in found] == [created.slug]
     assert client.database.query(created.sql).rows == [[1]]
+
+    updated = client.saved_queries.update(created.slug, sql="select 2 as two", shared=True)
+    assert (updated.slug, updated.name, updated.sql, updated.shared) == (
+        created.slug,
+        name,
+        "select 2 as two",
+        True,
+    )
+    assert client.saved_queries.delete(created.slug) == updated
+    saved_query_slugs.remove(created.slug)
+    with pytest.raises(NotFoundError):
+        client.saved_queries.get(created.slug)

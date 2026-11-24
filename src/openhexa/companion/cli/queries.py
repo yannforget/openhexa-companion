@@ -14,6 +14,7 @@ from openhexa.companion.cli._output import (
     print_json,
     print_table,
 )
+from openhexa.companion.cli._prompt import confirm, yes_option
 
 
 @click.group()
@@ -21,6 +22,7 @@ def queries() -> None:
     """Read and save the SQL queries of the workspace's Data Studio.
 
     Only the queries shared with the workspace and your own private ones are visible.
+    Run a query with `hexa database exec -- psql -c "$(hexa queries sql SLUG)"`.
     """
 
 
@@ -118,3 +120,74 @@ def create(
         return
     click.echo(f"Saved query {item.name}", err=True)
     click.echo(item.slug)
+
+
+@queries.command()
+@click.argument("slug")
+@click.option(
+    "--sql",
+    "source",
+    type=click.File("r", encoding="utf-8"),
+    help="Replace the SQL with the content of this file, or - for stdin.",
+)
+@click.option("--name", help="Rename the query. Its slug does not change.")
+@click.option("-d", "--description", help="What the query is for.")
+@click.option(
+    "--shared/--private",
+    default=None,
+    help="Let every workspace member see the query, or only its author.",
+)
+@json_option
+@pass_client
+def update(
+    client: LazyClient,
+    *,
+    slug: str,
+    source: TextIO | None,
+    name: str | None,
+    description: str | None,
+    shared: bool | None,
+    as_json: bool,
+) -> None:
+    """Change a saved query: its SQL, name, description or visibility.
+
+    OpenHEXA keeps the previous SQL in the query's history and does not check the new
+    one: run it first. Only the author may change a private query or share and unshare
+    a query; workspace editors and admins, and organization admins and owners, may also
+    change a shared one. With --json, prints the query.
+    """
+    if source is None and name is None and description is None and shared is None:
+        raise click.UsageError(
+            "Give at least one of --sql, --name, --description, --shared or --private"
+        )
+    item = client.get().saved_queries.update(
+        slug,
+        sql=source.read() if source else None,
+        name=name,
+        description=description,
+        shared=shared,
+    )
+    click.echo(f"Updated saved query {item.slug}", err=True)
+    if as_json:
+        print_json(item)
+
+
+@queries.command()
+@click.argument("slug")
+@yes_option
+@json_option
+@pass_client
+def delete(client: LazyClient, slug: str, yes: bool, as_json: bool) -> None:
+    """Delete a saved query.
+
+    Only the author may delete a private query; workspace editors and admins, and
+    organization admins and owners, may also delete a shared one. With --json, prints the
+    query deleted.
+    """
+    library = client.get()
+    item = library.saved_queries.get(slug)
+    confirm(f"Delete saved query '{item.slug}' ({item.name})", yes=yes)
+    deleted = library.saved_queries.delete(item.slug)
+    click.echo(f"Deleted saved query {deleted.slug}", err=True)
+    if as_json:
+        print_json(deleted)

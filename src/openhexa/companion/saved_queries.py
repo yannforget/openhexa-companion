@@ -7,7 +7,7 @@ from typing import Any
 
 from openhexa.companion._transport import Transport
 from openhexa.companion._util import format_options
-from openhexa.companion.errors import NotFoundError
+from openhexa.companion.errors import InvalidInputError, NotFoundError, PermissionDeniedError
 from openhexa.companion.workspace import workspace_not_found
 
 SUMMARY_FIELDS = """
@@ -35,6 +35,8 @@ query SavedQuery($slug: String!) {{
   savedQueryBySlug(slug: $slug) {{
     {SUMMARY_FIELDS}
     content
+    id
+    permissions {{ update delete updateVisibility }}
     workspace {{ slug }}
   }}
 }}
@@ -52,6 +54,41 @@ mutation CreateSavedQuery($input: CreateSavedQueryInput!) {{
   }}
 }}
 """
+
+UPDATE_MUTATION = f"""
+mutation UpdateSavedQuery($input: UpdateSavedQueryInput!) {{
+  updateSavedQuery(input: $input) {{
+    success
+    errors
+    savedQuery {{
+      {SUMMARY_FIELDS}
+      content
+    }}
+  }}
+}}
+"""
+
+DELETE_MUTATION = """
+mutation DeleteSavedQuery($input: DeleteSavedQueryInput!) {
+  deleteSavedQuery(input: $input) { success errors }
+}
+"""
+
+# Explanations of the error codes of saved query mutations.
+QUERY_ERRORS = {
+    "SAVED_QUERY_NOT_FOUND": "the query does not exist or the token's user cannot see it",
+    "VERSIONING_UNAVAILABLE": "OpenHEXA could not record the query's history; retrying is safe",
+}
+# Who may share or unshare a saved query, which OpenHEXA reports as PERMISSION_DENIED.
+SHARE_RULE = "only its author may share or unshare a query"
+
+
+def _who_may(verb: str) -> str:
+    """Who may change or delete a saved query, which OpenHEXA reports as PERMISSION_DENIED."""
+    return (
+        f"only its author may {verb} a private query; a shared one, its author, workspace "
+        "editors and admins, and organization admins and owners"
+    )
 
 
 @dataclass(frozen=True)
@@ -87,7 +124,7 @@ class SavedQuery(SavedQuerySummary):
 
 
 class SavedQueries:
-    """Reads and creates the saved queries of a workspace.
+    """Reads, creates, changes and deletes the saved queries of a workspace.
 
     Only the queries the token's user can see are visible: shared ones and their own.
     """
@@ -127,15 +164,7 @@ class SavedQueries:
             NotFoundError: The workspace has no saved query `slug` that the token's user
                 can see.
         """
-        data = self._transport.query(GET_QUERY, {"slug": slug})["savedQueryBySlug"]
-        # Slugs are unique across workspaces, so the lookup is not scoped to this one.
-        if data is None or data["workspace"]["slug"] != self._workspace:
-            slugs = (item.slug for item in self.list())
-            raise NotFoundError(
-                f"Saved query '{slug}' not found in workspace '{self._workspace}'. "
-                f"Saved queries: {format_options(slugs)}"
-            )
-        return _saved_query(data)
+        return _saved_query(self._find(slug))
 
     def create(
         self, name: str, sql: str, *, description: str | None = None, shared: bool = False
@@ -177,6 +206,97 @@ class SavedQueries:
             },
         )
         return _saved_query(result["savedQuery"])
+
+    def update(
+        self,
+        slug: str,
+        *,
+        sql: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        shared: bool | None = None,
+    ) -> SavedQuery:
+        """Change a saved query; arguments left to `None` are kept. The slug does not change.
+
+        Args:
+            slug: Slug of the query.
+            sql: The new SQL. OpenHEXA records the previous SQL in the query's history.
+            name: The new display name.
+            description: What the query is for.
+            shared: Let every workspace member see the query, or only its author.
+
+        Raises:
+            InvalidInputError: No change is given.
+            NotFoundError: The workspace has no saved query `slug` that the token's user
+                can see.
+            PermissionDeniedError: The token's user may not make this change: only the
+                author may change a private query or share and unshare a query; workspace
+                editors and admins, and organization admins and owners, may also change a
+                shared one.
+            APIError: OpenHEXA could not record the query's history (code
+                `VERSIONING_UNAVAILABLE`); retrying is safe.
+        """
+        changes = {"content": sql, "name": name, "description": description}
+        changes = {key: value for key, value in changes.items() if value is not None}
+        if shared is not None:
+            changes["visibility"] = "WORKSPACE" if shared else "PRIVATE"
+        if not changes:
+            raise InvalidInputError(f"No change given for saved query '{slug}'")
+        data = self._find(slug)
+        action = f"update saved query '{slug}' in workspace '{self._workspace}'"
+        permissions = data["permissions"]
+        if not permissions["update"]:
+            raise PermissionDeniedError(
+                f"Could not {action}: {_who_may('change')}", ["PERMISSION_DENIED"]
+            )
+        # OpenHEXA only checks who may share when the visibility changes.
+        sharing = changes.get("visibility", data["visibility"]) != data["visibility"]
+        if sharing and not permissions["updateVisibility"]:
+            raise PermissionDeniedError(f"Could not {action}: {SHARE_RULE}", ["PERMISSION_DENIED"])
+        result = self._transport.mutate(
+            "updateSavedQuery",
+            UPDATE_MUTATION,
+            {"input": {"id": data["id"], **changes}},
+            action=action,
+            reasons={**QUERY_ERRORS, "PERMISSION_DENIED": f"{_who_may('change')}; {SHARE_RULE}"},
+        )
+        return _saved_query(result["savedQuery"])
+
+    def delete(self, slug: str) -> SavedQuery:
+        """Delete a saved query and return it.
+
+        Raises:
+            NotFoundError: The workspace has no saved query `slug` that the token's user
+                can see.
+            PermissionDeniedError: The token's user may not delete it: only the author may
+                delete a private query; workspace editors and admins, and organization
+                admins and owners, may also delete a shared one.
+        """
+        data = self._find(slug)
+        action = f"delete saved query '{slug}' in workspace '{self._workspace}'"
+        rule = _who_may("delete")
+        if not data["permissions"]["delete"]:
+            raise PermissionDeniedError(f"Could not {action}: {rule}", ["PERMISSION_DENIED"])
+        self._transport.mutate(
+            "deleteSavedQuery",
+            DELETE_MUTATION,
+            {"input": {"id": data["id"]}},
+            action=action,
+            reasons={**QUERY_ERRORS, "PERMISSION_DENIED": rule},
+        )
+        return _saved_query(data)
+
+    def _find(self, slug: str) -> dict[str, Any]:
+        """Get the saved query `slug` of the workspace, with its ID and permissions."""
+        data = self._transport.query(GET_QUERY, {"slug": slug})["savedQueryBySlug"]
+        # Slugs are unique across workspaces, so the lookup is not scoped to this one.
+        if data is None or data["workspace"]["slug"] != self._workspace:
+            slugs = (item.slug for item in self.list())
+            raise NotFoundError(
+                f"Saved query '{slug}' not found in workspace '{self._workspace}'. "
+                f"Saved queries: {format_options(slugs)}"
+            )
+        return data
 
 
 def _summary(data: dict[str, Any]) -> SavedQuerySummary:

@@ -348,3 +348,50 @@ def test_database_exec_says_who_gets_credentials(fake_openhexa: FakeOpenHexa):
 
     assert result.exit_code == 4
     assert "only workspace editors and admins" in result.stderr
+
+
+def _saved_query(*, update: bool, update_visibility: bool) -> Handler:
+    """Answer lookups of a private saved query `cases` with the given permissions."""
+
+    def handler(body: dict[str, Any]) -> dict[str, Any]:
+        query = body["query"]
+        if "updateSavedQuery(" in query or "deleteSavedQuery(" in query:
+            pytest.fail("No mutation should be sent")
+        item = {
+            "id": "q1",
+            "slug": "cases",
+            "name": "Cases",
+            "description": None,
+            "visibility": "PRIVATE",
+            "createdBy": {"displayName": "Ana"},
+            "updatedAt": "2026-11-01T10:00:00+00:00",
+            "content": "select 1",
+            "permissions": {
+                "update": update,
+                "delete": update,
+                "updateVisibility": update_visibility,
+            },
+            "workspace": {"slug": "ws"},
+        }
+        return {"savedQueryBySlug": item}
+
+    return handler
+
+
+@pytest.mark.parametrize(
+    ("args", "update", "message"),
+    [
+        (["update", "cases", "--name", "New"], False, "only its author may change a private"),
+        (["update", "cases", "--shared"], True, "only its author may share or unshare"),
+        (["delete", "cases", "--yes"], False, "only its author may delete a private"),
+    ],
+)
+def test_queries_changes_say_who_may_make_them(
+    fake_openhexa: FakeOpenHexa, args: list[str], update: bool, message: str
+):
+    fake_openhexa(_saved_query(update=update, update_visibility=False))
+
+    result = _invoke("queries", *args)
+
+    assert result.exit_code == 4, result.output
+    assert message in result.stderr
