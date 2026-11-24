@@ -3,7 +3,7 @@
 import builtins
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from openhexa.companion._transport import Transport
 from openhexa.companion._util import check_uuid
@@ -15,6 +15,8 @@ from openhexa.companion.pipelines import (
     version_label,
 )
 
+# Statuses of a run.
+RunStatus = Literal["queued", "running", "terminating", "success", "failed", "stopped", "skipped"]
 # Statuses after which a run no longer changes.
 FINISHED_STATUSES = frozenset({"success", "failed", "stopped", "skipped"})
 
@@ -26,7 +28,9 @@ RUN_FIELDS = """
   triggerMode
   progress
   config
+  timeout
   user { displayName }
+  stoppedBy { displayName }
   version { id name versionNumber }
   pipeline { code workspace { slug } }
 """
@@ -113,6 +117,8 @@ class Run:
         version: Label of the version that ran, such as `v3` or `fix [v3]`.
         version_id: OpenHEXA identifier of the version that ran.
         user: Name of the person who started the run, if any.
+        timeout: Seconds the run may last before OpenHEXA stops it, if known.
+        stopped_by: Name of the person who stopped the run, if someone did.
     """
 
     id: str
@@ -126,6 +132,8 @@ class Run:
     version: str | None
     version_id: str | None
     user: str | None
+    timeout: int | None
+    stopped_by: str | None
 
     @property
     def finished(self) -> bool:
@@ -359,6 +367,8 @@ def _run(data: dict[str, Any]) -> Run:
         version=version_label(version["name"], version["versionNumber"]) if version else None,
         version_id=version["id"] if version else None,
         user=data["user"]["displayName"] if data["user"] else None,
+        timeout=data["timeout"],
+        stopped_by=data["stoppedBy"]["displayName"] if data["stoppedBy"] else None,
     )
 
 

@@ -37,8 +37,12 @@ VERSION_FIELDS = """
 """
 
 LIST_QUERY = f"""
-query Pipelines($workspace: String!, $page: Int!, $perPage: Int!) {{
-  pipelines(workspaceSlug: $workspace, page: $page, perPage: $perPage) {{
+query Pipelines(
+  $workspace: String!, $lastRunStates: [PipelineRunStatus!], $page: Int!, $perPage: Int!
+) {{
+  pipelines(
+    workspaceSlug: $workspace, lastRunStates: $lastRunStates, page: $page, perPage: $perPage
+  ) {{
     totalPages
     items {{ {PIPELINE_FIELDS} }}
   }}
@@ -216,6 +220,21 @@ class PipelineVersion:
         return version_label(self.name, self.number)
 
 
+@dataclass(frozen=True)
+class SourceFile:
+    """A file of the source code of a pipeline version.
+
+    Attributes:
+        path: Path of the file in the source, such as `pipeline.py`.
+        size: Size of the file in bytes.
+        text: Content of the file, or `None` if it is not UTF-8 text.
+    """
+
+    path: str
+    size: int
+    text: str | None
+
+
 class Pipelines:
     """Reads and deploys the pipelines of a workspace."""
 
@@ -223,11 +242,22 @@ class Pipelines:
         self._transport = transport
         self._workspace = workspace
 
-    def list(self) -> builtins.list[Pipeline]:
-        """List the pipelines of the workspace, by name."""
+    def list(self, *, last_run_status: str | None = None) -> builtins.list[Pipeline]:
+        """List the pipelines of the workspace, by name.
+
+        Args:
+            last_run_status: Only list pipelines whose latest run has this status, such
+                as `failed`.
+        """
+        states = [last_run_status] if last_run_status else None
 
         def fetch_page(page: int, per_page: int) -> dict[str, Any]:
-            variables = {"workspace": self._workspace, "page": page, "perPage": per_page}
+            variables = {
+                "workspace": self._workspace,
+                "lastRunStates": states,
+                "page": page,
+                "perPage": per_page,
+            }
             return self._transport.query(LIST_QUERY, variables)["pipelines"]
 
         return [_pipeline(item) for item in self._transport.paginate(fetch_page)]
@@ -308,6 +338,17 @@ class Pipelines:
                 f"in workspace '{self._workspace}'"
             )
         return base64.b64decode(data["zipfile"])
+
+    def files(self, version: PipelineVersion) -> builtins.list[SourceFile]:
+        """Read the files of the source code of a pipeline version.
+
+        Raises:
+            NotFoundError: The version no longer exists.
+        """
+        with zipfile.ZipFile(io.BytesIO(self.source(version))) as archive:
+            return [
+                _source_file(archive, entry) for entry in archive.infolist() if not entry.is_dir()
+            ]
 
     def create(
         self,
@@ -517,6 +558,15 @@ def _declared_timeout(tree: ast.Module) -> int | None:
 def version_label(name: str | None, number: int) -> str:
     """Name a version as OpenHEXA shows it, such as `v3` or `fix [v3]`."""
     return f"{name} [v{number}]" if name else f"v{number}"
+
+
+def _source_file(archive: zipfile.ZipFile, entry: zipfile.ZipInfo) -> SourceFile:
+    content = archive.read(entry)
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        text = None
+    return SourceFile(path=entry.filename, size=entry.file_size, text=text)
 
 
 def _pipeline(data: dict[str, Any]) -> Pipeline:

@@ -1,12 +1,16 @@
 """Tools reading pipelines, their runs and run logs."""
 
+from dataclasses import replace
 from datetime import datetime
 from typing import Annotated, Any
 
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel, Field, JsonValue
 
-from openhexa.companion import Client, Pipeline, PipelineVersion, Run, RunDetails
+from openhexa.companion import Client, Pipeline, PipelineVersion, Run, RunDetails, SourceFile
+from openhexa.companion._util import format_options
+from openhexa.companion.runs import RunStatus
 from openhexa.companion.server.tools._access import Access
 from openhexa.companion.server.tools._shared import (
     CREATE,
@@ -27,6 +31,8 @@ DEFAULT_RUN_LIMIT = 20
 DEFAULT_MESSAGE_LIMIT = 100
 # Characters of logs returned when no length is given.
 DEFAULT_LOG_LENGTH = 20_000
+# Characters of source code returned by one call.
+MAX_SOURCE_LENGTH = 50_000
 # Replaces the values of secret parameters, which OpenHEXA returns in clear.
 SECRET_MASK = "<secret>"
 # Parameter type whose values are hidden.
@@ -164,6 +170,11 @@ class RunInfo(RunSummary):
         description="Dataset versions the run published."
     )
     log_length: int = Field(description="Number of characters of logs, read with run logs.")
+    timeout: int | None = Field(
+        description="Seconds the run may last before OpenHEXA stops it. A failed run whose "
+        "duration reaches it was most likely stopped for taking too long."
+    )
+    stopped_by: str | None = Field(description="Who stopped the run, if someone did.")
     note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
@@ -174,6 +185,23 @@ class RunChange(RunSummary):
         description="Parameter values of the run. Secrets are masked."
     )
     note: str = Field(description="How to follow the run.")
+
+
+class SourceFileInfo(BaseModel):
+    path: str = Field(description="Path of the file in the source, such as 'pipeline.py'.")
+    size: int = Field(description="Size in bytes.")
+    content: str | None = Field(
+        description="Content of the file, or null if not returned or not text."
+    )
+
+
+class PipelineSource(BaseModel):
+    workspace: str = Field(description="Slug of the workspace.")
+    pipeline: str = Field(description="Code of the pipeline.")
+    version: str = Field(description="Label of the version, such as 'v3'.")
+    version_id: str = Field(description="OpenHEXA ID of the version.")
+    files: list[SourceFileInfo] = Field(description="Files of the version.")
+    note: str | None = Field(description="How to read content not returned, if any.")
 
 
 class RunLogs(BaseModel):
@@ -192,9 +220,20 @@ def register(server: MCPServer, access: Access) -> None:
         title="List OpenHEXA pipelines",
         annotations=READ_ONLY,
     )
-    async def list_pipelines(workspace: WorkspaceArg) -> PipelineList:
+    async def list_pipelines(
+        workspace: WorkspaceArg,
+        last_run_status: Annotated[
+            RunStatus | None,
+            Field(
+                description="Only list pipelines whose latest run has this status, such as "
+                "'failed' to find the pipelines that are currently failing."
+            ),
+        ] = None,
+    ) -> PipelineList:
         """List the pipelines of an OpenHEXA workspace, with their description and schedule."""
-        items = await access.run(workspace, lambda client: client.pipelines.list())
+        items = await access.run(
+            workspace, lambda client: client.pipelines.list(last_run_status=last_run_status)
+        )
         return PipelineList(workspace=workspace, pipelines=[_pipeline(p) for p in items])
 
     @server.tool(
@@ -273,7 +312,8 @@ def register(server: MCPServer, access: Access) -> None:
         """Read an OpenHEXA pipeline run: status, parameters, messages and outputs.
 
         Includes the version that ran and the dataset versions the run published, but
-        not the logs, which openhexa_get_pipeline_run_logs returns.
+        not the logs, which openhexa_get_pipeline_run_logs returns. To read the code that
+        ran, pass version_id to openhexa_get_pipeline_source.
         """
 
         def read(client: Client) -> tuple[Run, RunDetails, set[str]]:
@@ -309,6 +349,8 @@ def register(server: MCPServer, access: Access) -> None:
                 for d in details.dataset_versions
             ],
             log_length=len(details.logs),
+            timeout=found.timeout,
+            stopped_by=found.stopped_by,
             note=note,
         )
 
@@ -335,7 +377,8 @@ def register(server: MCPServer, access: Access) -> None:
         """Read the logs of an OpenHEXA pipeline run: the output of the pipeline process.
 
         Returns the end of the logs by default, where errors usually are; earlier parts
-        are read with an offset.
+        are read with an offset. Tracebacks refer to the code of the version that ran,
+        which openhexa_get_pipeline_source returns.
         """
 
         def read(client: Client) -> tuple[Run, str]:
@@ -353,6 +396,62 @@ def register(server: MCPServer, access: Access) -> None:
             offset=start,
             total_length=total,
             note=_log_note(start, end, total, length),
+        )
+
+    @server.tool(
+        name="openhexa_get_pipeline_source",
+        title="Get the source code of an OpenHEXA pipeline",
+        annotations=READ_ONLY,
+    )
+    async def get_pipeline_source(
+        workspace: WorkspaceArg,
+        pipeline: PipelineArg,
+        version: PipelineVersionArg = None,
+        path: Annotated[
+            str | None,
+            Field(
+                description="Path of one file to read. Defaults to every file, with their "
+                "content if the source is small enough."
+            ),
+        ] = None,
+    ) -> PipelineSource:
+        """Read the source code of an OpenHEXA pipeline version, such as the one a run ran.
+
+        Content is returned as is, so line numbers match those of tracebacks in run logs.
+        """
+
+        def read(client: Client) -> tuple[PipelineVersion, list[SourceFile]]:
+            selected = (
+                client.pipelines.version(pipeline)
+                if version is None
+                else _find_version(client, pipeline, version, client.pipelines.versions(pipeline))
+            )
+            return selected, client.pipelines.files(selected)
+
+        selected, files = await access.run(workspace, read)
+        note = None
+        if path is not None:
+            paths = [f.path for f in files]
+            files = [f for f in files if f.path == path]
+            if not files:
+                raise ToolError(f"The source has no file '{path}'. Files: {format_options(paths)}")
+        length = sum(len(f.text) for f in files if f.text is not None)
+        if length > MAX_SOURCE_LENGTH and path is None:
+            files = [replace(f, text=None) for f in files]
+            note = (
+                f"The source has {length} characters of text, too many to return at once. "
+                "Call again with path to read a file."
+            )
+        elif length > MAX_SOURCE_LENGTH:
+            files = [replace(f, text=(f.text or "")[:MAX_SOURCE_LENGTH]) for f in files]
+            note = f"The file is cut after {MAX_SOURCE_LENGTH} of its {length} characters."
+        return PipelineSource(
+            workspace=workspace,
+            pipeline=pipeline,
+            version=selected.label,
+            version_id=selected.id,
+            files=[SourceFileInfo(path=f.path, size=f.size, content=f.text) for f in files],
+            note=note,
         )
 
 

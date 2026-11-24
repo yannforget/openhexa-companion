@@ -3,12 +3,14 @@
 import io
 import zipfile
 from pathlib import Path
+from typing import get_args
 
 import click
 
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._output import format_time, json_option, print_json, print_table
 from openhexa.companion.cli._prompt import confirm, yes_option
+from openhexa.companion.runs import RunStatus
 
 version_option = click.option(
     "--version",
@@ -26,11 +28,16 @@ def pipelines() -> None:
 
 
 @pipelines.command("list")
+@click.option(
+    "--last-run-status",
+    type=click.Choice(get_args(RunStatus)),
+    help="Only list pipelines whose latest run has this status, such as failed.",
+)
 @json_option
 @pass_client
-def list_pipelines(client: LazyClient, as_json: bool) -> None:
+def list_pipelines(client: LazyClient, last_run_status: str | None, as_json: bool) -> None:
     """List the pipelines of the workspace."""
-    items = client.get().pipelines.list()
+    items = client.get().pipelines.list(last_run_status=last_run_status)
     if as_json:
         print_json(items)
         return

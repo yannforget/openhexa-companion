@@ -87,6 +87,10 @@ def show(client: LazyClient, run_id: str, as_json: bool) -> None:
     click.echo(f"Status: {run.status}, started {started}, {run.duration} s")
     if run.user:
         click.echo(f"Started by: {run.user} ({run.trigger})")
+    if run.stopped_by:
+        click.echo(f"Stopped by: {run.stopped_by}")
+    if run.timeout and run.status in ("failed", "stopped"):
+        click.echo(f"Timeout: {run.timeout} s")
     if run.parameters:
         click.echo("Parameters:")
         for code, value in run.parameters.items():

@@ -3,10 +3,12 @@
 import base64
 import hashlib
 import html
+import io
 import json
 import re
 import secrets
 import uuid
+import zipfile
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -45,6 +47,20 @@ STORAGE_URL = "https://storage.test/stats.csv"
 RUN_ID = "0b3c0a52-3f4e-4d8c-9a0e-5c1b7e2d9f10"
 PIPELINE_VERSION_ID = "9a7e6b2c-1d3f-4e5a-8b9c-0d1e2f3a4b5c"
 RUN_LOGS = "".join(f"line {i}\n" for i in range(1000))
+# Source of that version: too long to return at once, because of `data.txt`.
+PIPELINE_SOURCE = {
+    "pipeline.py": "from openhexa.sdk import pipeline\n\n\n@pipeline('etl')\ndef etl(): ...\n",
+    "data.txt": "".join(f"row {i:05}\n" for i in range(6000)),
+    "logo.png": b"\x89PNG\r\n\x1a\n\xff",
+}
+
+
+def _source_archive() -> str:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for path, content in PIPELINE_SOURCE.items():
+            archive.writestr(path, content)
+    return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
 def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
@@ -221,6 +237,7 @@ def _pipeline_version() -> dict[str, Any]:
         "createdAt": "2026-11-01T10:00:00+00:00",
         "timeout": None,
         "config": {"api_key": "configured-secret"},
+        "zipfile": _source_archive(),
         "parameters": [
             {
                 "code": code,
@@ -248,6 +265,8 @@ def _run(status: str, config: Mapping[str, Any]) -> dict[str, Any]:
         "progress": 100,
         "config": config,
         "user": None,
+        "timeout": 3600,
+        "stoppedBy": None,
         "version": {"id": PIPELINE_VERSION_ID, "name": None, "versionNumber": 1},
         "pipeline": {"code": "etl", "workspace": {"slug": "cases"}},
     }
@@ -638,12 +657,36 @@ async def test_runs_hide_secrets_and_page_logs():
             )
 
         info = run.structured_content
+        assert info["timeout"] == 3600
         assert info["parameters"] == {"year": 2025, "api_key": "<secret>"}
         assert "run-secret" not in text(run)
         assert info["published_dataset_versions"][0]["version_id"] == VERSION_ID
         assert tail.structured_content["logs"] == RUN_LOGS[-100:]
         assert f"offset={start}" in tail.structured_content["note"]
         assert earlier.structured_content["logs"] == RUN_LOGS[start : start + 100]
+
+
+@pytest.mark.anyio
+async def test_pipeline_source_is_read_by_file():
+    args = {"workspace": "cases", "pipeline": "etl", "version": PIPELINE_VERSION_ID}
+    async with running_connector() as connector:
+        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
+        async with mcp_session(connector, tokens["access_token"]) as mcp:
+            listed = await mcp.call_tool("openhexa_get_pipeline_source", args)
+            code = await mcp.call_tool(
+                "openhexa_get_pipeline_source", {**args, "path": "pipeline.py"}
+            )
+            missing = await mcp.call_tool(
+                "openhexa_get_pipeline_source", {**args, "path": "main.py"}
+            )
+
+    assert listed.structured_content["version"] == "v1"
+    assert [f["content"] for f in listed.structured_content["files"]] == [None, None, None]
+    assert "path" in listed.structured_content["note"]
+    [source] = code.structured_content["files"]
+    assert source["content"] == PIPELINE_SOURCE["pipeline.py"]
+    assert missing.is_error
+    assert "'pipeline.py'" in text(missing)
 
 
 async def account_form(http: httpx2.AsyncClient, *fields: tuple[str, str]) -> httpx2.Response:
@@ -916,5 +959,8 @@ async def _call_remaining_reads(mcp: MCPClient, workspace: str) -> list[CallTool
             run = {"workspace": workspace, "run": runs.structured_content["runs"][0]["run_id"]}
             results.append(await mcp.call_tool("openhexa_get_pipeline_run", run))
             results.append(await mcp.call_tool("openhexa_get_pipeline_run_logs", run))
+            source = await mcp.call_tool("openhexa_get_pipeline_source", args)
+            assert source.structured_content["files"][0]["content"], text(source)
+            results.append(source)
             break
     return results

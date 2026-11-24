@@ -1,7 +1,5 @@
-import io
 import time
 import uuid
-import zipfile
 from pathlib import Path
 
 import pytest
@@ -32,20 +30,6 @@ if __name__ == "__main__":
 """
 
 
-def test_inspect_finished_run(client: Client):
-    [run] = client.runs.list(DEMO_PIPELINE, limit=1)
-    assert run.finished
-    assert client.runs.get(run.id) == run
-
-    details = client.runs.details(run.id)
-    assert details.logs
-    assert details.messages
-
-    version = client.pipelines.version(DEMO_PIPELINE, version_id=run.version_id)
-    with zipfile.ZipFile(io.BytesIO(client.pipelines.source(version))) as archive:
-        assert "pipeline.py" in archive.namelist()
-
-
 def test_deploy_and_run(client: Client, tmp_path: Path):
     source = tmp_path / "pipeline"
     source.mkdir()
@@ -56,8 +40,7 @@ def test_deploy_and_run(client: Client, tmp_path: Path):
     try:
         assert first.timeout == 600
         assert [parameter.code for parameter in first.parameters] == ["greeting"]
-        with zipfile.ZipFile(io.BytesIO(client.pipelines.source(first))) as archive:
-            assert archive.namelist() == ["pipeline.py"]
+        assert [file.path for file in client.pipelines.files(first)] == ["pipeline.py"]
 
         (source / "pipeline.py").write_text(PIPELINE_CODE.replace("{version}", "second"))
         second = client.pipelines.deploy(first.pipeline, source, version_name="second")
@@ -73,6 +56,8 @@ def test_deploy_and_run(client: Client, tmp_path: Path):
 
         messages = [message.message for message in client.runs.details(run.id).messages]
         assert "hi from second" in messages
+        succeeded = client.pipelines.list(last_run_status="success")
+        assert first.pipeline in {pipeline.code for pipeline in succeeded}
     finally:
         client.pipelines.delete(first.pipeline)
 

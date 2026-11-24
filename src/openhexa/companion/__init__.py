@@ -19,7 +19,7 @@ from openhexa.companion.errors import (
     PermissionDeniedError,
 )
 from openhexa.companion.files import WorkspaceFile
-from openhexa.companion.pipelines import Pipeline, PipelineParameter, PipelineVersion
+from openhexa.companion.pipelines import Pipeline, PipelineParameter, PipelineVersion, SourceFile
 from openhexa.companion.runs import Run, RunDatasetVersion, RunDetails, RunMessage, RunOutput
 from openhexa.companion.saved_queries import SavedQuery, SavedQuerySummary
 from openhexa.companion.search import (
@@ -67,6 +67,7 @@ __all__ = [
     "SavedQuerySummary",
     "SearchHit",
     "SearchResult",
+    "SourceFile",
     "TableColumn",
     "User",
     "Webapp",
