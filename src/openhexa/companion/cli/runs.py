@@ -5,7 +5,7 @@ import time
 
 import click
 
-from openhexa.companion import Client, Run
+from openhexa.companion import Client, Run, RunOutput
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._errors import RUN_FAILED_EXIT_CODE
 from openhexa.companion.cli._output import (
@@ -73,8 +73,12 @@ def list_runs(client: LazyClient, pipeline: str, limit: int, as_json: bool) -> N
 def show(client: LazyClient, run_id: str, as_json: bool) -> None:
     """Show a run: status, parameters, messages and outputs.
 
-    Use `hexa runs logs` for the full output of the pipeline. With --json, prints the
-    run with its `messages`, `outputs` and `dataset_versions`.
+    File outputs are printed as paths in the workspace files: print one with `hexa files
+    read PATH` or save it with `hexa files download PATH`. Get a published dataset
+    version with `hexa datasets download DATASET --version VERSION`. Use `hexa runs
+    logs` for the full output of the pipeline. With --json, prints the run with its
+    `messages`, `outputs` (the path of a file output is its `name`) and
+    `dataset_versions`.
     """
     library = client.get()
     run = library.runs.get(run_id)
@@ -106,13 +110,30 @@ def show(client: LazyClient, run_id: str, as_json: bool) -> None:
         click.echo("Messages:")
         for message in details.messages:
             click.echo(f"  {message.priority:<8} {message.message}")
-    if details.outputs:
-        click.echo("Outputs:")
-        for output in details.outputs:
-            size = f" ({format_size(output.size)})" if output.size is not None else ""
-            click.echo(f"  {output.type:<6} {output.name}{size}")
+    _print_outputs(details.outputs)
     for item in details.dataset_versions:
         click.echo(f"Published dataset {item.workspace}/{item.dataset} version {item.version}")
+
+
+def _print_outputs(outputs: list[RunOutput]) -> None:
+    """Print outputs by type, with file outputs as workspace paths that can be copied."""
+    files = [output for output in outputs if output.type == "file"]
+    tables = [output for output in outputs if output.type == "table"]
+    others = [output for output in outputs if output.type not in ("file", "table")]
+    if files:
+        click.echo("Files:")
+        for output in files:
+            size = f"  ({format_size(output.size)})" if output.size is not None else ""
+            click.echo(f"  {output.name}{size}")
+    if tables:
+        click.echo("Tables:")
+        for output in tables:
+            click.echo(f"  {output.name}")
+    if others:
+        click.echo("Other outputs:")
+        for output in others:
+            location = f": {output.uri}" if output.uri else ""
+            click.echo(f"  {output.name or '(unnamed)'} ({output.type}){location}")
 
 
 @runs.command()

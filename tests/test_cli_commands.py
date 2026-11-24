@@ -230,3 +230,58 @@ def test_files_read_prints_the_file_as_is(fake_openhexa: FakeOpenHexa):
     assert result.stdout_bytes == b"district,cases\nA,1\n"
     assert directory.exit_code == 2
     assert "is a directory" in directory.stderr
+
+
+RUN_ID = "00000000-0000-0000-0000-0000000000aa"
+
+
+def _run_with_outputs(body: dict[str, Any]) -> dict[str, Any]:
+    pipeline = {"code": "etl", "workspace": {"slug": "ws"}}
+    if "logs" in body["query"]:
+        outputs = [
+            {"__typename": "BucketObject", "key": "out/cases.csv", "size": 19},
+            {"__typename": "DatabaseTable", "tableName": "cases"},
+            {
+                "__typename": "GenericOutput",
+                "genericName": "dashboard",
+                "genericType": "link",
+                "uri": "https://example.org/dashboard",
+            },
+        ]
+        details = {
+            "pipeline": pipeline,
+            "logs": "",
+            "messages": [],
+            "outputs": outputs,
+            "datasetVersions": [],
+        }
+        return {"pipelineRun": details}
+    run = {
+        "id": RUN_ID,
+        "status": "success",
+        "executionDate": "2026-11-01T10:00:00+00:00",
+        "duration": 3,
+        "triggerMode": "manual",
+        "progress": 100,
+        "config": {},
+        "timeout": None,
+        "user": None,
+        "stoppedBy": None,
+        "version": None,
+        "pipeline": pipeline,
+    }
+    return {"pipelineRun": run}
+
+
+def test_runs_show_prints_file_outputs_as_workspace_paths(fake_openhexa: FakeOpenHexa):
+    fake_openhexa(_run_with_outputs)
+
+    text = _invoke("runs", "show", RUN_ID)
+    as_json = _invoke("runs", "show", RUN_ID, "--json")
+
+    assert text.exit_code == 0, text.output
+    assert "Files:\n  out/cases.csv  (19 B)\n" in text.stdout
+    assert "Tables:\n  cases\n" in text.stdout
+    assert "dashboard (link): https://example.org/dashboard" in text.stdout
+    [file, *_] = json.loads(as_json.stdout)["outputs"]
+    assert file == {"type": "file", "name": "out/cases.csv", "uri": None, "size": 19}
