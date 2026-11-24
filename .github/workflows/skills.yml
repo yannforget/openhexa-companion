@@ -1,0 +1,27 @@
+# Attaches each skill in skills/ as a zip to every release, for clients that install
+# skills from a file. The connector's instructions link to the latest release.
+name: Skills
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Zip each skill
+        run: |
+          mkdir dist
+          cd skills
+          for skill in */; do
+            zip -r "../dist/${skill%/}.zip" "$skill"
+          done
+      - name: Attach the zips to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/*.zip --clobber
