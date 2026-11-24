@@ -19,6 +19,7 @@ from openhexa.companion.cli._output import (
     json_option,
     limit_option,
     nest,
+    print_bytes,
     print_json,
     print_table,
 )
@@ -110,6 +111,28 @@ def download(
     click.echo(f"Downloaded {len(targets)} file(s) to {root}", err=True)
     if as_json:
         print_json([nest(file, local_path=str(target)) for file, target in targets])
+
+
+@files.command()
+@click.argument("path")
+@json_option
+@pass_client
+def read(client: LazyClient, path: str, as_json: bool) -> None:
+    """Print the file at PATH to stdout, as is, without saving it.
+
+    Pipe it into `head` to look at the start of a large file. With --json, only errors
+    are printed as JSON: the content is printed as is, since it may not be text. Use
+    `hexa files download` to save files.
+    """
+    del as_json  # The content is never JSON; the root command prints errors as JSON.
+    library = client.get()
+    item = library.files.get(path)
+    if item.is_directory:
+        raise click.UsageError(
+            f"'{item.path}' is a directory: list it with `hexa files list {item.path}`"
+        )
+    with library.files.read(item.path) as stream:
+        print_bytes(stream)
 
 
 @files.command()

@@ -2,7 +2,9 @@
 
 import dataclasses
 import json
-from collections.abc import Sequence
+import os
+import sys
+from collections.abc import Iterable, Sequence
 from datetime import datetime
 from typing import Any
 
@@ -74,6 +76,22 @@ def note(message: str) -> None:
 def print_json(value: Any) -> None:
     """Print dataclasses, lists of them and plain values as indented JSON."""
     click.echo(json.dumps(value, default=_to_json, indent=2, ensure_ascii=False))
+
+
+def print_bytes(chunks: Iterable[bytes]) -> None:
+    """Write `chunks` to stdout as is, stopping quietly if the reader closes the pipe.
+
+    So `hexa files read PATH | head` reads only the start of a large file.
+    """
+    try:
+        for chunk in chunks:
+            # Click writes bytes to the binary stream under stdout.
+            click.echo(chunk, nl=False)
+    except BrokenPipeError:
+        # Python flushes stdout again at exit, which would fail on the closed pipe.
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        os.close(devnull)
 
 
 def nest(item: Any, **fields: Any) -> dict[str, Any]:

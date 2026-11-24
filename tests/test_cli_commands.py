@@ -201,3 +201,32 @@ def test_a_rejected_token_says_where_to_get_a_new_one(fake_openhexa: FakeOpenHex
     error = json.loads(as_json.stderr)["error"]
     assert error["type"] == "AuthenticationError"
     assert "/user/account" in error["message"]
+
+
+def _workspace_files(body: dict[str, Any]) -> dict[str, Any] | httpx2.Response:
+    """Answer lookups and downloads of file `data/cases.csv` in directory `data/`."""
+    if "url" in body:
+        return httpx2.Response(200, content=iter([b"district,cases\nA,1\n"]))
+    if "prepareObjectDownload(" in body["query"]:
+        url = "https://storage.test/cases.csv"
+        return {"prepareObjectDownload": {"success": True, "errors": [], "downloadUrl": url}}
+    key = body["variables"].get("key")
+    if key == "data/cases.csv":
+        item = {"key": key, "type": "FILE", "size": 19, "updatedAt": None}
+    elif key == "data/":
+        item = {"key": key, "type": "DIRECTORY", "size": 0, "updatedAt": None}
+    else:
+        item = None
+    return {"workspace": {"bucket": {"object": item}}}
+
+
+def test_files_read_prints_the_file_as_is(fake_openhexa: FakeOpenHexa):
+    fake_openhexa(_workspace_files)
+
+    result = CliRunner().invoke(main, ["files", "read", "data/cases.csv"])
+    directory = _invoke("files", "read", "data")
+
+    assert result.exit_code == 0, result.output
+    assert result.stdout_bytes == b"district,cases\nA,1\n"
+    assert directory.exit_code == 2
+    assert "is a directory" in directory.stderr

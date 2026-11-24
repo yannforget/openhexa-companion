@@ -61,13 +61,21 @@ Handler = Callable[[dict[str, Any]], dict[str, Any] | httpx2.Response]
 
 @pytest.fixture
 def fake_openhexa(monkeypatch: pytest.MonkeyPatch) -> Callable[[Handler], list[str]]:
-    """Make the CLI talk to a fake OpenHEXA; return the queries it receives."""
+    """Make the CLI talk to a fake OpenHEXA; return the queries it receives.
+
+    Requests to signed storage URLs reach the handler as `{"url": URL}`.
+    """
     monkeypatch.delenv("HEXA_JSON", raising=False)
 
     def install(handler: Handler) -> list[str]:
         queries: list[str] = []
 
         def respond(request: httpx2.Request) -> httpx2.Response:
+            if request.url.path != "/graphql/":
+                # A signed storage URL: the handler gets its URL instead of a body.
+                answer = handler({"url": str(request.url)})
+                assert isinstance(answer, httpx2.Response)
+                return answer
             body = json.loads(request.content)
             queries.append(body["query"])
             answer = handler(body)

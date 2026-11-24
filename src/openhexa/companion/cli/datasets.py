@@ -22,6 +22,7 @@ from openhexa.companion.cli._output import (
     json_option,
     limit_option,
     nest,
+    print_bytes,
     print_json,
     print_table,
 )
@@ -164,6 +165,29 @@ def download(
     click.echo(f"Downloaded {len(targets)} file(s) of version {version.name} to {output}", err=True)
     if as_json:
         print_json([nest(file, local_path=str(target)) for file, target in targets])
+
+
+@datasets.command()
+@dataset_argument
+@click.argument("path")
+@version_option
+@json_option
+@pass_client
+def read(
+    client: LazyClient, dataset: str, path: str, version_name: str | None, as_json: bool
+) -> None:
+    """Print the file at PATH of a dataset version to stdout, as is, without saving it.
+
+    PATH is the path of the file within the version, as `hexa datasets files` lists it.
+    Pipe it into `head` to look at the start of a large file. With --json, only errors
+    are printed as JSON: the content is printed as is, since it may not be text. Use
+    `hexa datasets download` to save files.
+    """
+    del as_json  # The content is never JSON; the root command prints errors as JSON.
+    library = client.get()
+    file = library.datasets.file(library.datasets.version(dataset, version_name), path)
+    with library.datasets.read(file) as stream:
+        print_bytes(stream)
 
 
 description_option = click.option(
