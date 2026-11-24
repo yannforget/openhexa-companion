@@ -549,3 +549,50 @@ def test_webapps_update_serves_an_earlier_version(fake_openhexa: FakeOpenHexa):
     assert json.loads(result.stdout)["version"] == WEBAPP_VERSIONS[2]
     assert "Warning" not in result.stderr
     assert unknown.exit_code == 3
+
+
+def test_webapps_download_saves_what_it_can_and_lists_the_rest(
+    fake_openhexa: FakeOpenHexa, tmp_path: Path
+):
+    def handler(body: dict[str, Any]) -> dict[str, Any]:
+        if "files(" in body["query"]:
+            files = [
+                {
+                    "path": "big.bin",
+                    "type": "file",
+                    "size": 12_000_000,
+                    "encoding": "BASE64",
+                    "tooLarge": True,
+                    "content": None,
+                },
+                {
+                    "path": "index.html",
+                    "type": "file",
+                    "size": 4,
+                    "encoding": "TEXT",
+                    "tooLarge": False,
+                    "content": "<h1>",
+                },
+            ]
+            return {"webapp": {"files": files}}
+        return _webapp([])(body)
+
+    fake_openhexa(handler)
+    output = tmp_path / "site"
+
+    result = _invoke("webapps", "download", "site", "-o", str(output), "--json")
+
+    assert result.exit_code == 1
+    assert (output / "index.html").read_text() == "<h1>"
+    assert not (output / "big.bin").exists()
+    assert json.loads(result.stdout) == [
+        {"path": "big.bin", "size": 12_000_000, "local_path": None, "skipped": True},
+        {
+            "path": "index.html",
+            "size": 4,
+            "local_path": str(output / "index.html"),
+            "skipped": False,
+        },
+    ]
+    assert "Skipped big.bin (12.0 MB)" in result.stderr
+    assert json.loads(result.stderr.splitlines()[-1])["error"]["type"] == "Error"

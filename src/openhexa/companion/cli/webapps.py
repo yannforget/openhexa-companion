@@ -134,28 +134,40 @@ def download(
     force: bool,
     as_json: bool,
 ) -> None:
-    """Download the files of a static webapp.
+    """Download the files of a static webapp, as it serves them by default.
 
-    With --json, prints the files written, with their `local_path`.
+    Files of 10 MB or more cannot be read through the API: the others are saved, those
+    are listed, and the command exits with an error so the copy is not taken as
+    complete. With --json, prints every file with its `local_path`, and `skipped` true
+    for files not saved.
     """
     target_dir = output or Path(webapp)
     files = client.get().webapps.files(webapp, version=version, content=True)
-    unreadable = [f.path for f in files if f.content is None]
-    if unreadable:
-        raise click.ClickException(
-            f"Files too large to download through the API: {', '.join(unreadable)}"
-        )
-    targets = [(f, local_path(target_dir, f.path)) for f in files]
-    check_targets((target for _, target in targets), force=force)
-    for file, target in targets:
-        save_stream([file.content or b""], target)
+    targets = {f.path: local_path(target_dir, f.path) for f in files if f.content is not None}
+    skipped = [f for f in files if f.content is None]
+    check_targets(targets.values(), force=force)
+    for file in files:
+        if file.path in targets:
+            save_stream([file.content or b""], targets[file.path])
     click.echo(f"Downloaded {len(targets)} file(s) to {target_dir}", err=True)
     if as_json:
         print_json(
             [
-                {"path": file.path, "size": file.size, "local_path": str(target)}
-                for file, target in targets
+                {
+                    "path": file.path,
+                    "size": file.size,
+                    "local_path": str(targets[file.path]) if file.path in targets else None,
+                    "skipped": file.path not in targets,
+                }
+                for file in files
             ]
+        )
+    if skipped:
+        for file in skipped:
+            note(f"Skipped {file.path} ({format_size(file.size)})")
+        raise click.ClickException(
+            f"Could not download {len(skipped)} file(s) of 10 MB or more, which the API does "
+            f"not return: {', '.join(f.path for f in skipped)}. The webapp still serves them."
         )
 
 
