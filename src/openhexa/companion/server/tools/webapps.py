@@ -9,7 +9,9 @@ from pydantic import BaseModel, Field
 from openhexa.companion import Client, Webapp, WebappFile, WebappVersion
 from openhexa.companion.server.tools._access import Access
 from openhexa.companion.server.tools._shared import (
+    DEFAULT_LIST_LIMIT,
     READ_ONLY,
+    ListLimitArg,
     WorkspaceArg,
     join_notes,
     truncation_note,
@@ -24,12 +26,9 @@ STATIC_TYPE = "STATIC"
 
 
 class WebappSummary(BaseModel):
-    slug: str = Field(description="Identifies the webapp in other tools.")
+    webapp: str = Field(description="Slug identifying the webapp in other tools.")
     name: str = Field(description="Display name.")
-    type: str = Field(
-        description="'STATIC' for sites published from files, 'IFRAME' for an embedded "
-        "URL, or 'SUPERSET' for a dashboard."
-    )
+    type: str = Field(description="'STATIC', 'IFRAME' or 'SUPERSET'.")
     url: str = Field(description="Where the webapp is served.")
     public: bool = Field(description="Whether anyone can open it without signing in.")
 
@@ -37,6 +36,8 @@ class WebappSummary(BaseModel):
 class WebappList(BaseModel):
     workspace: str = Field(description="Slug of the workspace.")
     webapps: list[WebappSummary] = Field(description="Webapps of the workspace.")
+    total_webapps: int = Field(description="Number of webapps of the workspace.")
+    note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
 class WebappFileInfo(BaseModel):
@@ -45,7 +46,7 @@ class WebappFileInfo(BaseModel):
 
 
 class WebappVersionInfo(BaseModel):
-    version_id: str = Field(description="Identifies the version.")
+    version_id: str = Field(description="OpenHEXA ID of the version.")
     message: str = Field(description="Description of the change.")
     created_at: datetime = Field(description="When the version was published.")
     author: str = Field(description="Who published it.")
@@ -54,20 +55,11 @@ class WebappVersionInfo(BaseModel):
 class WebappDetails(WebappSummary):
     workspace: str = Field(description="Slug of the workspace.")
     description: str = Field(description="What the webapp shows. Empty if undocumented.")
-    scopes: list[str] = Field(
-        description="OpenHEXA operations the webapp may perform for the person viewing "
-        "it, such as 'DATASETS_READ'."
-    )
-    published_version: str | None = Field(
-        description="ID of the published version, for static webapps."
-    )
-    files: list[WebappFileInfo] = Field(
-        description="Files of the published version, for static webapps."
-    )
-    total_files: int = Field(description="Number of files of the published version.")
-    versions: list[WebappVersionInfo] = Field(
-        description="Versions of a static webapp, newest first."
-    )
+    scopes: list[str] = Field(description="OpenHEXA operations allowed to the webapp.")
+    published_version_id: str | None = Field(description="ID of the version served.")
+    files: list[WebappFileInfo] = Field(description="Files of the version served.")
+    total_files: int = Field(description="Number of files of the version served.")
+    versions: list[WebappVersionInfo] = Field(description="Versions, newest first.")
     note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
@@ -77,10 +69,22 @@ def register(server: MCPServer, access: Access) -> None:
         title="List OpenHEXA webapps",
         annotations=READ_ONLY,
     )
-    async def list_webapps(workspace: WorkspaceArg) -> WebappList:
-        """List the webapps of an OpenHEXA workspace, with their type and URL."""
+    async def list_webapps(
+        workspace: WorkspaceArg, limit: ListLimitArg = DEFAULT_LIST_LIMIT
+    ) -> WebappList:
+        """List the webapps of an OpenHEXA workspace, with their type and URL.
+
+        Types are 'STATIC' for sites published from files, 'IFRAME' for an embedded URL
+        and 'SUPERSET' for a dashboard. public is true when anyone can open the webapp
+        without signing in.
+        """
         items = await access.run(workspace, lambda client: client.webapps.list())
-        return WebappList(workspace=workspace, webapps=[_summary(w) for w in items])
+        return WebappList(
+            workspace=workspace,
+            webapps=[_summary(w) for w in items[:limit]],
+            total_webapps=len(items),
+            note=truncation_note(len(items), limit, "webapps"),
+        )
 
     @server.tool(
         name="openhexa_get_webapp",
@@ -90,7 +94,11 @@ def register(server: MCPServer, access: Access) -> None:
     async def get_webapp(
         workspace: WorkspaceArg,
         webapp: Annotated[
-            str, Field(description="Slug of the webapp, as listed by openhexa_list_webapps.")
+            str,
+            Field(
+                description="Slug of the webapp, as given by openhexa_list_webapps or "
+                "openhexa_search."
+            ),
         ],
         file_limit: Annotated[
             int, Field(ge=1, description="Maximum number of files to return.")
@@ -99,7 +107,14 @@ def register(server: MCPServer, access: Access) -> None:
             int, Field(ge=1, description="Maximum number of versions to return, newest first.")
         ] = DEFAULT_VERSION_LIMIT,
     ) -> WebappDetails:
-        """Read an OpenHEXA webapp: its description and, for static webapps, files and versions."""
+        """Read an OpenHEXA webapp: its description and, for static webapps, files and versions.
+
+        scopes are the OpenHEXA operations the webapp may perform for the person viewing
+        it, such as 'DATASETS_READ'. A static webapp serves the version
+        published_version_id, which may be earlier than the latest one; files are that
+        version's, with sizes in bytes, and versions are listed newest first. Other
+        webapps have no files or versions.
+        """
 
         def read(client: Client) -> tuple[Webapp, list[WebappFile], list[WebappVersion]]:
             found = client.webapps.get(webapp)
@@ -116,7 +131,7 @@ def register(server: MCPServer, access: Access) -> None:
             workspace=workspace,
             description=found.description,
             scopes=found.scopes,
-            published_version=found.version,
+            published_version_id=found.version,
             files=[WebappFileInfo(path=f.path, size=f.size) for f in files[:file_limit]],
             total_files=len(files),
             versions=[
@@ -137,7 +152,7 @@ def register(server: MCPServer, access: Access) -> None:
 
 def _summary(webapp: Webapp) -> WebappSummary:
     return WebappSummary(
-        slug=webapp.slug,
+        webapp=webapp.slug,
         name=webapp.name,
         type=webapp.type,
         url=webapp.url,

@@ -19,6 +19,11 @@ CREATE = ToolAnnotations(
     read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False
 )
 
+# Items a list tool returns when no limit is given.
+DEFAULT_LIST_LIMIT = 100
+
+ListLimitArg = Annotated[int, Field(ge=1, description="Maximum number of items to return.")]
+
 WorkspaceArg = Annotated[
     str,
     Field(description="Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces."),
@@ -27,8 +32,8 @@ WorkspaceArg = Annotated[
 DatasetArg = Annotated[
     str,
     Field(
-        description="The dataset, as given by openhexa_list_datasets: its slug, or "
-        "'workspace/slug' for a dataset shared from another workspace."
+        description="The dataset, as given by openhexa_list_datasets or openhexa_search: "
+        "its slug, or 'workspace/slug' for a dataset shared from another workspace."
     ),
 ]
 
@@ -39,7 +44,9 @@ VersionArg = Annotated[
 
 PipelineArg = Annotated[
     str,
-    Field(description="Code of the pipeline, as listed by openhexa_list_pipelines."),
+    Field(
+        description="Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search."
+    ),
 ]
 
 RunArg = Annotated[

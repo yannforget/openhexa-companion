@@ -14,8 +14,10 @@ from openhexa.companion.runs import RunStatus
 from openhexa.companion.server.tools._access import Access
 from openhexa.companion.server.tools._shared import (
     CREATE,
+    DEFAULT_LIST_LIMIT,
     DESTRUCTIVE,
     READ_ONLY,
+    ListLimitArg,
     PipelineArg,
     RunArg,
     WorkspaceArg,
@@ -37,11 +39,6 @@ MAX_SOURCE_LENGTH = 50_000
 SECRET_MASK = "<secret>"
 # Parameter type whose values are hidden.
 SECRET_TYPE = "secret"
-# Note returned with a run just started or stopped.
-RUN_STATUS_NOTE = (
-    "The run continues in OpenHEXA; openhexa_get_pipeline_run returns its current status, "
-    "messages and outputs."
-)
 
 PipelineVersionArg = Annotated[
     str | None,
@@ -50,77 +47,63 @@ PipelineVersionArg = Annotated[
 
 
 class PipelineSummary(BaseModel):
-    code: str = Field(description="Identifies the pipeline in other tools.")
+    pipeline: str = Field(description="Code identifying the pipeline in other tools.")
     name: str = Field(description="Display name.")
-    description: str = Field(description="What the pipeline does. Empty if undocumented.")
-    type: str = Field(
-        description="'zipFile' for pipelines deployed from code, 'notebook' for those "
-        "running a notebook of the workspace."
-    )
-    schedule: str | None = Field(description="Cron expression of the schedule, if scheduled.")
-    current_version: str | None = Field(
-        description="Label of the latest version, such as 'v3' or 'fix [v3]', or null if "
-        "none was deployed."
-    )
+    description: str = Field(description="What the pipeline does.")
+    type: str = Field(description="'zipFile' or 'notebook'.")
+    schedule: str | None = Field(description="Cron expression of the schedule.")
+    latest_version: str | None = Field(description="Label of the latest version.")
 
 
 class PipelineList(BaseModel):
     workspace: str = Field(description="Slug of the workspace.")
-    pipelines: list[PipelineSummary] = Field(description="Pipelines of the workspace, by name.")
+    pipelines: list[PipelineSummary] = Field(description="Pipelines, by name.")
+    total_pipelines: int = Field(description="Number of pipelines matching the filter.")
+    note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
 class ParameterInfo(BaseModel):
-    code: str = Field(description="Name used to pass a value when starting a run.")
+    code: str = Field(description="Key of the parameter when starting a run.")
     name: str = Field(description="Display name.")
-    type: str = Field(description="Type, such as 'str', 'int', 'bool', 'dataset' or 'secret'.")
+    type: str = Field(description="Type, such as 'str', 'int', 'dataset' or 'secret'.")
     required: bool = Field(description="Whether a run needs a value.")
     multiple: bool = Field(description="Whether the parameter takes a list of values.")
-    default: Any = Field(description="Value used when a run gives none. Secrets are masked.")
-    choices: list[Any] | None = Field(description="Allowed values, if restricted.")
-    help: str | None = Field(description="Explanation of the parameter, if documented.")
+    default: Any = Field(description="Default value.")
+    choices: list[Any] | None = Field(description="Allowed values.")
+    help: str | None = Field(description="Explanation of the parameter.")
 
 
 class VersionSummary(BaseModel):
-    label: str = Field(description="Name of the version as OpenHEXA shows it, such as 'v3'.")
+    version: str = Field(description="Label of the version, such as 'v3'.")
     version_id: str = Field(description="OpenHEXA ID of the version.")
-    description: str | None = Field(description="What changed in this version, if documented.")
+    description: str | None = Field(description="What changed in this version.")
     created_at: datetime = Field(description="When the version was deployed.")
 
 
 class VersionDetails(VersionSummary):
-    timeout: int | None = Field(
-        description="Seconds after which runs are stopped, or null for the default."
-    )
-    parameters: list[ParameterInfo] = Field(description="Parameters declared by the version.")
-    configured_values: dict[str, Any] = Field(
-        description="Parameter values configured in OpenHEXA, used by runs that give no "
-        "other value. Secrets are masked."
-    )
+    timeout: int | None = Field(description="Seconds after which runs are stopped.")
+    parameters: list[ParameterInfo] = Field(description="Parameters of the version.")
+    configured_values: dict[str, Any] = Field(description="Values configured in OpenHEXA.")
 
 
 class PipelineDetails(PipelineSummary):
     workspace: str = Field(description="Slug of the workspace.")
-    version: VersionDetails | None = Field(
-        description="The requested version, the latest by default; null if none was deployed."
-    )
+    selected_version: VersionDetails | None = Field(description="The requested version.")
     versions: list[VersionSummary] = Field(description="Versions, newest first.")
     total_versions: int = Field(description="Number of versions of the pipeline.")
     note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
 class RunSummary(BaseModel):
-    run_id: str = Field(description="Identifies the run in other tools.")
-    status: str = Field(
-        description="One of 'queued', 'running', 'terminating', 'success', 'failed', "
-        "'stopped' or 'skipped'."
-    )
-    started_at: datetime | None = Field(description="When the run started, if it has.")
-    duration: int = Field(description="Seconds the run took or has taken so far.")
+    run: str = Field(description="ID identifying the run in other tools.")
+    status: str = Field(description="Status of the run.")
+    started_at: datetime | None = Field(description="When the run started.")
+    duration: int = Field(description="Seconds the run took so far.")
     trigger: str | None = Field(description="'manual', 'scheduled' or 'webhook'.")
-    progress: int = Field(description="Progress reported by the pipeline, from 0 to 100.")
+    progress: int = Field(description="Progress from 0 to 100.")
     version: str | None = Field(description="Label of the version that ran.")
     version_id: str | None = Field(description="OpenHEXA ID of the version that ran.")
-    user: str | None = Field(description="Who started the run, if a person did.")
+    user: str | None = Field(description="Who started the run.")
 
 
 class RunList(BaseModel):
@@ -133,23 +116,17 @@ class RunList(BaseModel):
 class RunMessageInfo(BaseModel):
     priority: str = Field(description="'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'.")
     message: str = Field(description="The message.")
-    timestamp: datetime | None = Field(description="When it was logged, if known.")
+    timestamp: datetime | None = Field(description="When it was logged.")
 
 
 class RunOutputInfo(BaseModel):
-    type: str = Field(
-        description="'file' for a workspace file, 'table' for a workspace database table, "
-        "or a type given by the pipeline."
-    )
+    type: str = Field(description="'file', 'table' or a type given by the pipeline.")
     name: str = Field(description="Path of the file, name of the table, or a given name.")
-    size: int | None = Field(description="Size of the file in bytes, if a file.")
+    size: int | None = Field(description="Size of a file in bytes.")
 
 
 class PublishedVersion(BaseModel):
-    dataset: str = Field(
-        description="The dataset, as the dataset tools take it: its slug, or "
-        "'workspace/slug' if another workspace owns it."
-    )
+    dataset: str = Field(description="Identifies the dataset in other tools.")
     owner_workspace: str = Field(description="Slug of the workspace that owns the dataset.")
     version: str = Field(description="Name of the version.")
     version_id: str = Field(description="OpenHEXA ID of the version.")
@@ -159,40 +136,28 @@ class RunInfo(RunSummary):
     workspace: str = Field(description="Slug of the workspace.")
     pipeline: str = Field(description="Code of the pipeline.")
     finished: bool = Field(description="Whether the status will no longer change.")
-    parameters: dict[str, Any] = Field(
-        description="Parameter values of the run. Secrets are masked."
-    )
-    messages: list[RunMessageInfo] = Field(
-        description="Messages the pipeline logged with current_run.log_*, oldest first."
-    )
-    outputs: list[RunOutputInfo] = Field(description="Files and tables declared as outputs.")
+    parameters: dict[str, Any] = Field(description="Parameter values of the run.")
+    messages: list[RunMessageInfo] = Field(description="Messages logged, oldest first.")
+    outputs: list[RunOutputInfo] = Field(description="Outputs declared by the run.")
     published_dataset_versions: list[PublishedVersion] = Field(
         description="Dataset versions the run published."
     )
-    log_length: int = Field(description="Number of characters of logs, read with run logs.")
-    timeout: int | None = Field(
-        description="Seconds the run may last before OpenHEXA stops it. A failed run whose "
-        "duration reaches it was most likely stopped for taking too long."
-    )
-    stopped_by: str | None = Field(description="Who stopped the run, if someone did.")
+    log_length: int = Field(description="Number of characters of logs.")
+    timeout: int | None = Field(description="Seconds the run may last.")
+    stopped_by: str | None = Field(description="Who stopped the run.")
     note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
 class RunChange(RunSummary):
     workspace: str = Field(description="Slug of the workspace.")
     pipeline: str = Field(description="Code of the pipeline.")
-    parameters: dict[str, Any] = Field(
-        description="Parameter values of the run. Secrets are masked."
-    )
-    note: str = Field(description="How to follow the run.")
+    parameters: dict[str, Any] = Field(description="Parameter values of the run.")
 
 
 class SourceFileInfo(BaseModel):
-    path: str = Field(description="Path of the file in the source, such as 'pipeline.py'.")
+    path: str = Field(description="Path of the file, such as 'pipeline.py'.")
     size: int = Field(description="Size in bytes.")
-    content: str | None = Field(
-        description="Content of the file, or null if not returned or not text."
-    )
+    content: str | None = Field(description="Content of the file, if returned.")
 
 
 class PipelineSource(BaseModel):
@@ -201,17 +166,17 @@ class PipelineSource(BaseModel):
     version: str = Field(description="Label of the version, such as 'v3'.")
     version_id: str = Field(description="OpenHEXA ID of the version.")
     files: list[SourceFileInfo] = Field(description="Files of the version.")
-    note: str | None = Field(description="How to read content not returned, if any.")
+    note: str | None = Field(description="Explains how to read content not returned, if any.")
 
 
 class RunLogs(BaseModel):
     workspace: str = Field(description="Slug of the workspace.")
-    run_id: str = Field(description="ID of the run.")
-    status: str = Field(description="Status of the run; logs grow while it is in progress.")
+    run: str = Field(description="ID of the run.")
+    status: str = Field(description="Status of the run.")
     logs: str = Field(description="The requested part of the logs.")
-    offset: int = Field(description="Position of the first returned character in the logs.")
+    offset: int = Field(description="Position of the first returned character.")
     total_length: int = Field(description="Number of characters of the whole logs.")
-    note: str | None = Field(description="How to read the parts not returned, if any.")
+    note: str | None = Field(description="Explains how to read the parts not returned, if any.")
 
 
 def register(server: MCPServer, access: Access) -> None:
@@ -226,15 +191,27 @@ def register(server: MCPServer, access: Access) -> None:
             RunStatus | None,
             Field(
                 description="Only list pipelines whose latest run has this status, such as "
-                "'failed' to find the pipelines that are currently failing."
+                "'failed' for the pipelines whose latest run failed."
             ),
         ] = None,
+        limit: ListLimitArg = DEFAULT_LIST_LIMIT,
     ) -> PipelineList:
-        """List the pipelines of an OpenHEXA workspace, with their description and schedule."""
+        """List the pipelines of an OpenHEXA workspace, with their description and schedule.
+
+        type is 'zipFile' for pipelines deployed from code and 'notebook' for those
+        running a notebook of the workspace. schedule is a cron expression, or null if
+        unscheduled. latest_version is the label of the latest version, such as 'v3' or
+        'fix [v3]', or null if none was deployed.
+        """
         items = await access.run(
             workspace, lambda client: client.pipelines.list(last_run_status=last_run_status)
         )
-        return PipelineList(workspace=workspace, pipelines=[_pipeline(p) for p in items])
+        return PipelineList(
+            workspace=workspace,
+            pipelines=[_pipeline(p) for p in items[:limit]],
+            total_pipelines=len(items),
+            note=truncation_note(len(items), limit, "pipelines"),
+        )
 
     @server.tool(
         name="openhexa_get_pipeline",
@@ -249,7 +226,16 @@ def register(server: MCPServer, access: Access) -> None:
             int, Field(ge=1, description="Maximum number of versions to list, newest first.")
         ] = DEFAULT_VERSION_LIMIT,
     ) -> PipelineDetails:
-        """Read an OpenHEXA pipeline: a version with its parameters, and its versions."""
+        """Read an OpenHEXA pipeline: a version with its parameters, and its versions.
+
+        selected_version is the requested version, the latest by default, or null if
+        none was deployed. It lists the parameters, whose code is the key that
+        openhexa_start_pipeline_run takes, and configured_values, the values configured
+        in OpenHEXA that runs use when they give none, before the parameter's default.
+        timeout is in seconds, null for OpenHEXA's default. Values of secret parameters
+        are masked as '<secret>'. A version's code and parameters do not change once
+        deployed; versions are listed newest first.
+        """
 
         def read(
             client: Client,
@@ -264,7 +250,7 @@ def register(server: MCPServer, access: Access) -> None:
         return PipelineDetails(
             **_pipeline(found).model_dump(),
             workspace=workspace,
-            version=_version_details(selected) if selected else None,
+            selected_version=_version_details(selected) if selected else None,
             versions=[_version_summary(v) for v in versions[:version_limit]],
             total_versions=len(versions),
             note=truncation_note(len(versions), version_limit, "versions", "version_limit"),
@@ -282,7 +268,13 @@ def register(server: MCPServer, access: Access) -> None:
             int, Field(ge=1, description="Maximum number of runs to return, newest first.")
         ] = DEFAULT_RUN_LIMIT,
     ) -> RunList:
-        """List the runs of an OpenHEXA pipeline, newest first, with their status."""
+        """List the runs of an OpenHEXA pipeline, newest first, with their status.
+
+        Statuses are 'queued', 'running', 'terminating', 'success', 'failed', 'stopped' and
+        'skipped'. duration is in seconds, so far for a run in progress;
+        progress is reported by the pipeline, from 0 to 100. version and version_id
+        identify the version that ran.
+        """
         items = await access.run(workspace, lambda client: client.runs.list(pipeline, limit=limit))
         note = None
         if len(items) == limit:
@@ -311,9 +303,19 @@ def register(server: MCPServer, access: Access) -> None:
     ) -> RunInfo:
         """Read an OpenHEXA pipeline run: status, parameters, messages and outputs.
 
-        Includes the version that ran and the dataset versions the run published, but
-        not the logs, which openhexa_get_pipeline_run_logs returns. To read the code that
-        ran, pass version_id to openhexa_get_pipeline_source.
+        Statuses are 'queued', 'running', 'terminating', 'success', 'failed', 'stopped' and
+        'skipped'. finished is true once the status can no longer change.
+        Messages are those the pipeline logged with current_run.log_*, oldest first.
+        Outputs are files ('file', by workspace path) and database tables ('table') the
+        run declared. Values of secret parameters are masked as '<secret>'. timeout is
+        the number of seconds the run may last before OpenHEXA stops it and marks it
+        failed; duration is in seconds.
+
+        Includes the version that ran and the dataset versions the run published, with
+        dataset identifiers as openhexa_get_dataset takes them. It does not include
+        the logs: log_length is their size in characters, and
+        openhexa_get_pipeline_run_logs returns them. openhexa_get_pipeline_source
+        returns the code that ran when given its version_id.
         """
 
         def read(client: Client) -> tuple[Run, RunDetails, set[str]]:
@@ -377,8 +379,9 @@ def register(server: MCPServer, access: Access) -> None:
         """Read the logs of an OpenHEXA pipeline run: the output of the pipeline process.
 
         Returns the end of the logs by default, where errors usually are; earlier parts
-        are read with an offset. Tracebacks refer to the code of the version that ran,
-        which openhexa_get_pipeline_source returns.
+        are read with an offset. Logs grow while the run is in progress. Tracebacks
+        refer to the code of the version that ran, which openhexa_get_pipeline_source
+        returns.
         """
 
         def read(client: Client) -> tuple[Run, str]:
@@ -390,7 +393,7 @@ def register(server: MCPServer, access: Access) -> None:
         end = min(start + length, total)
         return RunLogs(
             workspace=workspace,
-            run_id=found.id,
+            run=found.id,
             status=found.status,
             logs=logs[start:end],
             offset=start,
@@ -418,6 +421,8 @@ def register(server: MCPServer, access: Access) -> None:
         """Read the source code of an OpenHEXA pipeline version, such as the one a run ran.
 
         Content is returned as is, so line numbers match those of tracebacks in run logs.
+        content is null for files that are not text, and for every file when the
+        source is too long to return at once.
         """
 
         def read(client: Client) -> tuple[PipelineVersion, list[SourceFile]]:
@@ -476,7 +481,9 @@ def register_writes(server: MCPServer, access: Access) -> None:
     ) -> RunChange:
         """Start a run of an OpenHEXA pipeline and return its ID and initial status.
 
-        Returns once OpenHEXA has queued the run, without waiting for it to finish.
+        Returns once OpenHEXA has queued the run, without waiting for it to finish. The
+        run continues in OpenHEXA; openhexa_get_pipeline_run reads its status, messages
+        and outputs. Values of secret parameters are masked as '<secret>'.
         """
 
         def start(client: Client) -> tuple[Run, set[str]]:
@@ -527,24 +534,23 @@ def _run_change(workspace: str, run: Run, secrets: set[str]) -> RunChange:
         workspace=workspace,
         pipeline=run.pipeline,
         parameters=_mask(run.parameters, secrets),
-        note=RUN_STATUS_NOTE,
     )
 
 
 def _pipeline(pipeline: Pipeline) -> PipelineSummary:
     return PipelineSummary(
-        code=pipeline.code,
+        pipeline=pipeline.code,
         name=pipeline.name,
         description=pipeline.description,
         type=pipeline.type,
         schedule=pipeline.schedule,
-        current_version=pipeline.current_version,
+        latest_version=pipeline.current_version,
     )
 
 
 def _version_summary(version: PipelineVersion) -> VersionSummary:
     return VersionSummary(
-        label=version.label,
+        version=version.label,
         version_id=version.id,
         description=version.description,
         created_at=version.created_at,
@@ -593,7 +599,7 @@ def _mask(values: dict[str, Any], secrets: set[str]) -> dict[str, Any]:
 
 def _run_fields(run: Run) -> dict[str, Any]:
     return {
-        "run_id": run.id,
+        "run": run.id,
         "status": run.status,
         "started_at": run.started_at,
         "duration": run.duration,

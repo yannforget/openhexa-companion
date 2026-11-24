@@ -174,6 +174,7 @@ def _dataset(variables: Mapping[str, Any], workspaces: set[str]) -> dict[str, An
             "attributes": [],
             "latestVersion": version,
             "version": version if variables.get("version") == VERSION_ID else None,
+            "versions": {"totalPages": 1, "items": [version]},
         }
     }
 
@@ -458,11 +459,18 @@ async def test_connect_and_call_tools():
 
         async with mcp_session(connector, tokens["access_token"]) as mcp:
             names = [tool.name for tool in (await mcp.list_tools()).tools]
+            instructions = mcp.instructions
             listed = await mcp.call_tool("openhexa_list_workspaces", {})
             workspace = await mcp.call_tool("openhexa_get_workspace", {"workspace": "stock"})
 
         assert names[:2] == ["openhexa_list_workspaces", "openhexa_get_workspace"]
-        assert [ws["slug"] for ws in listed.structured_content["workspaces"]] == ["cases", "stock"]
+        assert instructions is not None
+        assert "OpenHEXA Companion" in instructions.splitlines()[0]
+        assert "releases/latest" in instructions
+        assert [ws["workspace"] for ws in listed.structured_content["workspaces"]] == [
+            "cases",
+            "stock",
+        ]
         assert workspace.structured_content["homepage"] == "# stock"
         assert "SECRET" not in json.dumps(workspace.structured_content)
 
@@ -591,6 +599,8 @@ async def test_file_urls_point_to_storage():
 
     info = result.structured_content
     assert info["url"] == STORAGE_URL
+    assert info["host"] == "storage.test"
+    assert "note" not in info
     assert (info["version_id"], info["path"], info["size"]) == (
         VERSION_ID,
         "stats.csv",
@@ -711,7 +721,7 @@ async def test_account_page_manages_access():
             f"{oldest}:cases": True,
             f"{oldest}:stock": False,
         }
-        assert [ws["slug"] for ws in listed.structured_content["workspaces"]] == ["stock"]
+        assert [ws["workspace"] for ws in listed.structured_content["workspaces"]] == ["stock"]
         assert forgotten.structured_content["workspaces"] == []
         assert await mcp_status(connector, other_tokens["access_token"]) == 401
         assert "bob@example.org" in bob_page.text
@@ -749,7 +759,7 @@ async def test_write_tools():
             )
 
         assert homepage.structured_content["homepage"] == "# New homepage"
-        assert started.structured_content["run_id"] == RUN_ID
+        assert started.structured_content["run"] == RUN_ID
         assert started.structured_content["status"] == "queued"
         assert started.structured_content["parameters"] == {"year": 2026, "api_key": "<secret>"}
         assert "typed-secret" not in text(started)
@@ -778,7 +788,7 @@ async def test_sql_tools():
 
         assert few.structured_content["rows"][0][1].endswith("…[cut]")
         assert len(few.structured_content["rows"][0][1]) < 600
-        assert "do not present this result as complete" in few.structured_content["note"]
+        assert "this result is incomplete" in few.structured_content["note"]
         assert many.structured_content["truncated"]
         assert 0 < many.structured_content["row_count"] < 1000
         assert "the result was too large" in many.structured_content["note"]
@@ -798,6 +808,9 @@ async def test_search_finds_items_for_the_read_tools():
             dataset = await mcp.call_tool(
                 "openhexa_get_dataset", {"workspace": "cases", "dataset": hits[0]["reference"]}
             )
+            pipeline = await mcp.call_tool(
+                "openhexa_get_pipeline", {"workspace": "cases", "pipeline": "etl"}
+            )
 
         assert not found.is_error, text(found)
         assert hits[0]["type"] == "dataset"
@@ -812,6 +825,10 @@ async def test_search_finds_items_for_the_read_tools():
         assert "Could not search tables" in found.structured_content["note"]
         assert "Showing 1 of 2 matches" in found.structured_content["note"]
         assert not dataset.is_error, text(dataset)
+        assert dataset.structured_content["versions"][0]["version_id"] == VERSION_ID
+        assert dataset.structured_content["total_versions"] == 1
+        assert pipeline.structured_content["pipeline"] == "etl"
+        assert pipeline.structured_content["selected_version"]["version"] == "v1"
 
 
 @pytest.mark.workspace
@@ -855,7 +872,7 @@ async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
     assert part.content == expected[100:200]
     assert DEMO_DATASET in {d["dataset"] for d in datasets.structured_content["datasets"]}
 
-    assert [ws["slug"] for ws in listed.structured_content["workspaces"]] == [
+    assert [ws["workspace"] for ws in listed.structured_content["workspaces"]] == [
         env["OPENHEXA_WORKSPACE"]
     ]
     assert not workspace.is_error, text(workspace)
@@ -912,15 +929,15 @@ async def _call_remaining_reads(mcp: MCPClient, workspace: str) -> list[CallTool
         pipelines := await mcp.call_tool("openhexa_list_pipelines", {"workspace": workspace}),
     ]
     for webapp in webapps.structured_content["webapps"][:1]:
-        args = {"workspace": workspace, "webapp": webapp["slug"]}
+        args = {"workspace": workspace, "webapp": webapp["webapp"]}
         results.append(await mcp.call_tool("openhexa_get_webapp", args))
     for pipeline in pipelines.structured_content["pipelines"]:
-        args = {"workspace": workspace, "pipeline": pipeline["code"]}
+        args = {"workspace": workspace, "pipeline": pipeline["pipeline"]}
         results.append(await mcp.call_tool("openhexa_get_pipeline", args))
         runs = await mcp.call_tool("openhexa_list_pipeline_runs", {**args, "limit": 1})
         results.append(runs)
         if runs.structured_content["runs"]:
-            run = {"workspace": workspace, "run": runs.structured_content["runs"][0]["run_id"]}
+            run = {"workspace": workspace, "run": runs.structured_content["runs"][0]["run"]}
             results.append(await mcp.call_tool("openhexa_get_pipeline_run", run))
             results.append(await mcp.call_tool("openhexa_get_pipeline_run_logs", run))
             source = await mcp.call_tool("openhexa_get_pipeline_source", args)

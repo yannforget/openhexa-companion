@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Annotated, Any
+from urllib.parse import urlsplit
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -10,43 +11,28 @@ from pydantic import BaseModel, Field, JsonValue
 from openhexa.companion import Client, Dataset, DatasetFile, DatasetVersion
 from openhexa.companion.server.tools._access import Access
 from openhexa.companion.server.tools._shared import (
+    DEFAULT_LIST_LIMIT,
     DESTRUCTIVE,
     READ_ONLY,
     DatasetArg,
+    ListLimitArg,
     VersionArg,
     WorkspaceArg,
     is_uuid,
     truncation_note,
 )
 
-# Versions listed when no limit is given.
-DEFAULT_VERSION_LIMIT = 20
+# Versions listed with a dataset when no limit is given.
+DEFAULT_VERSION_LIMIT = 10
 # Files listed when no limit is given.
 DEFAULT_FILE_LIMIT = 200
-# Note returned with each file URL.
-FILE_URL_NOTE = (
-    "The URL is a signed storage URL: it downloads the complete file without "
-    "authentication, and expires after about 10 minutes. Save the file to disk from a "
-    "code environment right away, then analyse the local copy rather than querying the "
-    "URL again. Don't display the URL, and never embed it in an artifact, web app or "
-    "saved code: an OpenHEXA web app must request `downloadUrl` from its own /graphql/ "
-    "endpoint when it needs the file. If the download fails with HTTP 400 or 403, call "
-    "this tool again for a new URL; if the code environment cannot reach the URL's "
-    "host, the user must allow that host for it. A downloaded copy can be reused for "
-    "later questions only while it matches the same version ID."
-)
 
 
 class DatasetSummary(BaseModel):
-    dataset: str = Field(
-        description="Identifies the dataset in other tools: its slug, or 'workspace/slug' "
-        "for a dataset shared from another workspace."
-    )
+    dataset: str = Field(description="Identifies the dataset in other tools.")
     name: str = Field(description="Display name.")
     owner_workspace: str = Field(description="Slug of the workspace that owns the dataset.")
-    latest_version: str | None = Field(
-        description="Name of the latest version, or null if it has none yet."
-    )
+    latest_version: str | None = Field(description="Name of the latest version.")
 
 
 class DatasetList(BaseModel):
@@ -54,29 +40,26 @@ class DatasetList(BaseModel):
     datasets: list[DatasetSummary] = Field(
         description="Datasets of the workspace, including those shared with it."
     )
+    total_datasets: int = Field(description="Number of datasets of the workspace.")
+    note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
 class DatasetDetails(DatasetSummary):
     workspace: str = Field(description="Slug of the workspace the dataset was read through.")
-    description: str = Field(
-        description="Documentation of the dataset in Markdown, such as its sources, "
-        "columns and caveats. Empty if there is none."
-    )
+    description: str = Field(description="Documentation of the dataset in Markdown.")
     attributes: dict[str, Any] = Field(description="Custom metadata by key.")
 
 
 class VersionSummary(BaseModel):
-    name: str = Field(description="Name of the version, unique within the dataset.")
+    version: str = Field(description="Name of the version, unique within the dataset.")
     version_id: str = Field(description="OpenHEXA ID of the version.")
-    changelog: str | None = Field(description="What changed in this version, if documented.")
+    changelog: str | None = Field(description="What changed in this version.")
     created_at: datetime = Field(description="When the version was created.")
 
 
-class VersionList(BaseModel):
-    workspace: str = Field(description="Slug of the workspace.")
-    dataset: str = Field(description="The dataset.")
+class DatasetWithVersions(DatasetDetails):
     versions: list[VersionSummary] = Field(description="Versions, newest first.")
-    total: int = Field(description="Number of versions of the dataset.")
+    total_versions: int = Field(description="Number of versions of the dataset.")
     note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
@@ -92,20 +75,20 @@ class FileList(BaseModel):
     version: str = Field(description="Name of the version.")
     version_id: str = Field(description="OpenHEXA ID of the version.")
     files: list[FileSummary] = Field(description="Files of the version, by path.")
-    total: int = Field(description="Number of files in the version.")
+    total_files: int = Field(description="Number of files in the version.")
     note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
 class FileUrl(BaseModel):
-    url: str = Field(description="Short-lived URL downloading the complete file.")
+    url: str = Field(description="Signed storage URL downloading the complete file.")
+    host: str = Field(description="Host of the URL.")
     workspace: str = Field(description="Slug of the workspace.")
     dataset: str = Field(description="The dataset.")
     version: str = Field(description="Name of the version.")
-    version_id: str = Field(description="OpenHEXA ID of the version, which pins the content.")
+    version_id: str = Field(description="OpenHEXA ID of the version.")
     path: str = Field(description="Path of the file within the version.")
     size: int = Field(description="Size in bytes.")
     content_type: str = Field(description="Media type declared when the file was uploaded.")
-    note: str = Field(description="How to use the URL.")
 
 
 def register(server: MCPServer, access: Access) -> None:
@@ -115,49 +98,50 @@ def register(server: MCPServer, access: Access) -> None:
         annotations=READ_ONLY,
     )
     async def list_datasets(
-        workspace: WorkspaceArg,
-        query: Annotated[
-            str | None,
-            Field(description="Only list datasets whose slug or name contains this text."),
-        ] = None,
+        workspace: WorkspaceArg, limit: ListLimitArg = DEFAULT_LIST_LIMIT
     ) -> DatasetList:
-        """List the datasets of an OpenHEXA workspace, including those shared with it."""
+        """List the datasets of an OpenHEXA workspace, including those shared with it.
+
+        A dataset is a set of files published in versions. Each dataset's identifier is
+        its slug, or 'workspace/slug' for a dataset shared from another workspace.
+        latest_version is the name of the latest version, or null if it has none yet.
+        """
         items = await access.run(workspace, lambda client: client.datasets.list())
-        if query:
-            needle = query.casefold()
-            items = [d for d in items if needle in d.slug.casefold() or needle in d.name.casefold()]
-        return DatasetList(workspace=workspace, datasets=[_summary(workspace, d) for d in items])
+        return DatasetList(
+            workspace=workspace,
+            datasets=[_summary(workspace, d) for d in items[:limit]],
+            total_datasets=len(items),
+            note=truncation_note(len(items), limit, "datasets"),
+        )
 
     @server.tool(
         name="openhexa_get_dataset",
         title="Get an OpenHEXA dataset",
         annotations=READ_ONLY,
     )
-    async def get_dataset(workspace: WorkspaceArg, dataset: DatasetArg) -> DatasetDetails:
-        """Read an OpenHEXA dataset: its description, attributes and latest version."""
-        item = await access.run(workspace, lambda client: client.datasets.get(dataset))
-        return _details(workspace, item)
-
-    @server.tool(
-        name="openhexa_list_dataset_versions",
-        title="List versions of an OpenHEXA dataset",
-        annotations=READ_ONLY,
-    )
-    async def list_dataset_versions(
+    async def get_dataset(
         workspace: WorkspaceArg,
         dataset: DatasetArg,
-        limit: Annotated[
-            int, Field(ge=1, description="Maximum number of versions to return, newest first.")
+        version_limit: Annotated[
+            int, Field(ge=1, description="Maximum number of versions to list, newest first.")
         ] = DEFAULT_VERSION_LIMIT,
-    ) -> VersionList:
-        """List the versions of an OpenHEXA dataset, newest first, with their changelogs."""
-        versions = await access.run(workspace, lambda client: client.datasets.versions(dataset))
-        return VersionList(
-            workspace=workspace,
-            dataset=dataset,
-            versions=[_version(v) for v in versions[:limit]],
-            total=len(versions),
-            note=truncation_note(len(versions), limit, "versions"),
+    ) -> DatasetWithVersions:
+        """Read an OpenHEXA dataset: its description, attributes and versions.
+
+        The description is Markdown documenting the data, such as its sources, columns
+        and caveats; it is empty if there is none. Versions are listed newest first; a
+        version's files do not change once a newer version exists.
+        """
+
+        def read(client: Client) -> tuple[Dataset, list[DatasetVersion]]:
+            return client.datasets.get(dataset), client.datasets.versions(dataset)
+
+        item, versions = await access.run(workspace, read)
+        return DatasetWithVersions(
+            **_details(workspace, item).model_dump(),
+            versions=[_version(v) for v in versions[:version_limit]],
+            total_versions=len(versions),
+            note=truncation_note(len(versions), version_limit, "versions", "version_limit"),
         )
 
     @server.tool(
@@ -173,7 +157,10 @@ def register(server: MCPServer, access: Access) -> None:
             int, Field(ge=1, description="Maximum number of files to return.")
         ] = DEFAULT_FILE_LIMIT,
     ) -> FileList:
-        """List the files of a version of an OpenHEXA dataset, with their size and type."""
+        """List the files of a version of an OpenHEXA dataset, with their size in bytes and type.
+
+        The response names the version listed, the latest by default, and its ID.
+        """
 
         def files(client: Client) -> tuple[DatasetVersion, list[FileSummary]]:
             found = _find_version(client, dataset, version)
@@ -189,7 +176,7 @@ def register(server: MCPServer, access: Access) -> None:
             version=found.name,
             version_id=found.id,
             files=items[:limit],
-            total=len(items),
+            total_files=len(items),
             note=truncation_note(len(items), limit, "files"),
         )
 
@@ -206,11 +193,14 @@ def register(server: MCPServer, access: Access) -> None:
         ],
         version: VersionArg = None,
     ) -> FileUrl:
-        """Get a short-lived URL that downloads a complete file of an OpenHEXA dataset.
+        """Get a temporary URL that downloads one file of an OpenHEXA dataset version.
 
-        The URL points to the storage of OpenHEXA, is pinned to one dataset version and
-        works without authentication for about 10 minutes, so code can download and
-        analyse the whole file.
+        The response holds the URL, not the file's content. The URL points to the storage
+        of OpenHEXA and serves the complete file of this version only. Anyone who has it
+        can download the file without authentication until it expires, 10 minutes to 1
+        hour after it was issued depending on the storage; storage then answers HTTP 400
+        or 403, and this tool issues a new URL. The response also gives the URL's host,
+        the version's name and ID, and the file's size in bytes and type.
         """
 
         def file_url(client: Client) -> tuple[DatasetFile, str]:
@@ -220,6 +210,7 @@ def register(server: MCPServer, access: Access) -> None:
         file, url = await access.run(workspace, file_url)
         return FileUrl(
             url=url,
+            host=urlsplit(url).hostname or "",
             workspace=workspace,
             dataset=dataset,
             version=file.version,
@@ -227,7 +218,6 @@ def register(server: MCPServer, access: Access) -> None:
             path=file.path,
             size=file.size,
             content_type=file.content_type,
-            note=FILE_URL_NOTE,
         )
 
 
@@ -331,7 +321,7 @@ def _details(workspace: str, dataset: Dataset) -> DatasetDetails:
 
 def _version(version: DatasetVersion) -> VersionSummary:
     return VersionSummary(
-        name=version.name,
+        version=version.name,
         version_id=version.id,
         changelog=version.changelog,
         created_at=version.created_at,

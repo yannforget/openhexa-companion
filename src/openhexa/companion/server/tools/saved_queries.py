@@ -15,10 +15,8 @@ class SavedQueryItem(BaseModel):
     query: str = Field(description="Slug identifying the saved query in other tools.")
     name: str = Field(description="Display name.")
     description: str = Field(description="What the query is for. Empty if undocumented.")
-    shared: bool = Field(
-        description="Whether every workspace member can see the query, rather than only its author."
-    )
-    author: str | None = Field(description="Who created the query, if their account exists.")
+    shared: bool = Field(description="Whether every workspace member can see the query.")
+    author: str | None = Field(description="Who created the query.")
     updated_at: datetime = Field(description="When the query was last changed.")
 
 
@@ -47,7 +45,8 @@ def register(server: MCPServer, access: Access) -> None:
     ) -> SavedQueryList:
         """List the SQL queries saved in an OpenHEXA workspace's Data Studio, without their SQL.
 
-        Lists the queries shared with the workspace and the user's own private ones.
+        Lists the queries shared with the workspace and the user's own private ones,
+        most recently updated first. shared is false for a query only its author sees.
         """
         items = await access.run(workspace, lambda client: client.saved_queries.list(search))
         return SavedQueryList(workspace=workspace, queries=[_item(q) for q in items])
@@ -60,12 +59,16 @@ def register(server: MCPServer, access: Access) -> None:
     async def get_saved_query(
         workspace: WorkspaceArg,
         query: Annotated[
-            str, Field(description="Slug of the query, as listed by openhexa_list_saved_queries.")
+            str,
+            Field(
+                description="Slug of the query, as given by openhexa_list_saved_queries or "
+                "openhexa_search."
+            ),
         ],
     ) -> SavedQueryDetails:
         """Read a saved query of an OpenHEXA workspace, with its SQL.
 
-        To run it, pass the SQL to openhexa_query_database.
+        openhexa_query_database runs the SQL.
         """
         item = await access.run(workspace, lambda client: client.saved_queries.get(query))
         return _details(workspace, item)
@@ -89,15 +92,15 @@ def register_writes(server: MCPServer, access: Access) -> None:
         shared: Annotated[
             bool,
             Field(
-                description="Let every workspace member see the query. Only when the user "
-                "asks; otherwise only they can see it."
+                description="Whether every workspace member can see the query. By default "
+                "only its author can."
             ),
         ] = False,
     ) -> SavedQueryDetails:
         """Save a SQL query in an OpenHEXA workspace's Data Studio.
 
-        OpenHEXA does not check the SQL: run it with openhexa_query_database first. Each
-        call saves a new query, even with the same name.
+        OpenHEXA saves the SQL without checking or running it. Each call saves a new
+        query, even with the same name.
         """
         item = await access.run(
             workspace,

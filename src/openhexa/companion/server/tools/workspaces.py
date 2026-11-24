@@ -11,12 +11,9 @@ from openhexa.companion.server.tools._shared import DESTRUCTIVE, READ_ONLY, Work
 
 
 class WorkspaceSummary(BaseModel):
-    slug: str = Field(description="Identifies the workspace in other tools.")
+    workspace: str = Field(description="Slug identifying the workspace in other tools.")
     name: str = Field(description="Display name of the workspace.")
-    token_rejected: bool = Field(
-        description="OpenHEXA rejected the stored token on its last use, so tools for this "
-        "workspace may fail until the user replaces it."
-    )
+    token_rejected: bool = Field(description="OpenHEXA rejected the stored token on its last use.")
 
 
 class WorkspaceList(BaseModel):
@@ -26,13 +23,8 @@ class WorkspaceList(BaseModel):
 class WorkspaceDetails(BaseModel):
     workspace: str = Field(description="Slug of the workspace.")
     name: str = Field(description="Display name of the workspace.")
-    homepage: str = Field(
-        description="The workspace homepage in Markdown, where members document the "
-        "workspace and its data. Empty if the workspace has none."
-    )
-    docker_image: str | None = Field(
-        description="Docker image running pipelines and notebooks, or null for the default image."
-    )
+    homepage: str = Field(description="The workspace homepage in Markdown.")
+    docker_image: str | None = Field(description="Image running pipelines and notebooks.")
 
 
 def register(server: MCPServer, access: Access) -> None:
@@ -42,10 +34,16 @@ def register(server: MCPServer, access: Access) -> None:
         annotations=READ_ONLY,
     )
     async def list_workspaces() -> WorkspaceList:
-        """List the OpenHEXA workspaces this connector can access, by slug and name."""
+        """List the OpenHEXA workspaces this connector can access, by slug and name.
+
+        The user chooses these workspaces when connecting, and changes them on the
+        connector's account page. token_rejected is true when OpenHEXA rejected the
+        workspace's stored token on its last use: tools for that workspace fail until the
+        user replaces the token on the account page.
+        """
         return WorkspaceList(
             workspaces=[
-                WorkspaceSummary(slug=ws.slug, name=ws.name, token_rejected=ws.token_rejected)
+                WorkspaceSummary(workspace=ws.slug, name=ws.name, token_rejected=ws.token_rejected)
                 for ws in await access.workspaces()
             ]
         )
@@ -59,7 +57,8 @@ def register(server: MCPServer, access: Access) -> None:
         """Read an OpenHEXA workspace: its name, Docker image and homepage.
 
         The homepage is Markdown written by workspace members, often describing the
-        workspace's purpose, data sources and conventions.
+        workspace's purpose, data sources and conventions; it is empty if they wrote
+        none. docker_image is null when pipelines and notebooks use the default image.
         """
         return _details(await access.run(workspace, lambda client: client.get_workspace()))
 

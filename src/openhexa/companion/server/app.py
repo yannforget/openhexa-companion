@@ -18,6 +18,25 @@ from openhexa.companion.server.pages import Pages
 from openhexa.companion.server.store import Store
 from openhexa.companion.server.tools import Access, register_tools
 
+# Where users download the openhexa-connector skill, released with the connector.
+SKILL_URL = "https://github.com/yannforget/openhexa-companion/releases/latest"
+
+# Orientation for clients that show it. Some drop it or show only its first line, which
+# therefore stands alone; tool descriptions repeat every fact a tool needs.
+INSTRUCTIONS = """\
+OpenHEXA Companion gives access to OpenHEXA workspaces: datasets, database, pipelines \
+and webapps.
+
+OpenHEXA is a data platform. A workspace has datasets (versioned collections of \
+files; a version doesn't change once a newer one exists), a PostgreSQL database with \
+saved queries, pipelines (with versions and runs) and webapps. Start with \
+openhexa_list_workspaces, then openhexa_search or the list tools. The workspace \
+homepage and dataset descriptions document the data. Ask the user before any write.
+
+The openhexa-connector skill (version {version}) gives guidance for analysing data and \
+investigating runs: {url}. If it is not installed, tell the user once.\
+"""
+
 
 def build_app(
     config: Config, store: Store, http_transport: httpx2.BaseTransport | None = None
@@ -45,10 +64,12 @@ def build_app(
             "revocation_options": revocation,
         }
     )
+    release = version("openhexa-companion")
     server = MCPServer(
         name="openhexa-companion",
         title="OpenHEXA Companion",
-        version=version("openhexa-companion"),
+        instructions=INSTRUCTIONS.format(version=release, url=SKILL_URL),
+        version=release,
         website_url=config.public_url,
         auth_server_provider=Provider(config, store),
         auth=auth,

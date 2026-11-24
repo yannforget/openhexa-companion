@@ -18,32 +18,19 @@ MAX_LIMIT = 100
 
 class Hit(BaseModel):
     type: ItemType = Field(description="'dataset', 'pipeline', 'webapp', 'query' or 'table'.")
-    reference: str = Field(
-        description="Identifies the item in other tools: the dataset argument of dataset "
-        "tools, the pipeline code, the webapp or saved query slug, or the table name."
-    )
+    reference: str = Field(description="Identifies the item in the tool for its type.")
     name: str = Field(description="Display name.")
-    owner_workspace: str | None = Field(
-        description="Slug of the workspace that owns a dataset shared with this one; null "
-        "for the workspace's own items."
-    )
-    extract: str | None = Field(
-        description="Part of the description around the matched words, which are between "
-        "**; null when the description does not match."
-    )
-    updated_at: datetime | None = Field(description="When the item last changed, if known.")
+    owner_workspace: str | None = Field(description="Owner of a shared dataset.")
+    extract: str | None = Field(description="Matching part of the description.")
+    updated_at: datetime | None = Field(description="When the item last changed.")
 
 
 class SearchResults(BaseModel):
     workspace: str = Field(description="Slug of the workspace.")
     hits: list[Hit] = Field(description="Matching items, best first.")
-    matches: dict[ItemType, int] = Field(
-        description="Number of matching items by type, including those not returned."
-    )
+    matches: dict[ItemType, int] = Field(description="Matching items by type, all hits included.")
     searched: int = Field(description="Number of items searched.")
-    note: str | None = Field(
-        description="Explains which types could not be searched or that hits were cut off."
-    )
+    note: str | None = Field(description="Types not searched, or hits cut off.")
 
 
 def register(server: MCPServer, access: Access) -> None:
@@ -57,14 +44,15 @@ def register(server: MCPServer, access: Access) -> None:
         query: Annotated[
             str,
             Field(
-                description="Words to look for. Any word may match, so give several "
-                "alternatives at once, such as synonyms, abbreviations and translations: "
-                "'malaria paludisme palu'. Empty lists the most recently updated items."
+                description="Words to look for. An item matches if any word does, so one "
+                "query can hold alternatives such as synonyms, abbreviations and "
+                "translations: 'malaria paludisme palu'. Empty lists the most recently "
+                "updated items."
             ),
         ] = "",
         types: Annotated[
             list[ItemType] | None,
-            Field(description="Only search these types. Omit unless the user named a type."),
+            Field(description="Restricts the search to these types. Defaults to every type."),
         ] = None,
         limit: Annotated[
             int, Field(ge=1, le=MAX_LIMIT, description="Maximum number of hits.")
@@ -75,8 +63,13 @@ def register(server: MCPServer, access: Access) -> None:
         Searches the names, slugs, descriptions and pipeline tags of the workspace's
         items, including datasets shared with it; tables are searched by name only.
         Words match the start of words, ignoring case and accents, but not misspellings.
-        Read a hit with openhexa_get_dataset, openhexa_get_pipeline, openhexa_get_webapp,
-        openhexa_get_saved_query or openhexa_get_database_table, passing its reference.
+        Hits are best first. A hit's reference is the dataset, pipeline, webapp, query
+        or table argument of openhexa_get_dataset, openhexa_get_pipeline,
+        openhexa_get_webapp, openhexa_get_saved_query or openhexa_get_database_table,
+        depending on its type. owner_workspace is set for datasets shared from another
+        workspace. extract is the part of the description around the matched words,
+        which are between **. matches counts matching items by type, including those
+        not returned.
         """
 
         def run(client: Client) -> tuple[Catalog, SearchResult]:
@@ -114,6 +107,6 @@ def _cut_note(result: SearchResult) -> str | None:
         return None
     counts = ", ".join(f"{count} {kind}s" for kind, count in result.matches.items() if count)
     return (
-        f"Showing {len(result.hits)} of {total} matches ({counts}). Narrow the query, pass "
-        "types to see more of one type, or raise limit."
+        f"Showing {len(result.hits)} of {total} matches ({counts}). A narrower query, "
+        "types or a higher limit returns more."
     )
