@@ -159,3 +159,45 @@ def test_datasets_create_needs_sources_for_version_options(fake_openhexa: FakeOp
     assert result.exit_code == 2
     assert "give SOURCES" in result.stderr
     assert queries == []
+
+
+def _workspace_and_user(body: dict[str, Any]) -> dict[str, Any]:
+    if "me {" in body["query"]:
+        return {"me": {"user": {"id": "u1", "email": "ana@example.org"}}}
+    workspace = {
+        "slug": "ws",
+        "name": "Workspace",
+        "description": "# Home\n",
+        "configuration": {},
+        "dockerImage": None,
+    }
+    return {"workspace": workspace}
+
+
+def test_workspace_show_checks_the_configuration(fake_openhexa: FakeOpenHexa):
+    fake_openhexa(_workspace_and_user)
+
+    text = _invoke("workspace", "show")
+    as_json = _invoke("workspace", "show", "--json")
+
+    assert text.exit_code == 0, text.output
+    assert "OpenHEXA: https://openhexa.test" in text.stdout
+    assert "User: ana@example.org" in text.stdout
+    shown = json.loads(as_json.stdout)
+    assert shown["slug"] == "ws"
+    assert shown["url"] == "https://openhexa.test"
+    assert shown["user"] == {"id": "u1", "email": "ana@example.org"}
+
+
+def test_a_rejected_token_says_where_to_get_a_new_one(fake_openhexa: FakeOpenHexa):
+    fake_openhexa(lambda _body: httpx2.Response(401))
+
+    text = _invoke("workspace", "show")
+    as_json = _invoke("workspace", "show", "--json")
+
+    assert text.exit_code == 4
+    assert "https://openhexa.test/user/account" in text.stderr
+    assert "OPENHEXA_TOKEN in .env" in text.stderr
+    error = json.loads(as_json.stderr)["error"]
+    assert error["type"] == "AuthenticationError"
+    assert "/user/account" in error["message"]

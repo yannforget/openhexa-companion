@@ -13,6 +13,7 @@ from openhexa.companion import (
     OpenHexaError,
     PermissionDeniedError,
 )
+from openhexa.companion.cli._context import LazyClient
 from openhexa.companion.cli._output import JSON_ENVVAR, JSON_META_KEY
 
 ERROR_EXIT_CODE = 1
@@ -46,7 +47,10 @@ class Group(click.Group):
                 (code for kind, code in LIBRARY_EXIT_CODES if isinstance(err, kind)),
                 ERROR_EXIT_CODE,
             )
-            _fail(ctx, type(err).__name__, str(err), code, err)
+            message = str(err)
+            if isinstance(err, AuthenticationError):
+                message += f". {_token_help(ctx)}"
+            _fail(ctx, type(err).__name__, message, code, err)
         except click.UsageError as err:
             if not _json_requested(ctx):
                 raise
@@ -63,6 +67,19 @@ def _fail(ctx: click.Context, kind: str, message: str, code: int, err: Exception
     else:
         click.echo(f"Error: {message}", err=True)
     raise click.exceptions.Exit(code) from err
+
+
+def _token_help(ctx: click.Context) -> str:
+    """Say where to get a new token and where to put it."""
+    lazy = ctx.find_object(LazyClient)
+    if lazy is None:
+        return "Set a valid OPENHEXA_TOKEN"
+    # The token was sent, so the client exists.
+    return (
+        f"Get a new token on your OpenHEXA account page ({lazy.get().url}/user/account, "
+        f"under Access tokens) and set OPENHEXA_TOKEN in {lazy.env_file} or in the "
+        "environment, which takes precedence"
+    )
 
 
 # Key of `click.Context.meta` holding the arguments given to the root command.

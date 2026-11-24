@@ -12,11 +12,11 @@ class LazyClient:
     """Creates the client on first use, so `--help` works without credentials."""
 
     def __init__(self, env_file: Path) -> None:
-        self._env_file = env_file
+        self.env_file = env_file
         self._client: Client | None = None
 
     def config(self) -> Config:
-        return load_config(self._env_file)
+        return load_config(self.env_file)
 
     def get(self) -> Client:
         if self._client is None:

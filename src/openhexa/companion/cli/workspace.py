@@ -5,7 +5,7 @@ from typing import TextIO
 import click
 
 from openhexa.companion.cli._context import LazyClient, pass_client
-from openhexa.companion.cli._output import json_option, print_json
+from openhexa.companion.cli._output import json_option, nest, print_json
 
 
 @click.group()
@@ -17,12 +17,21 @@ def workspace() -> None:
 @json_option
 @pass_client
 def show(client: LazyClient, as_json: bool) -> None:
-    """Show the workspace: name, Docker image, configuration and homepage."""
-    info = client.get().get_workspace()
+    """Show the workspace and check the configuration.
+
+    Prints the OpenHEXA URL, the email of the user the token belongs to, and the
+    workspace: name, Docker image, configuration and homepage. With --json, prints the
+    workspace with `url` and `user`.
+    """
+    library = client.get()
+    info = library.get_workspace()
+    user = library.get_user()
     if as_json:
-        print_json(info)
+        print_json(nest(info, url=library.url, user=user))
         return
     click.echo(f"{info.name} ({info.slug})")
+    click.echo(f"OpenHEXA: {library.url}")
+    click.echo(f"User: {user.email}")
     click.echo(f"Docker image: {info.docker_image or 'default'}")
     if info.configuration:
         click.echo("Configuration:")
