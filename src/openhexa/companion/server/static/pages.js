@@ -27,6 +27,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Copy buttons, for the text of the element they name.
+  for (const button of document.querySelectorAll("[data-copy]")) {
+    if (!navigator.clipboard) {
+      continue;
+    }
+    button.hidden = false;
+    button.addEventListener("click", async () => {
+      const text = document.getElementById(button.dataset.copy).textContent;
+      await navigator.clipboard.writeText(text);
+      button.textContent = "Copied";
+      setTimeout(() => {
+        button.textContent = "Copy";
+      }, 2000);
+    });
+  }
+
   // Ask before destructive actions.
   document.addEventListener("click", (event) => {
     const button = event.target.closest("[data-confirm]");

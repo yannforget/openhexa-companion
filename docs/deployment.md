@@ -26,8 +26,8 @@ Then start it behind a reverse proxy that terminates TLS:
 python -m openhexa.companion.server --host 127.0.0.1 --port 8000
 ```
 
-Run a single instance, and keep the database on a persistent disk. Users connect with
-`<public URL>/mcp`.
+Run a single instance, and keep the database on a persistent disk. The server's address
+shows users how to connect their AI client.
 
 ## Fly.io
 

@@ -10,10 +10,28 @@
 {% endif %}
 {% endblock %}
 {% block content %}
-<p class="lead">Choose which OpenHEXA workspaces on <strong>{{ openhexa_host }}</strong> your connected
-AI clients can reach. You do not need this page to connect a client: connect from the AI client
-itself.</p>
+<p class="lead">Give AI clients access to your OpenHEXA workspaces on
+<strong>{{ openhexa_host }}</strong>, and choose which workspaces each client can reach.</p>
 {{ error(error_message) }}
+
+<section class="card" aria-labelledby="connect-title">
+<h2 id="connect-title">Connect an AI client</h2>
+<ol class="steps">
+<li>In your AI client, add a remote MCP server (sometimes called a connector or an
+integration) with this URL:
+<div class="copy"><code id="mcp-url">{{ mcp_url }}</code>
+<button type="button" class="link" data-copy="mcp-url" hidden>Copy</button></div>
+<span class="muted">It uses Streamable HTTP and OAuth: there is no API key to enter.</span></li>
+<li>Connect. The client opens a page here, where you enter a token for each workspace it may
+use.</li>
+<li>To let the client analyse dataset files, allow its code sandbox to reach
+<code>storage.googleapis.com</code> (or your OpenHEXA storage host).</li>
+</ol>
+<p class="muted">For better results in clients that support skills, install the
+<a href="{{ skill_url }}" target="_blank" rel="noopener noreferrer">openhexa-mcp skill</a>.</p>
+<p class="muted">Tokens you enter are stored encrypted on this server, and its operator can
+access them: revoke them in OpenHEXA when you stop using it.</p>
+</section>
 
 {% if session %}
 <section class="card" aria-labelledby="clients-title">
@@ -25,7 +43,7 @@ client's access entirely: connect it again from the AI client to restore it.</p>
 </div>
 </div>
 {% if not grants %}
-<p>No AI client is connected. Connect one from your AI client: you can then choose its
+<p>No AI client is connected. Connect one as described above: you can then choose its
 workspaces here.</p>
 {% elif not workspaces %}
 <p>Add a workspace below to give your AI clients access to it.</p>

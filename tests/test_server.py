@@ -660,6 +660,18 @@ async def test_pipeline_source_is_read_by_file():
     assert "'pipeline.py'" in text(missing)
 
 
+@pytest.mark.anyio
+async def test_account_page_explains_how_to_connect():
+    async with running_service() as service:
+        home = await service.http.get("/")
+        page = await service.http.get("/account")
+
+    assert home.status_code == 307
+    assert home.headers["Location"] == f"{PUBLIC_URL}/account"
+    assert f"{PUBLIC_URL}/mcp" in page.text
+    assert "storage.googleapis.com" in page.text
+
+
 async def account_form(http: httpx2.AsyncClient, *fields: tuple[str, str]) -> httpx2.Response:
     """Load the account page and submit a form of it with `fields` and its CSRF token."""
     page = await http.get("/account")

@@ -20,7 +20,7 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.routing import Route
 
-from openhexa.companion.server.config import Config
+from openhexa.companion.server.config import SKILL_URL, Config
 from openhexa.companion.server.pages import (
     PAGE_HEADERS,
     FormError,
@@ -61,7 +61,14 @@ class Account:
         self._csrf_key = config.derive_key("account-csrf")
 
     def routes(self) -> list[Route]:
-        return [Route("/account", self.account, methods=["GET", "POST"])]
+        return [
+            Route("/", self.home, methods=["GET"]),
+            Route("/account", self.account, methods=["GET", "POST"]),
+        ]
+
+    async def home(self, _request: Request) -> Response:
+        """Send visitors of the service's address to the account page."""
+        return RedirectResponse(f"{self._config.public_url}/account", headers=PAGE_HEADERS)
 
     async def account(self, request: Request) -> Response:
         """Show the page, or apply a submitted form and redirect back to it."""
@@ -157,6 +164,8 @@ class Account:
             status=status,
             openhexa_host=urlsplit(self._config.openhexa_url).netloc,
             openhexa_url=self._config.openhexa_url,
+            mcp_url=self._config.mcp_url,
+            skill_url=SKILL_URL,
             error_message=error,
             action=f"{self._config.public_url}/account",
             csrf=sign_csrf(self._csrf_key, f"account:{browser}", CSRF_LIFETIME),

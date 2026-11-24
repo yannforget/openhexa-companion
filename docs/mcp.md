@@ -9,9 +9,12 @@ When you connect a client, the server opens a page where you enter a token for e
 workspace the client may use. The client gets its own credentials for the server, never
 your OpenHEXA tokens, and can do in each workspace what your token allows.
 
-On the account page, at `/account`, you can choose which workspaces each client reaches,
-disconnect a client, or forget a token. Forgetting a token doesn't revoke it in OpenHEXA:
-if it may have leaked, revoke it there too.
+The account page, at `/account`, shows how to connect a client. There you can also choose
+which workspaces each client reaches, disconnect a client, or forget a token. Forgetting a
+token doesn't revoke it in OpenHEXA: if it may have leaked, revoke it there too.
+
+The server's operator can access the tokens it stores. Use a server run by someone you
+trust, or run your own.
 
 A client that isn't used for 30 days must connect again.
 

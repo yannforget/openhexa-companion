@@ -12,14 +12,11 @@ from starlette.applications import Starlette
 from starlette.routing import Route
 
 from openhexa.companion.server.account import Account
-from openhexa.companion.server.config import Config
+from openhexa.companion.server.config import SKILL_URL, Config
 from openhexa.companion.server.oauth import Provider
 from openhexa.companion.server.pages import Pages
 from openhexa.companion.server.store import Store
 from openhexa.companion.server.tools import Access, register_tools
-
-# Where users download the openhexa-mcp skill, released with the MCP server.
-SKILL_URL = "https://github.com/yannforget/openhexa-companion/releases/latest"
 
 # Orientation for clients that show it. Some drop it or show only its first line, which
 # therefore stands alone; tool descriptions repeat every fact a tool needs.

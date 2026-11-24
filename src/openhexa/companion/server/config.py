@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import urlsplit
 
+# Where users download the openhexa-mcp skill, released with the MCP server.
+SKILL_URL = "https://github.com/yannforget/openhexa-companion/releases/latest"
 # Minimum length of `COMPANION_SECRET_KEY`, in characters.
 MIN_SECRET_KEY_LENGTH = 32
 # Hosts allowed to use plain HTTP, for local development.
