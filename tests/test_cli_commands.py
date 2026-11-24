@@ -395,3 +395,86 @@ def test_queries_changes_say_who_may_make_them(
 
     assert result.exit_code == 4, result.output
     assert message in result.stderr
+
+
+def _schedulable_pipeline(mutations: list[dict[str, Any]], *, missing: bool) -> Handler:
+    """Answer lookups of pipeline `etl`, recording its update mutations."""
+
+    def handler(body: dict[str, Any]) -> dict[str, Any]:
+        query = body["query"]
+        parameters = [
+            {
+                "code": code,
+                "name": code,
+                "type": "str",
+                "required": True,
+                "multiple": False,
+                "default": None,
+                "choices": None,
+                "help": None,
+            }
+            for code in ("country", "region")
+        ]
+        version = _pipeline_version(parameters=parameters, config={"region": "north"})
+        pipeline = {
+            "id": "p1",
+            "code": "etl",
+            "name": "ETL",
+            "description": "",
+            "type": "zipFile",
+            "schedule": None,
+            "currentVersion": {"name": None, "versionNumber": 1},
+        }
+        if "updatePipelineVersion(" in query:
+            mutations.append(body["variables"]["input"])
+            config = body["variables"]["input"]["config"]
+            updated = {**version, "config": config}
+            return {
+                "updatePipelineVersion": {"success": True, "errors": [], "pipelineVersion": updated}
+            }
+        if "updatePipeline(" in query:
+            mutations.append(body["variables"]["input"])
+            if missing:
+                result = {
+                    "success": False,
+                    "errors": ["MISSING_VERSION_CONFIG"],
+                    "details": "country",
+                }
+            else:
+                scheduled = {**pipeline, "schedule": body["variables"]["input"]["schedule"]}
+                result = {"success": True, "errors": [], "details": None, "pipeline": scheduled}
+            return {"updatePipeline": result}
+        return {"pipelineByCode": {**pipeline, "currentVersion": version}}
+
+    return handler
+
+
+def test_pipelines_update_sets_defaults_before_the_schedule(fake_openhexa: FakeOpenHexa):
+    mutations: list[dict[str, Any]] = []
+    fake_openhexa(_schedulable_pipeline(mutations, missing=False))
+
+    result = _invoke(
+        "pipelines", "update", "etl", "--schedule", "0 6 * * 1", "-p", "country=BE", "--json"
+    )
+
+    assert result.exit_code == 0, result.output
+    assert mutations == [
+        {
+            "id": "00000000-0000-0000-0000-000000000001",
+            "config": {"region": "north", "country": "BE"},
+        },
+        {"id": "p1", "schedule": "0 6 * * 1"},
+    ]
+    shown = json.loads(result.stdout)
+    assert shown["schedule"] == "0 6 * * 1"
+    assert shown["version"]["config"] == {"region": "north", "country": "BE"}
+
+
+def test_pipelines_update_names_parameters_missing_for_a_schedule(fake_openhexa: FakeOpenHexa):
+    fake_openhexa(_schedulable_pipeline([], missing=True))
+
+    result = _invoke("pipelines", "update", "etl", "--schedule", "0 6 * * 1")
+
+    assert result.exit_code == 1
+    assert "(country)" in result.stderr
+    assert "--param CODE=VALUE" in result.stderr

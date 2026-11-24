@@ -129,6 +129,27 @@ mutation DeletePipelineVersion($input: DeletePipelineVersionInput!) {
 }
 """
 
+UPDATE_MUTATION = f"""
+mutation UpdatePipeline($input: UpdatePipelineInput!) {{
+  updatePipeline(input: $input) {{
+    success
+    errors
+    details
+    pipeline {{ {PIPELINE_FIELDS} }}
+  }}
+}}
+"""
+
+UPDATE_VERSION_MUTATION = f"""
+mutation UpdatePipelineVersion($input: UpdatePipelineVersionInput!) {{
+  updatePipelineVersion(input: $input) {{
+    success
+    errors
+    pipelineVersion {{ {VERSION_FIELDS} }}
+  }}
+}}
+"""
+
 # Explanations of the error codes returned when creating or deploying a pipeline.
 DEPLOY_ERRORS = {
     "CANNOT_UPDATE_NOTEBOOK_PIPELINE": "notebook pipelines cannot receive new versions",
@@ -245,7 +266,7 @@ class SourceFile:
 
 
 class Pipelines:
-    """Reads and deploys the pipelines of a workspace."""
+    """Reads, deploys and configures the pipelines of a workspace."""
 
     def __init__(self, transport: Transport, workspace: str) -> None:
         self._transport = transport
@@ -463,6 +484,102 @@ class Pipelines:
             action=f"deploy a new version of pipeline '{pipeline}' in workspace "
             f"'{self._workspace}'",
             reasons={**DEPLOY_ERRORS, "PIPELINE_NOT_FOUND": "the pipeline does not exist"},
+        )
+        return _version(result["pipelineVersion"])
+
+    def update(
+        self,
+        pipeline: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        schedule: str | None = None,
+        unschedule: bool = False,
+    ) -> Pipeline:
+        """Change the name, description or schedule of a pipeline; `None` keeps a field.
+
+        A scheduled pipeline runs its latest version with the default parameter values of
+        that version, so OpenHEXA refuses a schedule while a required parameter has no
+        value: set it first with `set_defaults`.
+
+        Args:
+            pipeline: Code of the pipeline.
+            name: The new display name. The code does not change.
+            description: What the pipeline does.
+            schedule: Cron expression to run the pipeline on, such as `0 6 * * 1`.
+            unschedule: Stop running the pipeline on a schedule.
+
+        Raises:
+            InvalidInputError: No change is given, or both `schedule` and `unschedule`.
+            NotFoundError: The workspace has no such pipeline.
+            PermissionDeniedError: The token may not update the pipeline: only workspace
+                editors and admins can.
+            APIError: OpenHEXA rejected the change. Code `MISSING_VERSION_CONFIG` means
+                required parameters have no value; the message names them.
+        """
+        if schedule is not None and unschedule:
+            raise InvalidInputError("Give either a schedule or unschedule, not both")
+        changes: dict[str, Any] = {"name": name, "description": description, "schedule": schedule}
+        changes = {key: value for key, value in changes.items() if value is not None}
+        if unschedule:
+            changes["schedule"] = None
+        if not changes:
+            raise InvalidInputError(f"No change given for pipeline '{pipeline}'")
+        result = self._transport.mutate(
+            "updatePipeline",
+            UPDATE_MUTATION,
+            {"input": {"id": self.get(pipeline).id, **changes}},
+            action=f"update pipeline '{pipeline}' in workspace '{self._workspace}'",
+            reasons={
+                "INVALID_CONFIG": "the schedule is not a valid cron expression",
+                "MISSING_VERSION_CONFIG": "the pipeline cannot be scheduled while required "
+                "parameters have no default value",
+                "PERMISSION_DENIED": "the token may not update this pipeline; only workspace "
+                "editors and admins can",
+            },
+        )
+        return _pipeline(result["pipeline"])
+
+    def set_defaults(self, version: PipelineVersion, values: dict[str, Any]) -> PipelineVersion:
+        """Set default parameter values of a pipeline version, keeping the others.
+
+        Runs use these values unless they give another one; scheduled runs always do.
+        OpenHEXA checks each value against the type of its parameter.
+
+        Args:
+            version: The version, such as the latest one from `version`.
+            values: Values by parameter code. `None` removes a default value.
+
+        Raises:
+            InvalidInputError: No values are given, or a code is not a parameter of the
+                version.
+            NotFoundError: The version no longer exists.
+            PermissionDeniedError: The token may not update the pipeline: only workspace
+                editors and admins can.
+            APIError: A value does not match the type of its parameter (code
+                `INVALID_CONFIG`).
+        """
+        what = f"version '{version.label}' of pipeline '{version.pipeline}'"
+        if not values:
+            raise InvalidInputError(f"No parameter values given for {what}")
+        codes = [parameter.code for parameter in version.parameters]
+        unknown = [code for code in values if code not in codes]
+        if unknown:
+            raise InvalidInputError(
+                f"{what.capitalize()} has no parameter {format_options(unknown)}. "
+                f"Parameters: {format_options(codes)}"
+            )
+        result = self._transport.mutate(
+            "updatePipelineVersion",
+            UPDATE_VERSION_MUTATION,
+            {"input": {"id": version.id, "config": {**version.config, **values}}},
+            action=f"set default parameter values of {what} in workspace '{self._workspace}'",
+            reasons={
+                "INVALID_CONFIG": "a value does not match the type of its parameter",
+                "NOT_FOUND": "the version no longer exists",
+                "PERMISSION_DENIED": "the token may not update this pipeline; only workspace "
+                "editors and admins can",
+            },
         )
         return _version(result["pipelineVersion"])
 

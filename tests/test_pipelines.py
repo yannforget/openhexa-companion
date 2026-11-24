@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from openhexa.companion import Client, NotFoundError
+from openhexa.companion import APIError, Client, InvalidInputError, NotFoundError
 
 pytestmark = pytest.mark.workspace
 
@@ -73,3 +73,38 @@ def test_unknown_parameter_is_refused(client: Client):
 
     with pytest.raises(ValueError, match="'mode'"):
         client.runs.start(version, {"no_such_parameter": 1})
+
+
+SCHEDULED_CODE = """
+from openhexa.sdk import parameter, pipeline
+
+
+@pipeline(name="companion schedule test")
+@parameter("country", type=str, required=True)
+@parameter("year", type=int, default=2025)
+def companion_schedule_test(country, year):
+    pass
+"""
+
+
+def test_update_pipeline_and_its_defaults(client: Client, tmp_path: Path):
+    (tmp_path / "pipeline.py").write_text(SCHEDULED_CODE)
+    name = f"companion test {uuid.uuid4().hex[:8]}"
+    version = client.pipelines.create(name, tmp_path)
+    code = version.pipeline
+    try:
+        with pytest.raises(APIError, match="country") as refused:
+            client.pipelines.update(code, schedule="0 6 * * 1")
+        assert refused.value.codes == ("MISSING_VERSION_CONFIG",)
+
+        with pytest.raises(InvalidInputError, match="no parameter 'region'"):
+            client.pipelines.set_defaults(version, {"region": "north"})
+        version = client.pipelines.set_defaults(version, {"country": "BE"})
+        version = client.pipelines.set_defaults(version, {"year": 2026})
+        assert version.config == {"country": "BE", "year": 2026}
+
+        updated = client.pipelines.update(code, description="Weekly", schedule="0 6 * * 1")
+        assert (updated.description, updated.schedule) == ("Weekly", "0 6 * * 1")
+        assert client.pipelines.update(code, unschedule=True).schedule is None
+    finally:
+        client.pipelines.delete(code)

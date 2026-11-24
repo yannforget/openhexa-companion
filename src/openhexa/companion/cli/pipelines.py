@@ -1,13 +1,14 @@
 """`hexa pipelines` commands."""
 
 import io
+import json
 import zipfile
 from pathlib import Path
 from typing import get_args
 
 import click
 
-from openhexa.companion import NotFoundError, PipelineVersion
+from openhexa.companion import APIError, NotFoundError, PipelineVersion
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._local import check_targets, local_path, save_stream
 from openhexa.companion.cli._output import (
@@ -280,6 +281,88 @@ def _report(version: PipelineVersion, action: str, *, as_json: bool) -> None:
         return
     click.echo(f"{action} version {version.label} of {version.pipeline}", err=True)
     click.echo(version.pipeline)
+
+
+@pipelines.command()
+@click.argument("pipeline")
+@click.option("--name", help="Rename the pipeline. Its code does not change.")
+@click.option("-d", "--description", help="What the pipeline does.")
+@click.option(
+    "--schedule",
+    metavar="CRON",
+    help="Run the pipeline on this cron schedule, such as '0 6 * * 1' for Mondays at 6:00.",
+)
+@click.option("--no-schedule", is_flag=True, help="Stop running the pipeline on a schedule.")
+@click.option(
+    "--version",
+    "version_name",
+    help="Version whose default values --param sets, by name or number such as v3. "
+    "Defaults to the latest version.",
+)
+@parameter_options
+@json_option
+@pass_client
+def update(
+    client: LazyClient,
+    *,
+    pipeline: str,
+    name: str | None,
+    description: str | None,
+    schedule: str | None,
+    no_schedule: bool,
+    version_name: str | None,
+    params: tuple[str, ...],
+    params_file: Path | None,
+    as_json: bool,
+) -> None:
+    """Change the name, description, schedule or default parameter values of PIPELINE.
+
+    Default values belong to a version: --param and --params-file set those of the
+    latest version, or of --version, keeping the other values. Runs use them unless
+    they give other values. A scheduled pipeline runs its latest version with these
+    values, so OpenHEXA refuses a schedule while a required parameter has none; values
+    given in the same command are set first. Only workspace editors and admins may
+    change a pipeline. With --json, prints the pipeline with the version as `version`.
+    """
+    if schedule is not None and no_schedule:
+        raise click.UsageError("Give either --schedule or --no-schedule, not both")
+    parameters = read_parameters(params, params_file)
+    if version_name is not None and not parameters:
+        raise click.UsageError("--version selects the version whose values --param sets")
+    changes_pipeline = any(v is not None for v in (name, description, schedule)) or no_schedule
+    if not parameters and not changes_pipeline:
+        raise click.UsageError(
+            "Give at least one of --name, --description, --schedule, --no-schedule, --param "
+            "or --params-file"
+        )
+    library = client.get()
+    version = library.pipelines.version(pipeline, version_name)
+    if parameters:
+        version = library.pipelines.set_defaults(version, parameters)
+        values = ", ".join(f"{code}={json.dumps(value)}" for code, value in parameters.items())
+        click.echo(f"Set default values of {pipeline} version {version.label}: {values}", err=True)
+    if changes_pipeline:
+        try:
+            item = library.pipelines.update(
+                pipeline,
+                name=name,
+                description=description,
+                schedule=schedule,
+                unschedule=no_schedule,
+            )
+        except APIError as err:
+            if "MISSING_VERSION_CONFIG" not in err.codes:
+                raise
+            raise APIError(
+                f"{err}. Give them values with --param CODE=VALUE in this command, or check "
+                f"them with `hexa pipelines show {pipeline}`",
+                err.codes,
+            ) from err
+        click.echo(f"Updated pipeline {item.code}", err=True)
+    else:
+        item = library.pipelines.get(pipeline)
+    if as_json:
+        print_json(nest(item, version=version))
 
 
 @pipelines.command()
