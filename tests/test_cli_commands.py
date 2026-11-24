@@ -3,6 +3,7 @@
 import base64
 import io
 import json
+import sys
 import zipfile
 from collections.abc import Callable
 from pathlib import Path
@@ -285,3 +286,65 @@ def test_runs_show_prints_file_outputs_as_workspace_paths(fake_openhexa: FakeOpe
     assert "dashboard (link): https://example.org/dashboard" in text.stdout
     [file, *_] = json.loads(as_json.stdout)["outputs"]
     assert file == {"type": "file", "name": "out/cases.csv", "uri": None, "size": 19}
+
+
+def _database_credentials(body: dict[str, Any]) -> dict[str, Any]:
+    def credentials(username: str) -> dict[str, Any]:
+        url = f"postgresql://{username}:secret-{username}@db.test:5432/ws"
+        return {
+            "host": "db.test",
+            "port": 5432,
+            "dbName": "ws",
+            "username": username,
+            "password": f"secret-{username}",
+            "url": url,
+        }
+
+    assert "credentials" in body["query"]
+    database = {"credentials": credentials("ws"), "readOnlyCredentials": credentials("ws_ro")}
+    return {"workspace": {"database": database}}
+
+
+# Saves the variables `database exec` sets to the file given as argument, then exits
+# with code 7. The command's output does not go through the runner, so it is a file.
+SAVE_ENV = (
+    "import json, os, sys; "
+    "keys = ['PGHOST', 'PGPORT', 'PGDATABASE', 'PGUSER', 'PGPASSWORD', 'DATABASE_URL']; "
+    "open(sys.argv[1], 'w').write(json.dumps({key: os.environ[key] for key in keys})); "
+    "sys.exit(7)"
+)
+
+
+def test_database_exec_runs_a_command_with_the_credentials(
+    fake_openhexa: FakeOpenHexa, tmp_path: Path
+):
+    fake_openhexa(_database_credentials)
+    saved = tmp_path / "env.json"
+
+    read_only = _invoke("database", "exec", "--", sys.executable, "-c", SAVE_ENV, str(saved))
+    read_only_env = json.loads(saved.read_text())
+    write = _invoke(
+        "database", "exec", "--write", sys.executable, "-c", SAVE_ENV, str(saved), "--json"
+    )
+
+    assert read_only.exit_code == 7, read_only.output
+    assert read_only_env == {
+        "PGHOST": "db.test",
+        "PGPORT": "5432",
+        "PGDATABASE": "ws",
+        "PGUSER": "ws_ro",
+        "PGPASSWORD": "secret-ws_ro",
+        "DATABASE_URL": "postgresql://ws_ro:secret-ws_ro@db.test:5432/ws",
+    }
+    assert write.exit_code == 7, write.output
+    assert json.loads(saved.read_text())["PGUSER"] == "ws"
+
+
+def test_database_exec_says_who_gets_credentials(fake_openhexa: FakeOpenHexa):
+    nothing = {"credentials": None, "readOnlyCredentials": None}
+    fake_openhexa(lambda _body: {"workspace": {"database": nothing}})
+
+    result = _invoke("database", "exec", "--", "psql")
+
+    assert result.exit_code == 4
+    assert "only workspace editors and admins" in result.stderr

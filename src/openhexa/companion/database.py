@@ -256,14 +256,15 @@ class Database:
 
         Raises:
             PermissionDeniedError: The token may not see the credentials, which only
-                workspace editors and admins can.
+                workspace editors and admins, and organization admins and owners, can.
         """
         data = self._database(CREDENTIALS_QUERY, {"workspace": self._workspace})
         credentials = data["readOnlyCredentials" if read_only else "credentials"]
         if credentials is None:
             raise PermissionDeniedError(
                 f"The token may not see the database credentials of workspace "
-                f"'{self._workspace}': only workspace editors and admins can"
+                f"'{self._workspace}': only workspace editors and admins, and organization "
+                "admins and owners, can, even for the read-only user"
             )
         return DatabaseCredentials(
             host=credentials["host"],
