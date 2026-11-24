@@ -554,7 +554,7 @@ def test_webapps_update_serves_an_earlier_version(fake_openhexa: FakeOpenHexa):
 def test_webapps_download_saves_what_it_can_and_lists_the_rest(
     fake_openhexa: FakeOpenHexa, tmp_path: Path
 ):
-    def handler(body: dict[str, Any]) -> dict[str, Any]:
+    def handler(body: dict[str, Any]) -> dict[str, Any] | httpx2.Response:
         if "files(" in body["query"]:
             files = [
                 {
