@@ -29,6 +29,22 @@ python -m openhexa.companion.server --host 127.0.0.1 --port 8000
 Run a single instance, and keep the database on a persistent disk. Users connect with
 `<public URL>/mcp`.
 
+## Fly.io
+
+The repository includes a `Dockerfile` and a `fly.toml` that run one always-on machine
+with a volume for the database:
+
+```bash
+fly launch --no-deploy --copy-config --name <app>
+fly secrets set --stage \
+  COMPANION_PUBLIC_URL=https://<app>.fly.dev \
+  COMPANION_OPENHEXA_URL=https://app.openhexa.org \
+  COMPANION_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
+fly deploy --ha=false
+```
+
+Fly takes daily snapshots of the volume. To deploy a new version, run `fly deploy` again.
+
 ## Operating
 
 - **Backups**: back up the database with `sqlite3 companion.db ".backup backup.db"`. Its
