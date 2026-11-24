@@ -1,4 +1,4 @@
-"""The local OpenHEXA API of `hexa run`, through HTTP, with a fake OpenHEXA upstream."""
+"""The local OpenHEXA API of `hexa local run`, through HTTP, with a fake OpenHEXA upstream."""
 
 import json
 import sys

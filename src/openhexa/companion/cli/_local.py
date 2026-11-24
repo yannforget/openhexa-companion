@@ -1,11 +1,14 @@
 """Local files read or written by commands that transfer files."""
 
+import re
 from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
+from typing import Any
 
 import click
 
-# Local copy of parts of the workspace, used by `hexa run`, relative to the project root.
+# Local copy of parts of the workspace, used by `hexa local run`, relative to the project
+# root.
 LOCAL_WORKSPACE = Path(".hexa") / "workspace"
 
 
@@ -19,8 +22,23 @@ def local_workspace(kind: str) -> Path:
     folder.mkdir(parents=True, exist_ok=True)
     ignore = LOCAL_WORKSPACE / ".gitignore"
     if not ignore.exists():
-        ignore.write_text("# Local copy of the workspace, for `hexa run`.\n*\n", encoding="utf-8")
+        ignore.write_text(
+            "# Local copy of the workspace, for `hexa local run`.\n*\n", encoding="utf-8"
+        )
     return folder
+
+
+def version_order(name: str) -> list[Any]:
+    """Sort key of local dataset versions: natural order, so `v2` comes before `v10`.
+
+    `hexa local run` uses the greatest version as the latest.
+    """
+    return [(0, int(p)) if p.isdigit() else (1, p.lower()) for p in re.split(r"(\d+)", name)]
+
+
+def local_versions(dataset: Path) -> list[str]:
+    """The versions in the local copy of a dataset, the latest last."""
+    return sorted((p.name for p in dataset.iterdir() if p.is_dir()), key=version_order)
 
 
 def local_path(output: Path, path: str) -> Path:

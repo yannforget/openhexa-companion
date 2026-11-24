@@ -1,13 +1,15 @@
 # Local runs
 
-`hexa run` runs a pipeline from a local directory, without deploying it, in the same
+`hexa local run` runs a pipeline from a local directory, without deploying it, in the same
 image as hosted runs. Workspace files, datasets and connections can be local copies, so
 you can iterate without changing the workspace; anything not copied is read from the
 real workspace. When the pipeline works, publish it with `hexa pipelines publish`.
 
+To run a published pipeline on OpenHEXA instead, use `hexa pipelines run`.
+
 ```console
-$ hexa datasets download population
-$ hexa run pipelines/import_data -p country=BFA
+$ hexa local pull datasets/population connections/dhis2-prod
+$ hexa local run pipelines/import_data -p country=BFA
 Image: docker.io/blsq/openhexa-blsq-environment:latest (default: the workspace sets none, ...)
 Local: files, dataset population (v4), connection dhis2-prod
 Remote writes: refused (--allow-remote-writes to allow)
@@ -31,7 +33,7 @@ You need a container engine:
 Not supported for now: macOS with Podman, native Windows. OrbStack, Colima and Podman
 in WSL may work but are not tested.
 
-`hexa run` uses `--engine`, else the `HEXA_CONTAINER_ENGINE` variable, else the first
+`hexa local run` uses `--engine`, else the `HEXA_CONTAINER_ENGINE` variable, else the first
 of `docker` and `podman` that answers. Inside a Distrobox or toolbox container, use the
 host's engine:
 
@@ -46,7 +48,7 @@ The project must then be in a folder the host sees, such as your home folder.
 The pipeline runs in the workspace's image (`hexa workspace show` shows it), else
 `blsq/openhexa-blsq-environment:latest`, or the image given with `--image`. The API
 does not expose the instance's default image, so when the workspace sets none, hosted
-runs may use another one: `hexa run` says which image it uses and why.
+runs may use another one: `hexa local run` says which image it uses and why.
 
 The first run pulls the image, which takes several GB. Later runs reuse it. To pull it
 yourself beforehand:
@@ -72,34 +74,50 @@ my-project/
 Run `hexa` from the project root, where `.env` is. `.hexa/workspace/` holds data and
 connection secrets: `hexa` creates a `.gitignore` in it so Git ignores it.
 
-Downloads go there by default, so `hexa run` uses what you download:
+### Filling the local copy
+
+`hexa local pull ITEM...` copies items of the workspace into `.hexa/workspace/`. Each
+ITEM is named by its place there:
 
 ```bash
-hexa files download reports/        # → .hexa/workspace/files/reports/
-hexa datasets download population   # → .hexa/workspace/datasets/population/v4/ (latest version)
-hexa datasets download population --version v3
+hexa local pull files/reports                     # → .hexa/workspace/files/reports/
+hexa local pull files                             # all the workspace files
+hexa local pull datasets/population               # → .hexa/workspace/datasets/population/v4/ (latest)
+hexa local pull datasets/population@v3            # a given version
+hexa local pull datasets/other-ws/population      # a shared dataset, saved as datasets/population/
+hexa local pull connections/dhis2-prod            # → .hexa/workspace/connections/dhis2-prod.json
 ```
 
-Use `-o DIR` to save a download elsewhere, out of reach of `hexa run`. Downloads go to
-the `.hexa/` folder of the current directory, so run them from the project root.
+Several items can be pulled at once, which is why datasets take `@VERSION` rather than
+`--version`. Every item is checked before anything is written, and existing local files
+are kept unless `--force` is given. Connections are saved with their secret values, so
+the token must be allowed to read them (workspace editors and admins).
 
-Connections are saved from the output of `hexa connections show`, with their secrets:
+A dataset shared from another workspace is saved under its slug, as pipelines name it.
+`pull` refuses it if that slug names another dataset in the workspace, since the local
+copy would then replace that dataset.
+
+`hexa files download` and `hexa datasets download` save to the current directory or
+`-o DIR`, out of reach of `hexa local run`.
+
+### Inspecting and cleaning it
 
 ```bash
-mkdir -p .hexa/workspace/connections
-hexa connections show dhis2-prod --show-secrets --json > .hexa/workspace/connections/dhis2-prod.json
+hexa local status                          # files, dataset versions, connections
+hexa local clean datasets/population@v3    # one version (or datasets/population/v3)
+hexa local clean datasets/population       # read the dataset from the workspace again
+hexa local clean                           # the whole local copy
 ```
 
-Only `type` and `fields` are read. `hexa run` refuses a connection file with missing
-values, such as one saved without `--show-secrets`.
-
-You can also create, edit or delete the folders by hand. Delete a dataset's folder to
-read it from the workspace again.
+`clean` asks for confirmation; without a terminal, it needs `--yes`. You can also
+create, edit or delete the folders by hand. A connection file holds the JSON of
+`hexa connections show SLUG --show-secrets --json`; only `type` and `fields` are read,
+and `hexa local run` refuses one with missing values.
 
 ## Running
 
 ```bash
-hexa run [SOURCE] [-p CODE=VALUE ...] [--params-file FILE] [--image IMAGE]
+hexa local run [SOURCE] [-p CODE=VALUE ...] [--params-file FILE] [--image IMAGE]
          [--engine COMMAND] [--ignore-local-datasets] [--ignore-local-connections]
          [--allow-remote-writes] [--dry-run] [--json]
 ```
@@ -122,7 +140,7 @@ hexa run [SOURCE] [-p CODE=VALUE ...] [--params-file FILE] [--image IMAGE]
 
 | | Local copy | Otherwise |
 | --- | --- | --- |
-| Workspace files (`workspace.files_path`, `workspace.get_file`, `File` parameters) | Always `.hexa/workspace/files/`, read and written by the pipeline | Not available: download what the pipeline reads |
+| Workspace files (`workspace.files_path`, `workspace.get_file`, `File` parameters) | Always `.hexa/workspace/files/`, read and written by the pipeline | Not available: pull what the pipeline reads |
 | Datasets (`workspace.get_dataset`, `Dataset` parameters, `list_datasets`) | `.hexa/workspace/datasets/<slug>/`, unless `--ignore-local-datasets` | Read from the workspace |
 | Connections (`workspace.get_connection`, connection parameters) | `.hexa/workspace/connections/<slug>.json`, unless `--ignore-local-connections` | Read from the workspace |
 | `current_run.log_*`, `add_file_output` | Printed and summarised | |
@@ -164,5 +182,6 @@ and prints the engine command without starting anything.
 | `Permission denied` on a mounted folder | With SELinux, check that `--dry-run` shows `:z` on mounts. On macOS, keep the project under your home folder |
 | The pull or the run is very slow on Apple Silicon | Enable Rosetta in Docker Desktop's settings |
 | `Local run refused the remote write ...` | Expected: use a local copy, or `--allow-remote-writes` |
-| `Dataset ... does not exist` | Check the slug, or download it with `hexa datasets download SLUG` |
-| A file the pipeline reads is missing | Download it with `hexa files download PATH` |
+| `Dataset ... does not exist` | Check the slug, or copy it with `hexa local pull datasets/SLUG` |
+| A file the pipeline reads is missing | Copy it with `hexa local pull files/PATH` |
+| What does the run read locally? | `hexa local status`, or the `Local:` line the run prints |

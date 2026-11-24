@@ -1,4 +1,4 @@
-"""`hexa run --dry-run`, with a fake container engine on PATH and a fake OpenHEXA."""
+"""`hexa local run --dry-run`, with a fake container engine on PATH and a fake OpenHEXA."""
 
 import shlex
 from pathlib import Path
@@ -60,7 +60,7 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_dry_run_prints_the_engine_command(project: Path, engine: str):
     _fake_engine(project / "bin", engine, has_image=True)
 
-    result = CliRunner().invoke(main, ["run", "pipe", "--dry-run", "-p", "country=BFA"])
+    result = CliRunner().invoke(main, ["local", "run", "pipe", "--dry-run", "-p", "country=BFA"])
 
     assert result.exit_code == 0, result.output
     assert TOKEN not in result.output
@@ -79,7 +79,9 @@ def test_dry_run_prints_the_engine_command(project: Path, engine: str):
 def test_dry_run_says_when_the_image_would_be_pulled(project: Path):
     _fake_engine(project / "bin", "podman", has_image=False)
 
-    result = CliRunner().invoke(main, ["run", "pipe", "--dry-run", "--image", "my/image:2"])
+    result = CliRunner().invoke(
+        main, ["local", "run", "pipe", "--dry-run", "--image", "my/image:2"]
+    )
 
     assert result.exit_code == 0, result.output
     assert "Image: docker.io/my/image:2 (--image)" in result.stderr
@@ -90,14 +92,16 @@ def test_dry_run_says_when_the_image_would_be_pulled(project: Path):
 def test_ignored_local_datasets_are_not_mounted(project: Path):
     _fake_engine(project / "bin", "docker", has_image=True)
 
-    result = CliRunner().invoke(main, ["run", "pipe", "--dry-run", "--ignore-local-datasets"])
+    result = CliRunner().invoke(
+        main, ["local", "run", "pipe", "--dry-run", "--ignore-local-datasets"]
+    )
 
     assert result.exit_code == 0, result.output
     assert "/hexa/workspace/datasets" not in result.stdout
 
 
 def test_no_engine_is_a_clean_error(project: Path):
-    result = CliRunner().invoke(main, ["run", "pipe", "--dry-run"])
+    result = CliRunner().invoke(main, ["local", "run", "pipe", "--dry-run"])
 
     assert result.exit_code == 1
     assert "No container engine answers: tried docker and podman" in result.output
@@ -109,8 +113,8 @@ def test_connection_files_without_secrets_are_refused(project: Path):
     folder.mkdir()
     (folder / "dhis2.json").write_text('{"type": "DHIS2", "fields": {"password": null}}')
 
-    result = CliRunner().invoke(main, ["run", "pipe", "--dry-run"])
+    result = CliRunner().invoke(main, ["local", "run", "pipe", "--dry-run"])
 
     assert result.exit_code == 1
     assert "has no value for password" in result.output
-    assert "--show-secrets" in result.output
+    assert "hexa local pull connections/dhis2 --force" in result.output

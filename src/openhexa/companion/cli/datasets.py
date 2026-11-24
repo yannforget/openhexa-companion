@@ -6,12 +6,11 @@ from typing import Any
 
 import click
 
-from openhexa.companion import Client, DatasetVersion, NotFoundError
+from openhexa.companion import Client
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._local import (
     check_targets,
     local_path,
-    local_workspace,
     save_stream,
     upload_pairs,
 )
@@ -126,8 +125,9 @@ def files(
     "-o",
     "--output",
     type=click.Path(file_okay=False, path_type=Path),
-    help="Directory to save the files in, keeping their paths within the version, instead "
-    "of the local workspace used by `hexa run`.",
+    default=Path(),
+    help="Directory to save the files in, keeping their paths within the version. "
+    "Defaults to the current directory.",
 )
 @click.option("--force", is_flag=True, help="Replace local files that already exist.")
 @json_option
@@ -138,25 +138,19 @@ def download(
     dataset: str,
     paths: tuple[str, ...],
     version_name: str | None,
-    output: Path | None,
+    output: Path,
     force: bool,
     as_json: bool,
 ) -> None:
     """Download files of a dataset version: those at PATHS, or all of them.
 
-    Files go to the local workspace in the current directory,
-    .hexa/workspace/datasets/SLUG/VERSION/, where `hexa run` reads the dataset instead
-    of the workspace's. Use --output to save them elsewhere. Existing local files are
-    left untouched unless --force is given; the command stops before downloading
-    anything if one exists. With --json, prints the files written, with their
-    `local_path`.
+    Files keep their paths within the version. To copy a version for `hexa local run`,
+    use `hexa local pull datasets/DATASET[@VERSION]`. Existing local files are left
+    untouched unless --force is given; the command stops before downloading anything if
+    one exists. With --json, prints the files written, with their `local_path`.
     """
     library = client.get()
     version = library.datasets.version(dataset, version_name)
-    local = output is None
-    if output is None:
-        _check_local_slug(library, version)
-        output = local_workspace("datasets") / version.dataset / version.name
     if paths:
         selected = [library.datasets.file(version, path) for path in paths]
     else:
@@ -168,32 +162,8 @@ def download(
             save_stream(stream, target)
         click.echo(f"{target} ({format_size(file.size)})", err=True)
     click.echo(f"Downloaded {len(targets)} file(s) of version {version.name} to {output}", err=True)
-    if local:
-        click.echo(f"`hexa run` now reads dataset {version.dataset} from there.", err=True)
     if as_json:
         print_json([nest(file, local_path=str(target)) for file, target in targets])
-
-
-def _check_local_slug(library: Client, version: DatasetVersion) -> None:
-    """Refuse a local copy that would replace another dataset in `hexa run`.
-
-    Pipelines name datasets by slug, and `hexa run` finds local copies by slug. A
-    dataset shared from another workspace can only be saved under its slug if the slug
-    names that dataset in the workspace, as the SDK resolves it.
-    """
-    if version.workspace == library.workspace:
-        return
-    reference = f"{version.workspace}/{version.dataset}"
-    try:
-        resolved = library.datasets.get(version.dataset)
-    except NotFoundError:
-        resolved = None
-    if resolved is None or resolved.workspace != version.workspace:
-        raise click.ClickException(
-            f"In workspace {library.workspace}, the slug {version.dataset} does not name "
-            f"the shared dataset {reference}, so `hexa run` could not use a local copy of "
-            "it. Use --output to save it elsewhere."
-        )
 
 
 description_option = click.option(

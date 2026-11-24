@@ -10,9 +10,9 @@ from openhexa.companion.cli.connections import connections
 from openhexa.companion.cli.database import database
 from openhexa.companion.cli.datasets import datasets
 from openhexa.companion.cli.files import files
+from openhexa.companion.cli.local import local
 from openhexa.companion.cli.pipelines import pipelines
 from openhexa.companion.cli.queries import queries
-from openhexa.companion.cli.run import run
 from openhexa.companion.cli.runs import runs
 from openhexa.companion.cli.search import search
 from openhexa.companion.cli.webapps import webapps
@@ -46,9 +46,9 @@ main.add_command(connections)
 main.add_command(database)
 main.add_command(datasets)
 main.add_command(files)
+main.add_command(local)
 main.add_command(pipelines)
 main.add_command(queries)
-main.add_command(run)
 main.add_command(runs)
 main.add_command(search)
 main.add_command(webapps)

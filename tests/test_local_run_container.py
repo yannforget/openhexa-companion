@@ -1,4 +1,4 @@
-"""`hexa run` end to end: a real container engine and the demo workspace.
+"""`hexa local run` end to end: a real container engine and the demo workspace.
 
 Run on demand with `uv run pytest -m container`. The engine is HEXA_CONTAINER_ENGINE or
 the first of docker and podman; the image is HEXA_TEST_IMAGE or the workspace's.
@@ -53,7 +53,7 @@ def test_run_reads_locally_and_remotely(
     monkeypatch.chdir(tmp_path)
     image = ["--image", os.environ["HEXA_TEST_IMAGE"]] if "HEXA_TEST_IMAGE" in os.environ else []
 
-    result = CliRunner().invoke(main, ["run", "pipe", "--json", *image])
+    result = CliRunner().invoke(main, ["local", "run", "pipe", "--json", *image])
 
     assert result.exit_code == 0, result.output
     summary = json.loads(result.stdout)

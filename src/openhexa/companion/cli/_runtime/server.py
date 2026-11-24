@@ -144,8 +144,8 @@ def _page(items: list[Any], arguments: dict[str, Any]) -> dict[str, Any]:
 def refusal(names: str) -> str:
     return (
         f"Local run refused the remote write {names}: local runs do not change the "
-        "workspace. Use a local copy (for example `hexa datasets download SLUG`), "
-        "or run again with `hexa run --allow-remote-writes`."
+        "workspace. Use a local copy (for example `hexa local pull datasets/SLUG`), "
+        "or run again with `hexa local run --allow-remote-writes`."
     )
 
 

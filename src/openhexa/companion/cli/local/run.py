@@ -1,4 +1,4 @@
-"""`hexa run`: run a pipeline locally, in the image of hosted runs."""
+"""`hexa local run`: run a pipeline locally, in the image of hosted runs."""
 
 import json
 import os
@@ -19,7 +19,7 @@ import click
 
 from openhexa.companion import Workspace
 from openhexa.companion.cli._context import LazyClient, pass_client
-from openhexa.companion.cli._local import LOCAL_WORKSPACE, local_workspace
+from openhexa.companion.cli._local import LOCAL_WORKSPACE, local_versions, local_workspace
 from openhexa.companion.cli._output import json_option
 from openhexa.companion.cli._parameters import parameter_options, read_parameters
 from openhexa.companion.pipelines import source_files
@@ -27,7 +27,7 @@ from openhexa.companion.pipelines import source_files
 # Image of hosted runs when the workspace sets none, unless the instance changes it.
 DEFAULT_IMAGE = "blsq/openhexa-blsq-environment:latest"
 # Scripts run inside the container: the startup script and the local OpenHEXA API.
-RUNTIME = Path(__file__).parent / "_runtime"
+RUNTIME = Path(__file__).parent.parent / "_runtime"
 # Engines tried in order when none is chosen.
 ENGINES = ("docker", "podman")
 # Oldest Podman with `--userns=keep-id:uid=...,gid=...`.
@@ -109,9 +109,10 @@ def run(
 
     SOURCE is a directory with pipeline.py, the current directory by default. The
     pipeline runs in a container, with the image of hosted runs. It reads the copies of
-    workspace files, datasets and connections in .hexa/workspace/, where `hexa files
-    download` and `hexa datasets download` save them, and the rest from the workspace.
-    It cannot change the workspace unless --allow-remote-writes is given.
+    workspace files, datasets and connections in .hexa/workspace/, where `hexa local
+    pull` saves them, and the rest from the workspace. It cannot change the workspace
+    unless --allow-remote-writes is given. To run a published pipeline on OpenHEXA, use
+    `hexa pipelines run`.
 
     The command exits with the pipeline's exit code, or 130 when interrupted.
     """
@@ -314,7 +315,7 @@ def _existing(folder: Path) -> Path | None:
 def describe_local(datasets: Path | None, connections: Path | None) -> str:
     parts = ["files"]
     for folder in sorted(p for p in datasets.iterdir() if p.is_dir()) if datasets else ():
-        versions = sorted((p.name for p in folder.iterdir() if p.is_dir()), key=_natural_key)
+        versions = local_versions(folder)
         parts.append(f"dataset {folder.name} ({versions[-1] if versions else 'no version'})")
     if connections:
         parts += [f"connection {p.stem}" for p in sorted(connections.glob("*.json"))]
@@ -325,23 +326,22 @@ def check_connections(folder: Path) -> None:
     """Refuse connection files the SDK could not use, such as ones without secrets.
 
     Raises:
-        click.ClickException: A file is not the JSON of `hexa connections show`, or has
-            fields without a value.
+        click.ClickException: A file is not a connection saved by `hexa local pull`, or
+            has fields without a value.
     """
     for path in sorted(folder.glob("*.json")):
         fields = _connection_fields(path)
         if fields is None:
             raise click.ClickException(
-                f"{path} is not a connection: expected the JSON printed by `hexa "
-                f"connections show {path.stem} --show-secrets --json`, with `type` and "
-                "`fields`."
+                f"{path} is not a connection: expected the JSON saved by `hexa local pull "
+                f"connections/{path.stem}`, with `type` and `fields`."
             )
         missing = sorted(code for code, value in fields.items() if value is None)
         if missing:
             raise click.ClickException(
-                f"{path} has no value for {', '.join(missing)}: secret values are only "
-                f"printed with --show-secrets. Save it again with `hexa connections show "
-                f"{path.stem} --show-secrets --json > {path}`."
+                f"{path} has no value for {', '.join(missing)}. Save it again with `hexa "
+                f"local pull connections/{path.stem} --force`, with a token that may read "
+                "its secrets."
             )
 
 
@@ -355,10 +355,6 @@ def _connection_fields(path: Path) -> dict[str, Any] | None:
         return None
     fields = data.get("fields")
     return fields if isinstance(fields, dict) else None
-
-
-def _natural_key(name: str) -> list[Any]:
-    return [(0, int(p)) if p.isdigit() else (1, p.lower()) for p in re.split(r"(\d+)", name)]
 
 
 def container_command(engine: Engine, image: str, name: str, mounts: list[Mount]) -> list[str]:

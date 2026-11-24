@@ -1,6 +1,6 @@
 """Start a local pipeline run inside the pipeline image.
 
-`hexa run` runs `python /hexa/runtime/start.py` in the container and writes the run
+`hexa local run` runs `python /hexa/runtime/start.py` in the container and writes the run
 settings, including the real token, as one JSON line on stdin. This script starts the
 local OpenHEXA API on the container's loopback, runs the image's entrypoint with
 `pipeline run`, writes `/hexa/run/summary.json` and exits with the pipeline's code.

@@ -73,8 +73,8 @@ def show(client: LazyClient, slug: str, show_secrets: bool, as_json: bool) -> No
 def connection_json(connection: Connection, *, show_secrets: bool) -> dict[str, Any]:
     """The JSON of a connection, with `fields` mapping codes to values.
 
-    Secret values are `null` unless `show_secrets` is set. `hexa run` reads this JSON
-    as a local copy of the connection.
+    Secret values are `null` unless `show_secrets` is set. `hexa local pull` saves
+    this JSON as the local copy of the connection.
     """
     return {
         "slug": connection.slug,
