@@ -49,7 +49,7 @@ markers = [
 ]
 
 [tool.pyrefly]
-project-includes = ["src/**/*.py", "tests/**/*.py"]
+project-includes = ["src/**/*.py", "tests/**/*.py", "scripts/**/*.py"]
 
 [tool.ruff]
 line-length = 100

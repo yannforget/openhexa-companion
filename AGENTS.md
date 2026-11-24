@@ -22,6 +22,7 @@ Read [README.md](README.md) for what the project does and how it is used, and
 - `tests/`: tests.
 - `README.md` and `docs/`: user and operator documentation, written for people. Keep
   them in step with the code; don't put agent instructions there.
+  `scripts/reference.py` generates `docs/cli.md` and `docs/mcp-tools.md`.
 - `guidelines/`: rules for writing code in this project.
 - `plans/`: temporary implementation plans for handing context between sessions.
   Not tracked by Git and not documentation.

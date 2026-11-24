@@ -43,8 +43,8 @@ with `hexa workspace show`.
 ### Usage
 
 Commands are grouped by what they work on: `workspace`, `search`, `datasets`, `files`,
-`database`, `queries`, `connections`, `pipelines`, `runs`, `local` and `webapps`. Run
-`hexa <command> --help` for details.
+`database`, `queries`, `connections`, `pipelines`, `runs`, `local` and `webapps`. See
+the [CLI reference](docs/cli.md), or run `hexa <command> --help`.
 
 Find and read data:
 
@@ -134,6 +134,8 @@ The remote MCP server gives AI chat clients tools to:
 - list tables, run read-only SQL queries, and read and save Data Studio queries;
 - read pipelines, their code, runs and logs, and start or stop runs;
 - read webapps.
+
+See the [MCP tool reference](docs/mcp-tools.md) for every tool.
 
 To use it in Claude:
 
