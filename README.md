@@ -13,8 +13,6 @@ agent or an AI chat client.
 Everything goes through the OpenHEXA API with a workspace token: no changes to OpenHEXA
 are needed, and you can do what your token allows, nothing more.
 
-> The project is in early development: commands, tools and the Python API may change.
-
 ## The `hexa` CLI
 
 ### Installation
