@@ -137,21 +137,23 @@ The remote MCP server gives AI chat clients tools to:
 
 See the [MCP tool reference](docs/mcp-tools.md) for every tool.
 
-To use it in Claude:
+To use it:
 
-1. Add `https://<companion host>/mcp` as a custom MCP server.
-2. Select **Connect**, and enter a slug and token for each workspace Claude may use.
-3. To analyse dataset files, allow the storage host in Claude's code sandbox settings:
-   `storage.googleapis.com` for hosted OpenHEXA.
+1. Add `https://openhexa-companion.fly.dev/mcp` as a remote MCP server in your AI client.
+2. Connect, and enter a slug and token for each workspace the client may use.
+3. To analyse dataset files, allow the client's code sandbox to reach
+   `storage.googleapis.com` (or your OpenHEXA storage host).
 
-You can manage your connected clients and workspaces at `https://<companion host>/account`.
+<https://openhexa-companion.fly.dev/account> shows these steps, and lets you manage your
+connected clients and workspaces.
 
-The [`openhexa-mcp` skill](skills/openhexa-mcp/) helps Claude analyse data
-and investigate runs. Download it from the
+The [`openhexa-mcp` skill](skills/openhexa-mcp/) helps AI clients analyse data and
+investigate runs. Download it from the
 [latest release](https://github.com/yannforget/openhexa-companion/releases/latest).
 
 See [MCP](docs/mcp.md) for how access works and its limits, and
-[Deploying the MCP server](docs/deployment.md) to run your own.
+[Deploying the MCP server](docs/deployment.md) to run your own instead of the public
+one.
 
 ## The Python library
 
