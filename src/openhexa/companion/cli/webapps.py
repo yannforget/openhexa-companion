@@ -14,6 +14,7 @@ from openhexa.companion.cli._output import (
     json_option,
     limit_option,
     nest,
+    note,
     print_json,
     print_table,
 )
@@ -31,6 +32,8 @@ SCOPES = (
     "PIPELINES_READ",
     "PIPELINES_RUN",
 )
+# Scopes that let the webapp change the workspace for the person viewing it.
+WRITE_SCOPES = frozenset({"DATASETS_WRITE", "FILES_WRITE", "PIPELINES_RUN"})
 
 source_argument = click.argument(
     "source_dir",
@@ -74,7 +77,7 @@ def list_webapps(client: LazyClient, limit: int | None, as_json: bool) -> None:
 @json_option
 @pass_client
 def show(client: LazyClient, webapp: str, as_json: bool) -> None:
-    """Show a webapp, its files and its latest versions.
+    """Show a webapp, the files of the version it serves and its latest versions.
 
     With --json, prints the webapp with its `files` and latest `versions`.
     """
@@ -88,6 +91,9 @@ def show(client: LazyClient, webapp: str, as_json: bool) -> None:
     click.echo(f"{item.name} ({item.slug}, {item.type})")
     click.echo(f"URL: {item.url}")
     click.echo(f"Public: {'yes' if item.public else 'no'}")
+    if item.version:
+        latest = " (the latest)" if versions and versions[0].id == item.version else ""
+        click.echo(f"Serving version: {item.version}{latest}")
     if item.scopes:
         click.echo(f"Scopes: {', '.join(item.scopes)}")
     if item.description:
@@ -107,7 +113,8 @@ def show(client: LazyClient, webapp: str, as_json: bool) -> None:
 @click.argument("webapp")
 @click.option(
     "--version",
-    help="ID of a version, as shown by `hexa webapps versions list`. Defaults to the latest one.",
+    help="ID of a version, as shown by `hexa webapps versions list`. Defaults to the one "
+    "the webapp serves.",
 )
 @click.option(
     "-o",
@@ -214,11 +221,89 @@ def publish(
     current directory by default. The webapp ends up with exactly the files of SOURCE;
     files no longer there are removed. Hidden files and directories (such as .env and
     .git), node_modules and __pycache__ are not sent. The new version is live at once,
-    even if an earlier version was being served after a rollback. With --json, prints
-    the webapp with the paths `uploaded` and `deleted`.
+    even if an earlier version was served again with `hexa webapps update --version`.
+    With --json, prints the webapp with the paths `uploaded` and `deleted`.
     """
     result = client.get().webapps.publish(webapp, source_dir, message=message)
     _report(result, as_json=as_json)
+
+
+@webapps.command()
+@click.argument("webapp")
+@click.option("--name", help="Rename the webapp. Its slug and URL do not change.")
+@click.option("-d", "--description", help="What the webapp shows.")
+@click.option(
+    "--public/--private",
+    default=None,
+    help="Let anyone open it without signing in, or only workspace members.",
+)
+@click.option(
+    "--scope",
+    "scopes",
+    multiple=True,
+    type=click.Choice(SCOPES, case_sensitive=False),
+    help="An OpenHEXA operation the webapp may perform for the person viewing it. Replaces "
+    "the current scopes; repeat for each scope.",
+)
+@click.option("--no-scopes", is_flag=True, help="Remove every scope.")
+@click.option(
+    "--version",
+    help="Serve this version of a static webapp: its ID or the start of it, as shown by "
+    "`hexa webapps versions list`.",
+)
+@json_option
+@pass_client
+def update(
+    client: LazyClient,
+    *,
+    webapp: str,
+    name: str | None,
+    description: str | None,
+    public: bool | None,
+    scopes: tuple[str, ...],
+    no_scopes: bool,
+    version: str | None,
+    as_json: bool,
+) -> None:
+    """Change the settings of WEBAPP, or the version it serves.
+
+    --version serves an earlier version, to roll back a publication; newer versions are
+    kept, so you can serve them again. `hexa webapps publish` publishes a new version and
+    serves it. Making the webapp public or giving it scopes that change data prints a
+    warning. Only workspace editors and admins may change a webapp. With --json, prints
+    the webapp.
+    """
+    if scopes and no_scopes:
+        raise click.UsageError("Give either --scope or --no-scopes, not both")
+    new_scopes = [scope.upper() for scope in scopes] if scopes else [] if no_scopes else None
+    if all(value is None for value in (name, description, public, new_scopes, version)):
+        raise click.UsageError(
+            "Give at least one of --name, --description, --public, --private, --scope, "
+            "--no-scopes or --version"
+        )
+    library = client.get()
+    before = library.webapps.get(webapp)
+    item = library.webapps.update(
+        webapp,
+        name=name,
+        description=description,
+        public=public,
+        scopes=new_scopes,
+        version=version,
+    )
+    click.echo(f"Updated webapp {item.slug}", err=True)
+    if item.public and not before.public:
+        note(f"Warning: anyone can now open {item.url} without signing in")
+    added = sorted(WRITE_SCOPES.intersection(item.scopes).difference(before.scopes))
+    if added:
+        note(
+            f"Warning: {item.slug} may now {', '.join(added)} for the person viewing it"
+            + (", and anyone can open it" if item.public else "")
+        )
+    if version is not None:
+        note(f"Serving version {item.version}")
+    if as_json:
+        print_json(item)
 
 
 @webapps.command()

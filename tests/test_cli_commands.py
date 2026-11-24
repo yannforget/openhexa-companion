@@ -478,3 +478,74 @@ def test_pipelines_update_names_parameters_missing_for_a_schedule(fake_openhexa:
     assert result.exit_code == 1
     assert "(country)" in result.stderr
     assert "--param CODE=VALUE" in result.stderr
+
+
+WEBAPP_VERSIONS = ["c3" * 20, "b2" * 20, "a1" * 20]
+
+
+def _webapp(mutations: list[dict[str, Any]]) -> Handler:
+    """Answer lookups of static webapp `site`, private with read scopes, recording updates."""
+    webapp = {
+        "id": "w1",
+        "slug": "site",
+        "name": "Site",
+        "description": "",
+        "type": "STATIC",
+        "url": "https://site.test/",
+        "isPublic": False,
+        "allowedOperations": ["DATASETS_READ"],
+        "source": {"__typename": "GitSource", "publishedVersion": WEBAPP_VERSIONS[0]},
+    }
+
+    def handler(body: dict[str, Any]) -> dict[str, Any]:
+        query = body["query"]
+        if "updateWebapp(" in query:
+            changes = body["variables"]["input"]
+            mutations.append(changes)
+            updated = {**webapp, **{k: v for k, v in changes.items() if k in webapp}}
+            if "publishedVersionId" in changes:
+                source = {
+                    "__typename": "GitSource",
+                    "publishedVersion": changes["publishedVersionId"],
+                }
+                updated["source"] = source
+            return {"updateWebapp": {"success": True, "errors": [], "webapp": updated}}
+        if "versions(" in query:
+            items = [
+                {"id": v, "message": "m", "date": "2026-11-01T10:00:00+00:00", "authorName": "Ana"}
+                for v in WEBAPP_VERSIONS
+            ]
+            return {"webapp": {"versions": {"items": items}}}
+        return {"webapp": webapp}
+
+    return handler
+
+
+def test_webapps_update_warns_about_public_access_and_write_scopes(fake_openhexa: FakeOpenHexa):
+    mutations: list[dict[str, Any]] = []
+    fake_openhexa(_webapp(mutations))
+
+    result = _invoke("webapps", "update", "site", "--public", "--scope", "files_write")
+
+    assert result.exit_code == 0, result.output
+    assert mutations == [{"id": "w1", "isPublic": True, "allowedOperations": ["FILES_WRITE"]}]
+    assert "anyone can now open https://site.test/" in result.stderr
+    assert "may now FILES_WRITE" in result.stderr
+
+
+def test_webapps_update_serves_an_earlier_version(fake_openhexa: FakeOpenHexa):
+    mutations: list[dict[str, Any]] = []
+    fake_openhexa(_webapp(mutations))
+
+    result = _invoke("webapps", "update", "site", "--version", "a1a1", "--name", "Old", "--json")
+    unknown = _invoke("webapps", "update", "site", "--version", "")
+
+    assert result.exit_code == 0, result.output
+    # OpenHEXA drops other changes made with the version, so they are sent separately.
+    assert mutations == [
+        {"id": "w1", "name": "Old"},
+        {"id": "w1", "publishedVersionId": WEBAPP_VERSIONS[2]},
+    ]
+    assert json.loads(result.stdout)["version"] == WEBAPP_VERSIONS[2]
+    assert "Warning" not in result.stderr
+    assert unknown.exit_code == 3

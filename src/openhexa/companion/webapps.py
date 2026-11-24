@@ -95,7 +95,8 @@ mutation DeleteWebapp($input: DeleteWebappInput!) {
 # Explanations of the error codes returned by webapp mutations.
 WEBAPP_ERRORS = {
     "ALREADY_EXISTS": "a webapp with this name already exists in the workspace",
-    "PERMISSION_DENIED": "the token may not manage webapps in this workspace",
+    "PERMISSION_DENIED": "the token may not manage webapps in this workspace; only "
+    "workspace editors and admins can",
     "SAVE_FAILED": "OpenHEXA could not store the files",
     "TYPE_MISMATCH": "only static webapps hold files",
     "VERSION_NOT_FOUND": "the version does not exist",
@@ -189,7 +190,7 @@ class Publication:
 
 
 class Webapps:
-    """Reads and publishes the webapps of a workspace."""
+    """Reads, publishes and configures the webapps of a workspace."""
 
     def __init__(self, transport: Transport, workspace: str) -> None:
         self._transport = transport
@@ -223,15 +224,19 @@ class Webapps:
 
         Args:
             slug: Slug of the webapp.
-            version: ID of a version, or `None` for the latest one.
+            version: ID of a version, or `None` for the one the webapp serves, which is
+                the latest unless an earlier one was served again with `update`.
             content: Include the bytes of each file. Files of 10 MB or more are not
                 readable through the API and have no content.
 
         Raises:
             NotFoundError: The workspace has no webapp `slug`.
         """
-        variables = {"ref": version, "content": content}
-        data = self._find(FILES_QUERY, slug, **variables)["files"] or []
+        return self._files(slug, version or self.get(slug).version, content=content)
+
+    def _files(self, slug: str, ref: str | None, *, content: bool) -> builtins.list[WebappFile]:
+        """List the files at `ref`, a version ID, or at the latest version if `None`."""
+        data = self._find(FILES_QUERY, slug, ref=ref, content=content)["files"] or []
         return [_file(item) for item in data if item["type"] == "file"]
 
     def versions(self, slug: str, *, limit: int | None = 20) -> builtins.list[WebappVersion]:
@@ -319,7 +324,8 @@ class Webapps:
         The webapp ends up with exactly the files of `source`: files no longer in
         `source` are removed. Hidden files and directories (such as `.env` and `.git`),
         `node_modules` and `__pycache__` are not sent. The change is published at once
-        and becomes a new version.
+        and becomes a new version, which the webapp serves even if it served an earlier
+        one.
 
         Args:
             slug: Slug of a static webapp.
@@ -335,7 +341,9 @@ class Webapps:
         files = package_site(source)
         webapp = self.get(slug)
         sent = {file["path"] for file in files}
-        deleted = sorted(file.path for file in self.files(slug) if file.path not in sent)
+        # Publishing adds a version after the latest one, even if an earlier one is served.
+        latest = self._files(slug, None, content=False)
+        deleted = sorted(file.path for file in latest if file.path not in sent)
         result = self._transport.mutate(
             "updateWebapp",
             UPDATE_MUTATION,
@@ -356,6 +364,64 @@ class Webapps:
             deleted=deleted,
         )
 
+    def update(
+        self,
+        slug: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        public: bool | None = None,
+        scopes: builtins.list[str] | None = None,
+        version: str | None = None,
+    ) -> Webapp:
+        """Change a webapp's settings or the version it serves; `None` keeps a field.
+
+        Args:
+            slug: Slug of the webapp. It does not change with the name.
+            name: The new display name.
+            description: What the webapp shows.
+            public: Let anyone open it without signing in to OpenHEXA, or only workspace
+                members.
+            scopes: Replace the OpenHEXA operations the webapp may perform for the person
+                viewing it, such as `DATASETS_READ`; an empty list removes them all.
+            version: Serve this version of a static webapp: its ID, or the start of it,
+                as listed by `versions`. Newer versions are kept, so a later call can
+                serve them again.
+
+        Raises:
+            InvalidInputError: No change is given, or `version` matches several versions.
+            NotFoundError: The workspace has no webapp `slug`, or it has no such version.
+            PermissionDeniedError: The token may not update the webapp: only workspace
+                editors and admins can.
+            APIError: OpenHEXA rejected the change, such as a version for a webapp that
+                is not static (code `TYPE_MISMATCH`).
+        """
+        changes: dict[str, Any] = {
+            "name": name,
+            "description": description,
+            "isPublic": public,
+            "allowedOperations": scopes,
+        }
+        changes = {key: value for key, value in changes.items() if value is not None}
+        if not changes and version is None:
+            raise InvalidInputError(f"No change given for webapp '{slug}'")
+        webapp_id = self.get(slug).id
+        # OpenHEXA drops the other changes of a request that also changes the served
+        # version, so the version is changed in a request of its own.
+        requests = [changes] if changes else []
+        if version is not None:
+            requests.append({"publishedVersionId": self._version_id(slug, version)})
+        result: dict[str, Any] = {}
+        for request in requests:
+            result = self._transport.mutate(
+                "updateWebapp",
+                UPDATE_MUTATION,
+                {"input": {"id": webapp_id, **request}},
+                action=f"update webapp '{slug}' in workspace '{self._workspace}'",
+                reasons=WEBAPP_ERRORS,
+            )
+        return _webapp(result["webapp"])
+
     def delete(self, slug: str) -> None:
         """Delete a webapp.
 
@@ -371,6 +437,22 @@ class Webapps:
             action=f"delete webapp '{slug}' in workspace '{self._workspace}'",
             reasons=WEBAPP_ERRORS,
         )
+
+    def _version_id(self, slug: str, version: str) -> str:
+        """The full ID of the version of `slug` whose ID is or starts with `version`."""
+        versions = self.versions(slug, limit=None)
+        matches = [item.id for item in versions if item.id.startswith(version)]
+        if not version or not matches:
+            raise NotFoundError(
+                f"Webapp '{slug}' in workspace '{self._workspace}' has no version '{version}'. "
+                f"Versions, newest first: {format_options(item.id for item in versions)}"
+            )
+        if len(matches) > 1:
+            raise InvalidInputError(
+                f"Version '{version}' of webapp '{slug}' is ambiguous: give more of the ID "
+                f"among {format_options(matches)}"
+            )
+        return matches[0]
 
     def _find(self, query: str, slug: str, **variables: Any) -> dict[str, Any]:
         """Run a query on the webapp `slug` and return the webapp object."""

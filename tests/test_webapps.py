@@ -39,6 +39,21 @@ def test_create_publish_and_delete(client: Client, tmp_path: Path):
         files = {file.path: file.content for file in client.webapps.files(slug, content=True)}
         assert files == {"index.html": b"<h1>second</h1>", "logo.png": BINARY}
         assert client.webapps.versions(slug)[0].message == "second"
+
+        first = created.webapp.version or ""
+        rolled_back = client.webapps.update(slug, version=first[:10], public=True, scopes=[])
+        assert (rolled_back.version, rolled_back.public) == (first, True)
+        assert {file.path for file in client.webapps.files(slug)} == {
+            "index.html",
+            "old.txt",
+            "logo.png",
+        }
+
+        # Publishing after serving an earlier version compares with the latest one.
+        (tmp_path / "index.html").write_text("<h1>third</h1>")
+        third = client.webapps.publish(slug, tmp_path, message="third")
+        assert third.deleted == []
+        assert third.webapp.version == client.webapps.versions(slug)[0].id
     finally:
         client.webapps.delete(slug)
 
