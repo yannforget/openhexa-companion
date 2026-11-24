@@ -54,6 +54,7 @@ Read the relevant guidelines before changing code:
 
 - [guidelines/python.md](guidelines/python.md): any Python code.
 - [guidelines/library.md](guidelines/library.md): the library, outside `cli/` and `server/`.
+- [guidelines/cli.md](guidelines/cli.md): the `hexa` CLI, in `cli/`.
 
 For Python changes, run:
 
