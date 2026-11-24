@@ -19,10 +19,11 @@ jobs:
       HEXA_CONTAINER_ENGINE: ${{ matrix.engine }}
       HEXA_TEST_IMAGE: ${{ inputs.image }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      # Before setup-uv, which installs into /opt/hostedtoolcache.
       - name: Free disk space for the image
         run: sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
       - name: Pull the image
         run: ${{ matrix.engine }} pull --platform linux/amd64 "docker.io/$HEXA_TEST_IMAGE"
       - name: Write the demo workspace credentials
