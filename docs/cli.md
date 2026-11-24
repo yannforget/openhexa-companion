@@ -6,21 +6,21 @@ Every command of `hexa`, as printed by `hexa <command> --help`. Every command
 also accepts `--json` and `--help`. See the [README](../README.md#the-hexa-cli) to
 install and configure `hexa`.
 
-- [`hexa connections`](#hexa-connections)
-- [`hexa database`](#hexa-database)
-- [`hexa datasets`](#hexa-datasets)
-- [`hexa files`](#hexa-files)
-- [`hexa local`](#hexa-local)
-- [`hexa pipelines`](#hexa-pipelines)
-- [`hexa queries`](#hexa-queries)
-- [`hexa runs`](#hexa-runs)
-- [`hexa search`](#hexa-search)
-- [`hexa webapps`](#hexa-webapps)
-- [`hexa workspace`](#hexa-workspace)
+- [`hexa connections`](#hexa-connections): Read the connections of the workspace.
+- [`hexa database`](#hexa-database): Read the tables and credentials of the workspace database.
+- [`hexa datasets`](#hexa-datasets): Read and publish datasets.
+- [`hexa files`](#hexa-files): Read and write the workspace files, shared by pipelines and notebooks.
+- [`hexa local`](#hexa-local): Run pipelines on this machine, with a local copy of the workspace.
+- [`hexa pipelines`](#hexa-pipelines): Read, publish and run pipelines on OpenHEXA.
+- [`hexa queries`](#hexa-queries): Read and save the SQL queries of the workspace's Data Studio.
+- [`hexa runs`](#hexa-runs): Inspect and stop pipeline runs on OpenHEXA.
+- [`hexa search`](#hexa-search): Find datasets, pipelines, webapps, saved queries and tables matching any word of QUERY.
+- [`hexa webapps`](#hexa-webapps): Read and publish webapps.
+- [`hexa workspace`](#hexa-workspace): Read and edit the workspace configured in .env.
 
-```
-hexa [OPTIONS] COMMAND [ARGS]...
-```
+## `hexa`
+
+**`hexa COMMAND [ARGS]...`**
 
 Work with an OpenHEXA workspace.
 
@@ -29,38 +29,24 @@ as {"error": {"type", "message"}} on stderr. Exit codes: 1 for an error, 2 for
 misuse, 3 for not found, 4 for permission denied or a rejected token, 5 for a run
 that did not succeed.
 
-| Option | Description |
-| --- | --- |
-| `--version` | Show the version and exit. |
-| `--env-file FILE` | File with OPENHEXA_URL, OPENHEXA_WORKSPACE and OPENHEXA_TOKEN. Environment variables take precedence. [default: .env] |
+- `--version`: Show the version and exit.
+- `--env-file FILE`: File with OPENHEXA_URL, OPENHEXA_WORKSPACE and OPENHEXA_TOKEN. Environment variables take precedence. [default: .env]
 
 ## `hexa connections`
 
 Read the connections of the workspace.
 
-### `hexa connections list`
-
-```
-hexa connections list [OPTIONS]
-```
+**`hexa connections list`**
 
 List the connections of the workspace, with secret values hidden.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of connections to show. Defaults to all. [x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of connections to show. Defaults to all. [x>=1]
 
-### `hexa connections show`
-
-```
-hexa connections show [OPTIONS] SLUG
-```
+**`hexa connections show SLUG`**
 
 Show the fields of a connection, with secret values hidden by default.
 
-| Option | Description |
-| --- | --- |
-| `--show-secrets` | Print secret values. Only use on your own machine, never in shared logs. |
+- `--show-secrets`: Print secret values. Only use on your own machine, never in shared logs.
 
 ## `hexa database`
 
@@ -69,36 +55,20 @@ Read the tables and credentials of the workspace database.
 Query it with ordinary clients through `hexa database exec`. Only workspace editors
 and admins, and organization admins and owners, get the credentials.
 
-### `hexa database tables`
-
-```
-hexa database tables [OPTIONS]
-```
+**`hexa database tables`**
 
 List the tables of the workspace database.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of tables to show. Defaults to all. [x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of tables to show. Defaults to all. [x>=1]
 
-### `hexa database credentials`
-
-```
-hexa database credentials [OPTIONS]
-```
+**`hexa database credentials`**
 
 Show how to connect to the workspace database, with the password hidden by default.
 
-| Option | Description |
-| --- | --- |
-| `--read-only` | Credentials of a user that may only read. |
-| `--show-secrets` | Print secret values. Only use on your own machine, never in shared logs. |
+- `--read-only`: Credentials of a user that may only read.
+- `--show-secrets`: Print secret values. Only use on your own machine, never in shared logs.
 
-### `hexa database exec`
-
-```
-hexa database exec [OPTIONS] COMMAND...
-```
+**`hexa database exec COMMAND...`**
 
 Run COMMAND connected to the workspace database, and exit with its exit code.
 
@@ -111,9 +81,7 @@ COMMAND connects as the read-only user unless --write is given. Only workspace
 editors and admins, and organization admins and owners, get the credentials. With
 --json, only errors are printed as JSON: COMMAND prints what it prints.
 
-| Option | Description |
-| --- | --- |
-| `--write` | Connect as the user that may also write. |
+- `--write`: Connect as the user that may also write.
 
 ## `hexa datasets`
 
@@ -122,46 +90,26 @@ Read and publish datasets.
 DATASET is a dataset slug, or WORKSPACE/SLUG for a dataset shared from another
 workspace.
 
-### `hexa datasets list`
-
-```
-hexa datasets list [OPTIONS]
-```
+**`hexa datasets list`**
 
 List the datasets of the workspace, including those shared with it.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of datasets to show. Defaults to all. [x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of datasets to show. Defaults to all. [x>=1]
 
-### `hexa datasets show`
-
-```
-hexa datasets show [OPTIONS] DATASET
-```
+**`hexa datasets show DATASET`**
 
 Show a dataset and its description.
 
-### `hexa datasets files`
-
-```
-hexa datasets files [OPTIONS] DATASET
-```
+**`hexa datasets files DATASET`**
 
 List the files of a dataset version.
 
 Each file names its version, also printed on stderr.
 
-| Option | Description |
-| --- | --- |
-| `--version TEXT` | Version name. Defaults to the latest version. |
-| `-n, --limit INTEGER RANGE` | Maximum number of files to show. Defaults to all. [x>=1] |
+- `--version TEXT`: Version name. Defaults to the latest version.
+- `-n, --limit INTEGER RANGE`: Maximum number of files to show. Defaults to all. [x>=1]
 
-### `hexa datasets download`
-
-```
-hexa datasets download [OPTIONS] DATASET [PATHS]...
-```
+**`hexa datasets download DATASET [PATHS]...`**
 
 Download files of a dataset version: those at PATHS, or all of them.
 
@@ -170,17 +118,11 @@ use `hexa local pull datasets/DATASET[@VERSION]`. Existing local files are left
 untouched unless --force is given; the command stops before downloading anything if
 one exists. With --json, prints the files written, with their `local_path`.
 
-| Option | Description |
-| --- | --- |
-| `--version TEXT` | Version name. Defaults to the latest version. |
-| `-o, --output DIRECTORY` | Directory to save the files in, keeping their paths within the version. Defaults to the current directory. |
-| `--force` | Replace local files that already exist. |
+- `--version TEXT`: Version name. Defaults to the latest version.
+- `-o, --output DIRECTORY`: Directory to save the files in, keeping their paths within the version. Defaults to the current directory.
+- `--force`: Replace local files that already exist.
 
-### `hexa datasets read`
-
-```
-hexa datasets read [OPTIONS] DATASET PATH
-```
+**`hexa datasets read DATASET PATH`**
 
 Print the file at PATH of a dataset version to stdout, as is, without saving it.
 
@@ -189,15 +131,9 @@ Pipe it into `head` to look at the start of a large file. With --json, only erro
 are printed as JSON: the content is printed as is, since it may not be text. Use
 `hexa datasets download` to save files.
 
-| Option | Description |
-| --- | --- |
-| `--version TEXT` | Version name. Defaults to the latest version. |
+- `--version TEXT`: Version name. Defaults to the latest version.
 
-### `hexa datasets create`
-
-```
-hexa datasets create [OPTIONS] NAME [SOURCES]...
-```
+**`hexa datasets create NAME [SOURCES]...`**
 
 Create a dataset named NAME and print its slug.
 
@@ -205,17 +141,11 @@ With SOURCES, publishes them as its first version, as `hexa datasets publish` do
 without them, the dataset is empty. With --json, prints the dataset, with the first
 version and its `files` as `version` when SOURCES are given.
 
-| Option | Description |
-| --- | --- |
-| `--name TEXT` | Name of the first version, when SOURCES are given. Defaults to v1. |
-| `-d, --description TEXT` | Description of the dataset, in Markdown. |
-| `-m, --message TEXT` | What changed in this version. |
+- `--name TEXT`: Name of the first version, when SOURCES are given. Defaults to v1.
+- `-d, --description TEXT`: Description of the dataset, in Markdown.
+- `-m, --message TEXT`: What changed in this version.
 
-### `hexa datasets publish`
-
-```
-hexa datasets publish [OPTIONS] DATASET SOURCES...
-```
+**`hexa datasets publish DATASET SOURCES...`**
 
 Publish SOURCES as a new version of a dataset, which becomes its latest version.
 
@@ -223,41 +153,27 @@ Files are added at the root of the version. The files in a directory keep their
 path relative to it; hidden files and directories, such as `.env`, are skipped.
 With --json, prints the version with its `files`.
 
-| Option | Description |
-| --- | --- |
-| `--name TEXT` | Name of the new version. [required] |
-| `-m, --message TEXT` | What changed in this version. |
+- `--name TEXT`: Name of the new version. [required]
+- `-m, --message TEXT`: What changed in this version.
 
-### `hexa datasets update`
-
-```
-hexa datasets update [OPTIONS] DATASET
-```
+**`hexa datasets update DATASET`**
 
 Change the name or description of a dataset.
 
 Use `hexa datasets versions update` to change a version. With --json, prints the
 dataset.
 
-| Option | Description |
-| --- | --- |
-| `--name TEXT` | New name of the dataset. Its slug does not change. |
-| `-d, --description TEXT` | Description of the dataset, in Markdown. |
+- `--name TEXT`: New name of the dataset. Its slug does not change.
+- `-d, --description TEXT`: Description of the dataset, in Markdown.
 
-### `hexa datasets delete`
-
-```
-hexa datasets delete [OPTIONS] DATASET
-```
+**`hexa datasets delete DATASET`**
 
 Delete a dataset with all its versions and files.
 
 Use `hexa datasets versions delete` to delete a single version. With --json, prints
 the dataset.
 
-| Option | Description |
-| --- | --- |
-| `-y, --yes` | Do not ask for confirmation. |
+- `-y, --yes`: Do not ask for confirmation.
 
 ### `hexa datasets versions`
 
@@ -265,45 +181,27 @@ List, rename and delete the versions of a dataset.
 
 VERSION is the name of a version, as shown by `hexa datasets versions list`.
 
-#### `hexa datasets versions list`
-
-```
-hexa datasets versions list [OPTIONS] DATASET
-```
+**`hexa datasets versions list DATASET`**
 
 List the versions of a dataset, newest first.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of versions to show. [default: 20; x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of versions to show. [default: 20; x>=1]
 
-#### `hexa datasets versions update`
-
-```
-hexa datasets versions update [OPTIONS] DATASET VERSION
-```
+**`hexa datasets versions update DATASET VERSION`**
 
 Rename a version of a dataset or change its message. With --json, prints the version.
 
-| Option | Description |
-| --- | --- |
-| `--name TEXT` | New name of the version. |
-| `-m, --message TEXT` | New description of what changed in the version. |
+- `--name TEXT`: New name of the version.
+- `-m, --message TEXT`: New description of what changed in the version.
 
-#### `hexa datasets versions delete`
-
-```
-hexa datasets versions delete [OPTIONS] DATASET VERSION
-```
+**`hexa datasets versions delete DATASET VERSION`**
 
 Delete a version of a dataset and its files.
 
 Deleting the latest version makes the previous one the latest. With --json, prints
 the version.
 
-| Option | Description |
-| --- | --- |
-| `-y, --yes` | Do not ask for confirmation. |
+- `-y, --yes`: Do not ask for confirmation.
 
 ### `hexa datasets attributes`
 
@@ -312,22 +210,14 @@ Set or delete the custom attributes of a dataset.
 Attributes are key/value metadata, such as source=DHIS2 or year=2025. `hexa
 datasets show` lists them.
 
-#### `hexa datasets attributes set`
-
-```
-hexa datasets attributes set [OPTIONS] DATASET KEY VALUE
-```
+**`hexa datasets attributes set DATASET KEY VALUE`**
 
 Set the attribute KEY of a dataset to VALUE, replacing any previous value.
 
 VALUE is read as JSON if it can be (2025, true, ["COD","SEN"]), as text otherwise.
 With --json, prints the dataset.
 
-#### `hexa datasets attributes delete`
-
-```
-hexa datasets attributes delete [OPTIONS] DATASET KEY
-```
+**`hexa datasets attributes delete DATASET KEY`**
 
 Remove the attribute KEY of a dataset. With --json, prints the dataset.
 
@@ -337,24 +227,14 @@ Read and write the workspace files, shared by pipelines and notebooks.
 
 PATH is relative to the root of the workspace files, such as data/cases.csv.
 
-### `hexa files list`
-
-```
-hexa files list [OPTIONS] [DIRECTORY]
-```
+**`hexa files list [DIRECTORY]`**
 
 List the files in DIRECTORY, or the root by default.
 
-| Option | Description |
-| --- | --- |
-| `-r, --recursive` | List the files of subdirectories too. |
-| `-n, --limit INTEGER RANGE` | Maximum number of files to show. Defaults to all. [x>=1] |
+- `-r, --recursive`: List the files of subdirectories too.
+- `-n, --limit INTEGER RANGE`: Maximum number of files to show. Defaults to all. [x>=1]
 
-### `hexa files download`
-
-```
-hexa files download [OPTIONS] PATHS...
-```
+**`hexa files download PATHS...`**
 
 Download the files or directories at PATHS.
 
@@ -364,16 +244,10 @@ local pull files/PATH`. Existing local files are left untouched unless --force i
 given; the command stops before downloading anything if one exists. With --json,
 prints the files written, with their `local_path`.
 
-| Option | Description |
-| --- | --- |
-| `-o, --output DIRECTORY` | Directory to save the files in. Defaults to the current directory. |
-| `--force` | Replace local files that already exist. |
+- `-o, --output DIRECTORY`: Directory to save the files in. Defaults to the current directory.
+- `--force`: Replace local files that already exist.
 
-### `hexa files read`
-
-```
-hexa files read [OPTIONS] PATH
-```
+**`hexa files read PATH`**
 
 Print the file at PATH to stdout, as is, without saving it.
 
@@ -381,11 +255,7 @@ Pipe it into `head` to look at the start of a large file. With --json, only erro
 are printed as JSON: the content is printed as is, since it may not be text. Use
 `hexa files download` to save files.
 
-### `hexa files upload`
-
-```
-hexa files upload [OPTIONS] SOURCES...
-```
+**`hexa files upload SOURCES...`**
 
 Upload SOURCES to the workspace files.
 
@@ -394,24 +264,16 @@ directories, such as .env, are skipped. Existing workspace files are left untouc
 unless --force is given; the command stops before uploading anything if one exists.
 With --json, prints the files uploaded.
 
-| Option | Description |
-| --- | --- |
-| `--to TEXT` | Directory of the workspace files to upload to. Defaults to the root. |
-| `--force` | Replace workspace files that already exist. |
+- `--to TEXT`: Directory of the workspace files to upload to. Defaults to the root.
+- `--force`: Replace workspace files that already exist.
 
-### `hexa files delete`
-
-```
-hexa files delete [OPTIONS] PATH
-```
+**`hexa files delete PATH`**
 
 Delete the file at PATH, or the directory at PATH with everything in it.
 
 With --json, prints the file or directory deleted.
 
-| Option | Description |
-| --- | --- |
-| `-y, --yes` | Do not ask for confirmation. |
+- `-y, --yes`: Do not ask for confirmation.
 
 ## `hexa local`
 
@@ -422,11 +284,7 @@ commands from the project root. It holds workspace files, dataset versions and
 connections, and mirrors their names: an ITEM is a path in it, such as
 files/data/cases.csv, datasets/population or connections/dhis2-prod.
 
-### `hexa local run`
-
-```
-hexa local run [OPTIONS] [SOURCE]
-```
+**`hexa local run [SOURCE]`**
 
 Run the pipeline in SOURCE locally, without deploying it.
 
@@ -439,22 +297,16 @@ unless --allow-remote-writes is given. To run a published pipeline on OpenHEXA, 
 
 The command exits with the pipeline's exit code, or 130 when interrupted.
 
-| Option | Description |
-| --- | --- |
-| `-p, --param CODE=VALUE` | Value of a parameter. VALUE is read as JSON if it can be (42, true, ["a","b"]), as a string otherwise. Repeat for each parameter. |
-| `--params-file FILE` | JSON file with parameter values by code; --param values take precedence. |
-| `--image TEXT` | Image to run the pipeline in, instead of the workspace's. |
-| `--engine COMMAND` | Container engine command, such as docker, podman or "distrobox-host-exec podman". Defaults to HEXA_CONTAINER_ENGINE, then the first of docker and podman that answers. |
-| `--ignore-local-datasets` | Read every dataset from the workspace, even those with a local copy. |
-| `--ignore-local-connections` | Read every connection from the workspace, even those with a local file. |
-| `--allow-remote-writes` | Let the pipeline change the workspace, such as creating dataset versions. |
-| `--dry-run` | Run the checks and print the engine command, then stop. |
+- `-p, --param CODE=VALUE`: Value of a parameter. VALUE is read as JSON if it can be (42, true, ["a","b"]), as a string otherwise. Repeat for each parameter.
+- `--params-file FILE`: JSON file with parameter values by code; --param values take precedence.
+- `--image TEXT`: Image to run the pipeline in, instead of the workspace's.
+- `--engine COMMAND`: Container engine command, such as docker, podman or "distrobox-host-exec podman". Defaults to HEXA_CONTAINER_ENGINE, then the first of docker and podman that answers.
+- `--ignore-local-datasets`: Read every dataset from the workspace, even those with a local copy.
+- `--ignore-local-connections`: Read every connection from the workspace, even those with a local file.
+- `--allow-remote-writes`: Let the pipeline change the workspace, such as creating dataset versions.
+- `--dry-run`: Run the checks and print the engine command, then stop.
 
-### `hexa local pull`
-
-```
-hexa local pull [OPTIONS] ITEMS...
-```
+**`hexa local pull ITEMS...`**
 
 Copy workspace files, dataset versions and connections into .hexa/workspace/.
 
@@ -470,15 +322,9 @@ the workspace. Every item is checked before anything is written: existing local
 files are left untouched unless --force is given. With --json, prints the items
 copied, with their `files`.
 
-| Option | Description |
-| --- | --- |
-| `--force` | Replace local files that already exist. |
+- `--force`: Replace local files that already exist.
 
-### `hexa local status`
-
-```
-hexa local status [OPTIONS]
-```
+**`hexa local status`**
 
 Show what the local copy in .hexa/workspace/ holds.
 
@@ -486,11 +332,7 @@ Lists the number of workspace files, the versions of each dataset with the one
 `hexa local run` reads (the greatest in natural order, so v10 comes after v2), and
 the connections. With --json, prints {"files", "datasets", "connections"}.
 
-### `hexa local clean`
-
-```
-hexa local clean [OPTIONS] [ITEM]
-```
+**`hexa local clean [ITEM]`**
 
 Delete the local copy of ITEM, or the whole local copy by default.
 
@@ -499,9 +341,7 @@ datasets/population, datasets/population/v3 (or datasets/population@v3) or
 connections/dhis2-prod. `hexa local run` then reads it from the workspace again.
 With --json, prints the item deleted, with its number of `files`.
 
-| Option | Description |
-| --- | --- |
-| `-y, --yes` | Do not ask for confirmation. |
+- `-y, --yes`: Do not ask for confirmation.
 
 ## `hexa pipelines`
 
@@ -509,38 +349,22 @@ Read, publish and run pipelines on OpenHEXA.
 
 PIPELINE is the code of a pipeline, as shown by `hexa pipelines list`.
 
-### `hexa pipelines list`
-
-```
-hexa pipelines list [OPTIONS]
-```
+**`hexa pipelines list`**
 
 List the pipelines of the workspace.
 
-| Option | Description |
-| --- | --- |
-| `--last-run-status [queued|running|terminating|success|failed|stopped|skipped]` | Only list pipelines whose latest run has this status, such as failed. |
-| `-n, --limit INTEGER RANGE` | Maximum number of pipelines to show. Defaults to all. [x>=1] |
+- `--last-run-status [queued|running|terminating|success|failed|stopped|skipped]`: Only list pipelines whose latest run has this status, such as failed.
+- `-n, --limit INTEGER RANGE`: Maximum number of pipelines to show. Defaults to all. [x>=1]
 
-### `hexa pipelines show`
-
-```
-hexa pipelines show [OPTIONS] PIPELINE
-```
+**`hexa pipelines show PIPELINE`**
 
 Show a pipeline and a version with its parameters.
 
 With --json, prints the pipeline with the version as `version`.
 
-| Option | Description |
-| --- | --- |
-| `--version TEXT` | Version name or number, such as v3. Defaults to the latest version. |
+- `--version TEXT`: Version name or number, such as v3. Defaults to the latest version.
 
-### `hexa pipelines run`
-
-```
-hexa pipelines run [OPTIONS] PIPELINE
-```
+**`hexa pipelines run PIPELINE`**
 
 Start a run of PIPELINE on OpenHEXA and print its ID.
 
@@ -549,18 +373,12 @@ without a value use the value configured in OpenHEXA, then the default declared 
 the code. Follow the run with `hexa runs logs RUN_ID -f`. With --wait, the command
 exits with code 5 if the run does not succeed. With --json, prints the run.
 
-| Option | Description |
-| --- | --- |
-| `--version TEXT` | Version name or number, such as v3. Defaults to the latest version. |
-| `-p, --param CODE=VALUE` | Value of a parameter. VALUE is read as JSON if it can be (42, true, ["a","b"]), as a string otherwise. Repeat for each parameter. |
-| `--params-file FILE` | JSON file with parameter values by code; --param values take precedence. |
-| `--wait` | Wait for the run to end, printing its logs. |
+- `--version TEXT`: Version name or number, such as v3. Defaults to the latest version.
+- `-p, --param CODE=VALUE`: Value of a parameter. VALUE is read as JSON if it can be (42, true, ["a","b"]), as a string otherwise. Repeat for each parameter.
+- `--params-file FILE`: JSON file with parameter values by code; --param values take precedence.
+- `--wait`: Wait for the run to end, printing its logs.
 
-### `hexa pipelines source`
-
-```
-hexa pipelines source [OPTIONS] PIPELINE
-```
+**`hexa pipelines source PIPELINE`**
 
 Download the source code of a pipeline version.
 
@@ -569,50 +387,32 @@ pipeline code. Existing local files are left untouched unless --force is given; 
 command stops before writing anything if one exists. With --json, prints the paths
 of the files written.
 
-| Option | Description |
-| --- | --- |
-| `--version TEXT` | Version name or number, such as v3. Defaults to the latest version. |
-| `-o, --output DIRECTORY` | Directory to save the source in. Defaults to PIPELINE. |
-| `--force` | Replace local files that already exist. |
+- `--version TEXT`: Version name or number, such as v3. Defaults to the latest version.
+- `-o, --output DIRECTORY`: Directory to save the source in. Defaults to PIPELINE.
+- `--force`: Replace local files that already exist.
 
-### `hexa pipelines create`
-
-```
-hexa pipelines create [OPTIONS] NAME [SOURCE]
-```
+**`hexa pipelines create NAME [SOURCE]`**
 
 Create a pipeline named NAME from the code in SOURCE and print its code.
 
 OpenHEXA derives the pipeline code from NAME. The code in SOURCE becomes the first
 version. With --json, prints the first version, whose `pipeline` is the code.
 
-| Option | Description |
-| --- | --- |
-| `-d, --description TEXT` | What the pipeline does. |
-| `--name TEXT` | Name of the first version. Defaults to v1. |
-| `-m, --message TEXT` | Description of the first version. |
+- `-d, --description TEXT`: What the pipeline does.
+- `--name TEXT`: Name of the first version. Defaults to v1.
+- `-m, --message TEXT`: Description of the first version.
 
-### `hexa pipelines publish`
-
-```
-hexa pipelines publish [OPTIONS] PIPELINE [SOURCE]
-```
+**`hexa pipelines publish PIPELINE [SOURCE]`**
 
 Deploy the code in SOURCE as a new version of PIPELINE.
 
 This is the deployment: the new version becomes the latest, which runs and
 schedules use unless they name another. With --json, prints the version.
 
-| Option | Description |
-| --- | --- |
-| `--name TEXT` | Name of the new version. Defaults to its number. |
-| `-m, --message TEXT` | What changed in this version. |
+- `--name TEXT`: Name of the new version. Defaults to its number.
+- `-m, --message TEXT`: What changed in this version.
 
-### `hexa pipelines update`
-
-```
-hexa pipelines update [OPTIONS] PIPELINE
-```
+**`hexa pipelines update PIPELINE`**
 
 Change the name, description, schedule or default parameter values of PIPELINE.
 
@@ -623,27 +423,19 @@ values, so OpenHEXA refuses a schedule while a required parameter has none; valu
 given in the same command are set first. Only workspace editors and admins may
 change a pipeline. With --json, prints the pipeline with the version as `version`.
 
-| Option | Description |
-| --- | --- |
-| `--name TEXT` | Rename the pipeline. Its code does not change. |
-| `-d, --description TEXT` | What the pipeline does. |
-| `--schedule CRON` | Run the pipeline on this cron schedule, such as '0 6 * * 1' for Mondays at 6:00. |
-| `--no-schedule` | Stop running the pipeline on a schedule. |
-| `--version TEXT` | Version whose default values --param sets, by name or number such as v3. Defaults to the latest version. |
-| `-p, --param CODE=VALUE` | Value of a parameter. VALUE is read as JSON if it can be (42, true, ["a","b"]), as a string otherwise. Repeat for each parameter. |
-| `--params-file FILE` | JSON file with parameter values by code; --param values take precedence. |
+- `--name TEXT`: Rename the pipeline. Its code does not change.
+- `-d, --description TEXT`: What the pipeline does.
+- `--schedule CRON`: Run the pipeline on this cron schedule, such as '0 6 * * 1' for Mondays at 6:00.
+- `--no-schedule`: Stop running the pipeline on a schedule.
+- `--version TEXT`: Version whose default values --param sets, by name or number such as v3. Defaults to the latest version.
+- `-p, --param CODE=VALUE`: Value of a parameter. VALUE is read as JSON if it can be (42, true, ["a","b"]), as a string otherwise. Repeat for each parameter.
+- `--params-file FILE`: JSON file with parameter values by code; --param values take precedence.
 
-### `hexa pipelines delete`
-
-```
-hexa pipelines delete [OPTIONS] PIPELINE
-```
+**`hexa pipelines delete PIPELINE`**
 
 Delete a pipeline with its versions and runs. With --json, prints the pipeline.
 
-| Option | Description |
-| --- | --- |
-| `-y, --yes` | Do not ask for confirmation. |
+- `-y, --yes`: Do not ask for confirmation.
 
 ### `hexa pipelines versions`
 
@@ -652,23 +444,13 @@ List and delete the versions of a pipeline.
 VERSION is the name or number of a version, such as v3, as shown by `hexa pipelines
 versions list`.
 
-#### `hexa pipelines versions list`
-
-```
-hexa pipelines versions list [OPTIONS] PIPELINE
-```
+**`hexa pipelines versions list PIPELINE`**
 
 List the versions of a pipeline, newest first.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of versions to show. [default: 20; x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of versions to show. [default: 20; x>=1]
 
-#### `hexa pipelines versions delete`
-
-```
-hexa pipelines versions delete [OPTIONS] PIPELINE VERSION
-```
+**`hexa pipelines versions delete PIPELINE VERSION`**
 
 Delete a version of a pipeline with its runs.
 
@@ -676,9 +458,7 @@ Deleting the latest version makes the previous one the latest. The only version 
 a pipeline cannot be deleted: delete the pipeline instead. With --json, prints the
 version.
 
-| Option | Description |
-| --- | --- |
-| `-y, --yes` | Do not ask for confirmation. |
+- `-y, --yes`: Do not ask for confirmation.
 
 ## `hexa queries`
 
@@ -687,60 +467,36 @@ Read and save the SQL queries of the workspace's Data Studio.
 Only the queries shared with the workspace and your own private ones are visible.
 Run a query with `hexa database exec -- psql -c "$(hexa queries sql SLUG)"`.
 
-### `hexa queries list`
-
-```
-hexa queries list [OPTIONS]
-```
+**`hexa queries list`**
 
 List the saved queries, most recently updated first.
 
 Find queries by keywords with `hexa search -t query`.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of queries to show. Defaults to all. [x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of queries to show. Defaults to all. [x>=1]
 
-### `hexa queries show`
-
-```
-hexa queries show [OPTIONS] SLUG
-```
+**`hexa queries show SLUG`**
 
 Show a saved query: its details, then its SQL.
 
 Use `hexa queries sql` to print only the SQL.
 
-### `hexa queries sql`
-
-```
-hexa queries sql [OPTIONS] SLUG
-```
+**`hexa queries sql SLUG`**
 
 Print only the SQL of a saved query, to pipe or save it.
 
 With --json, prints the query, whose `sql` is the SQL.
 
-### `hexa queries create`
-
-```
-hexa queries create [OPTIONS] NAME FILE
-```
+**`hexa queries create NAME FILE`**
 
 Save the SQL in FILE, or - for stdin, as a query named NAME.
 
 OpenHEXA does not check the SQL: run it first. The query is private unless --shared.
 
-| Option | Description |
-| --- | --- |
-| `-d, --description TEXT` | What the query is for. |
-| `--shared` | Let every workspace member see the query. |
+- `-d, --description TEXT`: What the query is for.
+- `--shared`: Let every workspace member see the query.
 
-### `hexa queries update`
-
-```
-hexa queries update [OPTIONS] SLUG
-```
+**`hexa queries update SLUG`**
 
 Change a saved query: its SQL, name, description or visibility.
 
@@ -749,18 +505,12 @@ one: run it first. Only the author may change a private query or share and unsha
 a query; workspace editors and admins, and organization admins and owners, may also
 change a shared one. With --json, prints the query.
 
-| Option | Description |
-| --- | --- |
-| `--sql FILENAME` | Replace the SQL with the content of this file, or - for stdin. |
-| `--name TEXT` | Rename the query. Its slug does not change. |
-| `-d, --description TEXT` | What the query is for. |
-| `--shared / --private` | Let every workspace member see the query, or only its author. |
+- `--sql FILENAME`: Replace the SQL with the content of this file, or - for stdin.
+- `--name TEXT`: Rename the query. Its slug does not change.
+- `-d, --description TEXT`: What the query is for.
+- `--shared / --private`: Let every workspace member see the query, or only its author.
 
-### `hexa queries delete`
-
-```
-hexa queries delete [OPTIONS] SLUG
-```
+**`hexa queries delete SLUG`**
 
 Delete a saved query.
 
@@ -768,9 +518,7 @@ Only the author may delete a private query; workspace editors and admins, and
 organization admins and owners, may also delete a shared one. With --json, prints the
 query deleted.
 
-| Option | Description |
-| --- | --- |
-| `-y, --yes` | Do not ask for confirmation. |
+- `-y, --yes`: Do not ask for confirmation.
 
 ## `hexa runs`
 
@@ -779,23 +527,13 @@ Inspect and stop pipeline runs on OpenHEXA.
 Start a run with `hexa pipelines run`. RUN_ID is the ID of a run, as shown by
 `hexa runs list PIPELINE`.
 
-### `hexa runs list`
-
-```
-hexa runs list [OPTIONS] PIPELINE
-```
+**`hexa runs list PIPELINE`**
 
 List the runs of a pipeline, newest first.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of runs to show. [default: 20; x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of runs to show. [default: 20; x>=1]
 
-### `hexa runs show`
-
-```
-hexa runs show [OPTIONS] RUN_ID
-```
+**`hexa runs show RUN_ID`**
 
 Show a run: status, parameters, messages and outputs.
 
@@ -806,34 +544,22 @@ logs` for the full output of the pipeline. With --json, prints the run with its
 `messages`, `outputs` (the path of a file output is its `name`) and
 `dataset_versions`.
 
-### `hexa runs logs`
-
-```
-hexa runs logs [OPTIONS] RUN_ID
-```
+**`hexa runs logs RUN_ID`**
 
 Print the logs of a run.
 
 With --follow, the command exits with code 5 if the run does not succeed. With
 --json, prints the run with its `logs` once it is followed to the end.
 
-| Option | Description |
-| --- | --- |
-| `-f, --follow` | Keep printing new logs until the run ends. |
+- `-f, --follow`: Keep printing new logs until the run ends.
 
-### `hexa runs stop`
-
-```
-hexa runs stop [OPTIONS] RUN_ID
-```
+**`hexa runs stop RUN_ID`**
 
 Stop a run. With --json, prints the run, which is terminating.
 
 ## `hexa search`
 
-```
-hexa search [OPTIONS] [QUERY]...
-```
+**`hexa search [QUERY]...`**
 
 Find datasets, pipelines, webapps, saved queries and tables matching any word of QUERY.
 
@@ -844,10 +570,8 @@ alternatives at once, such as `malaria paludisme`. Without QUERY, lists the most
 recently updated items. With --json, prints the matching items, each with the
 `extract` that matched.
 
-| Option | Description |
-| --- | --- |
-| `-t, --type [dataset|pipeline|webapp|query|table]` | Only search this type. Repeat for several. |
-| `-n, --limit INTEGER RANGE` | Maximum number of matches to show. [default: 20; x>=1] |
+- `-t, --type [dataset|pipeline|webapp|query|table]`: Only search this type. Repeat for several.
+- `-n, --limit INTEGER RANGE`: Maximum number of matches to show. [default: 20; x>=1]
 
 ## `hexa webapps`
 
@@ -855,33 +579,19 @@ Read and publish webapps.
 
 WEBAPP is the slug of a webapp, as shown by `hexa webapps list`.
 
-### `hexa webapps list`
-
-```
-hexa webapps list [OPTIONS]
-```
+**`hexa webapps list`**
 
 List the webapps of the workspace.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of webapps to show. Defaults to all. [x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of webapps to show. Defaults to all. [x>=1]
 
-### `hexa webapps show`
-
-```
-hexa webapps show [OPTIONS] WEBAPP
-```
+**`hexa webapps show WEBAPP`**
 
 Show a webapp, the files of the version it serves and its latest versions.
 
 With --json, prints the webapp with its `files` and latest `versions`.
 
-### `hexa webapps download`
-
-```
-hexa webapps download [OPTIONS] WEBAPP
-```
+**`hexa webapps download WEBAPP`**
 
 Download the files of a static webapp, as it serves them by default.
 
@@ -890,17 +600,11 @@ are listed, and the command exits with an error so the copy is not taken as
 complete. With --json, prints every file with its `local_path`, and `skipped` true
 for files not saved.
 
-| Option | Description |
-| --- | --- |
-| `--version TEXT` | ID of a version, as shown by `hexa webapps versions list`. Defaults to the one the webapp serves. |
-| `-o, --output DIRECTORY` | Directory to save the files in. Defaults to WEBAPP. |
-| `--force` | Replace local files that already exist. |
+- `--version TEXT`: ID of a version, as shown by `hexa webapps versions list`. Defaults to the one the webapp serves.
+- `-o, --output DIRECTORY`: Directory to save the files in. Defaults to WEBAPP.
+- `--force`: Replace local files that already exist.
 
-### `hexa webapps create`
-
-```
-hexa webapps create [OPTIONS] NAME [SOURCE]
-```
+**`hexa webapps create NAME [SOURCE]`**
 
 Create a static webapp named NAME from the site in SOURCE and print its slug.
 
@@ -909,17 +613,11 @@ current directory by default. OpenHEXA derives the slug from NAME. See `hexa
 webapps publish` for the files sent. With --json, prints the webapp with the paths
 `uploaded`.
 
-| Option | Description |
-| --- | --- |
-| `-d, --description TEXT` | What the webapp shows. |
-| `--public` | Let anyone open it without signing in. |
-| `--scope [user_read|datasets_read|datasets_write|files_read|files_write|database_read|pipelines_read|pipelines_run]` | An OpenHEXA operation the webapp may perform for the person viewing it. Repeat for each scope. |
+- `-d, --description TEXT`: What the webapp shows.
+- `--public`: Let anyone open it without signing in.
+- `--scope [user_read|datasets_read|datasets_write|files_read|files_write|database_read|pipelines_read|pipelines_run]`: An OpenHEXA operation the webapp may perform for the person viewing it. Repeat for each scope.
 
-### `hexa webapps publish`
-
-```
-hexa webapps publish [OPTIONS] WEBAPP [SOURCE]
-```
+**`hexa webapps publish WEBAPP [SOURCE]`**
 
 Publish the site in SOURCE as a new version of WEBAPP and serve it.
 
@@ -930,15 +628,9 @@ files no longer there are removed. Hidden files and directories (such as .env an
 even if an earlier version was served again with `hexa webapps update --version`.
 With --json, prints the webapp with the paths `uploaded` and `deleted`.
 
-| Option | Description |
-| --- | --- |
-| `-m, --message TEXT` | What changed in this version. |
+- `-m, --message TEXT`: What changed in this version.
 
-### `hexa webapps update`
-
-```
-hexa webapps update [OPTIONS] WEBAPP
-```
+**`hexa webapps update WEBAPP`**
 
 Change the settings of WEBAPP, or the version it serves.
 
@@ -948,54 +640,36 @@ serves it. Making the webapp public or giving it scopes that change data prints 
 warning. Only workspace editors and admins may change a webapp. With --json, prints
 the webapp.
 
-| Option | Description |
-| --- | --- |
-| `--name TEXT` | Rename the webapp. Its slug and URL do not change. |
-| `-d, --description TEXT` | What the webapp shows. |
-| `--public / --private` | Let anyone open it without signing in, or only workspace members. |
-| `--scope [user_read|datasets_read|datasets_write|files_read|files_write|database_read|pipelines_read|pipelines_run]` | An OpenHEXA operation the webapp may perform for the person viewing it. Replaces the current scopes; repeat for each scope. |
-| `--no-scopes` | Remove every scope. |
-| `--version TEXT` | Serve this version of a static webapp: its ID or the start of it, as shown by `hexa webapps versions list`. |
+- `--name TEXT`: Rename the webapp. Its slug and URL do not change.
+- `-d, --description TEXT`: What the webapp shows.
+- `--public / --private`: Let anyone open it without signing in, or only workspace members.
+- `--scope [user_read|datasets_read|datasets_write|files_read|files_write|database_read|pipelines_read|pipelines_run]`: An OpenHEXA operation the webapp may perform for the person viewing it. Replaces the current scopes; repeat for each scope.
+- `--no-scopes`: Remove every scope.
+- `--version TEXT`: Serve this version of a static webapp: its ID or the start of it, as shown by `hexa webapps versions list`.
 
-### `hexa webapps delete`
-
-```
-hexa webapps delete [OPTIONS] WEBAPP
-```
+**`hexa webapps delete WEBAPP`**
 
 Delete a webapp. With --json, prints the webapp.
 
-| Option | Description |
-| --- | --- |
-| `-y, --yes` | Do not ask for confirmation. |
+- `-y, --yes`: Do not ask for confirmation.
 
 ### `hexa webapps versions`
 
 List the versions of a static webapp.
 
-#### `hexa webapps versions list`
-
-```
-hexa webapps versions list [OPTIONS] WEBAPP
-```
+**`hexa webapps versions list WEBAPP`**
 
 List the versions of a static webapp, newest first.
 
 Give a version's ID to `hexa webapps download --version`.
 
-| Option | Description |
-| --- | --- |
-| `-n, --limit INTEGER RANGE` | Maximum number of versions to show. [default: 20; x>=1] |
+- `-n, --limit INTEGER RANGE`: Maximum number of versions to show. [default: 20; x>=1]
 
 ## `hexa workspace`
 
 Read and edit the workspace configured in .env.
 
-### `hexa workspace show`
-
-```
-hexa workspace show [OPTIONS]
-```
+**`hexa workspace show`**
 
 Show the workspace and check the configuration.
 
@@ -1003,11 +677,7 @@ Prints the OpenHEXA URL, the email of the user the token belongs to, and the
 workspace: name, Docker image, configuration and homepage. With --json, prints the
 workspace with `url` and `user`.
 
-### `hexa workspace homepage`
-
-```
-hexa workspace homepage [OPTIONS]
-```
+**`hexa workspace homepage`**
 
 Print the workspace homepage, in Markdown.
 
@@ -1015,16 +685,10 @@ The homepage documents the workspace for its members and for assistants. Change 
 with `hexa workspace update --homepage`. With --json, prints the workspace, whose
 `description` is the homepage.
 
-### `hexa workspace update`
-
-```
-hexa workspace update [OPTIONS]
-```
+**`hexa workspace update`**
 
 Change the workspace homepage.
 
 Only workspace editors and admins may change it. With --json, prints the workspace.
 
-| Option | Description |
-| --- | --- |
-| `--homepage FILENAME` | Replace the homepage with the Markdown in this file, or - for stdin. [required] |
+- `--homepage FILENAME`: Replace the homepage with the Markdown in this file, or - for stdin. [required]

@@ -47,15 +47,14 @@ def cli_reference() -> str:
         "also accepts `--json` and `--help`. See the [README](../README.md#the-hexa-cli) to",
         "install and configure `hexa`.",
         "",
-        *[f"- [`hexa {name}`](#hexa-{name})" for name in cli.commands],
+        *[
+            f"- [`hexa {name}`](#hexa-{name}): {_summary(command.help)}"
+            for name, command in cli.commands.items()
+        ],
         "",
-        "```",
-        _usage(cli, root),
-        "```",
+        "## `hexa`",
         "",
-        _text(cli.help),
-        "",
-        *_options(cli, root),
+        *_entry(cli, root),
     ]
     for name, command in cli.commands.items():
         lines += _command(command, click.Context(command, info_name=name, parent=root), 2)
@@ -63,31 +62,31 @@ def cli_reference() -> str:
 
 
 def _command(command: click.Command, ctx: click.Context, level: int) -> list[str]:
-    path = ctx.command_path
-    lines = ["", f"{'#' * level} `{path}`", ""]
-    if isinstance(command, click.Group):
-        lines += [_text(command.help), ""]
-        for name, sub in command.commands.items():
-            lines += _command(sub, click.Context(sub, info_name=name, parent=ctx), level + 1)
-        return lines
-    lines += ["```", _usage(command, ctx), "```", "", _text(command.help), ""]
-    return lines + _options(command, ctx)
+    """A heading for each group and top-level command, and an entry for each command."""
+    heading = ["", f"{'#' * level} `{ctx.command_path}`", ""]
+    if not isinstance(command, click.Group):
+        return [*(heading if level == 2 else [""]), *_entry(command, ctx)]
+    lines = [*heading, _text(command.help), ""]
+    for name, sub in command.commands.items():
+        lines += _command(sub, click.Context(sub, info_name=name, parent=ctx), level + 1)
+    return lines
 
 
-def _usage(command: click.Command, ctx: click.Context) -> str:
-    return " ".join([ctx.command_path, *command.collect_usage_pieces(ctx)])
+def _entry(command: click.Command, ctx: click.Context) -> list[str]:
+    """The usage of `command` in bold, its help, then its options."""
+    pieces = [p for p in command.collect_usage_pieces(ctx) if p != "[OPTIONS]"]
+    usage = " ".join([ctx.command_path, *pieces])
+    return [f"**`{usage}`**", "", _text(command.help), "", *_options(command, ctx)]
 
 
 def _options(command: click.Command, ctx: click.Context) -> list[str]:
-    rows = []
+    lines = []
     for param in command.get_params(ctx):
         record = param.get_help_record(ctx)
         if isinstance(param, click.Option) and record and param.opts[0] not in COMMON:
             names, help_text = record
-            rows.append(f"| `{names}` | {_cell(help_text)} |")
-    if not rows:
-        return []
-    return ["| Option | Description |", "| --- | --- |", *rows]
+            lines.append(f"- `{names}`: {_oneline(help_text)}")
+    return lines
 
 
 def mcp_reference() -> str:
@@ -131,14 +130,13 @@ def _area(name: str) -> str | None:
 
 
 def _tool(tool: Tool) -> list[str]:
-    kind = "" if _read_only(tool) else " (**write**)"
+    kind = " (**write**)" if not _read_only(tool) else ""
     # Descriptions are plain text, written for models: escape what Markdown would hide.
     description = re.sub(r"([*<])", r"\\\1", _text(tool.description))
-    lines = ["", f"### `{tool.name}`{kind}", "", description, ""]
+    lines = ["", f"**`{tool.name}`**{kind}", "", description, ""]
     schema = tool.input_schema
     defs = schema.get("$defs", {})
     required = set(schema.get("required", []))
-    rows = []
     for name, prop in schema.get("properties", {}).items():
         if name in required:
             presence = "required"
@@ -146,10 +144,8 @@ def _tool(tool: Tool) -> list[str]:
             presence = f"default `{json.dumps(prop['default'])}`"
         else:
             presence = "optional"
-        description = _cell(prop.get("description", ""))
-        rows.append(f"| `{name}` | {_type(prop, defs)} | {presence} | {description} |")
-    if rows:
-        lines += ["| Argument | Type | | Description |", "| --- | --- | --- | --- |", *rows]
+        description = _oneline(prop.get("description", ""))
+        lines.append(f"- `{name}` ({_type(prop, defs)}, {presence}): {description}")
     return lines
 
 
@@ -162,7 +158,7 @@ def _type(prop: dict[str, Any], defs: dict[str, Any]) -> str:
         name = prop["$ref"].rsplit("/", 1)[-1]
         return "JSON" if name == "JsonValue" else _type(defs[name], defs)
     if "enum" in prop:
-        return " \\| ".join(f"`{value}`" for value in prop["enum"])
+        return " | ".join(f"`{value}`" for value in prop["enum"])
     kind = prop.get("type", "any")
     if kind == "array":
         return f"list of {_type(prop.get('items', {}), defs)}"
@@ -186,8 +182,13 @@ def _finish(lines: list[str]) -> str:
     return re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip() + "\n"
 
 
-def _cell(text: str) -> str:
-    return " ".join(text.split()).replace("|", "\\|")
+def _summary(text: str | None) -> str:
+    """First paragraph of a docstring, on one line."""
+    return _oneline(_text(text).split("\n\n")[0])
+
+
+def _oneline(text: str) -> str:
+    return " ".join(text.split())
 
 
 REFERENCES = {"cli.md": cli_reference, "mcp-tools.md": mcp_reference}

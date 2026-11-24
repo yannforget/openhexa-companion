@@ -14,7 +14,7 @@ access works.
 
 ## Workspaces
 
-### `openhexa_list_workspaces`
+**`openhexa_list_workspaces`**
 
 List the OpenHEXA workspaces this MCP server can access, by slug and name.
 
@@ -23,7 +23,7 @@ MCP server's account page. token_rejected is true when OpenHEXA rejected the
 workspace's stored token on its last use: tools for that workspace fail until the
 user replaces the token on the account page.
 
-### `openhexa_get_workspace`
+**`openhexa_get_workspace`**
 
 Read an OpenHEXA workspace: its name, Docker image and homepage.
 
@@ -31,11 +31,9 @@ The homepage is Markdown written by workspace members, often describing the
 workspace's purpose, data sources and conventions; it is empty if they wrote
 none. docker_image is null when pipelines and notebooks use the default image.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
 
-### `openhexa_search`
+**`openhexa_search`**
 
 Find datasets, pipelines, webapps, saved queries and tables in an OpenHEXA workspace.
 
@@ -50,28 +48,24 @@ workspace. extract is the part of the description around the matched words,
 which are between \*\*. matches counts matching items by type, including those
 not returned.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `query` | string | default `""` | Words to look for. An item matches if any word does, so one query can hold alternatives such as synonyms, abbreviations and translations: 'malaria paludisme palu'. Empty lists the most recently updated items. |
-| `types` | list of `dataset` \| `pipeline` \| `webapp` \| `query` \| `table` | optional | Restricts the search to these types. Defaults to every type. |
-| `limit` | integer (1-100) | default `20` | Maximum number of hits. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `query` (string, default `""`): Words to look for. An item matches if any word does, so one query can hold alternatives such as synonyms, abbreviations and translations: 'malaria paludisme palu'. Empty lists the most recently updated items.
+- `types` (list of `dataset` | `pipeline` | `webapp` | `query` | `table`, optional): Restricts the search to these types. Defaults to every type.
+- `limit` (integer (1-100), default `20`): Maximum number of hits.
 
-### `openhexa_update_workspace_homepage` (**write**)
+**`openhexa_update_workspace_homepage`** (**write**)
 
 Replace the whole homepage of an OpenHEXA workspace with new Markdown.
 
 The previous content is overwritten, not merged, and OpenHEXA keeps no history of
 it. Only workspace editors and admins may change the homepage.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `homepage` | string | required | The complete new homepage, in Markdown. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `homepage` (string, required): The complete new homepage, in Markdown.
 
 ## Datasets
 
-### `openhexa_list_datasets`
+**`openhexa_list_datasets`**
 
 List the datasets of an OpenHEXA workspace, including those shared with it.
 
@@ -79,12 +73,10 @@ A dataset is a set of files published in versions. Each dataset's identifier is
 its slug, or 'workspace/slug' for a dataset shared from another workspace.
 latest_version is the name of the latest version, or null if it has none yet.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `limit` | integer (≥ 1) | default `100` | Maximum number of items to return. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `limit` (integer (≥ 1), default `100`): Maximum number of items to return.
 
-### `openhexa_get_dataset`
+**`openhexa_get_dataset`**
 
 Read an OpenHEXA dataset: its description, attributes and versions.
 
@@ -92,26 +84,22 @@ The description is Markdown documenting the data, such as its sources, columns
 and caveats; it is empty if there is none. Versions are listed newest first; a
 version's files do not change once a newer version exists.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `dataset` | string | required | The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace. |
-| `version_limit` | integer (≥ 1) | default `10` | Maximum number of versions to list, newest first. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `dataset` (string, required): The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace.
+- `version_limit` (integer (≥ 1), default `10`): Maximum number of versions to list, newest first.
 
-### `openhexa_list_dataset_files`
+**`openhexa_list_dataset_files`**
 
 List the files of a version of an OpenHEXA dataset, with their size in bytes and type.
 
 The response names the version listed, the latest by default, and its ID.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `dataset` | string | required | The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace. |
-| `version` | string | optional | Name or ID of the dataset version. Defaults to the latest version. |
-| `limit` | integer (≥ 1) | default `200` | Maximum number of files to return. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `dataset` (string, required): The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace.
+- `version` (string, optional): Name or ID of the dataset version. Defaults to the latest version.
+- `limit` (integer (≥ 1), default `200`): Maximum number of files to return.
 
-### `openhexa_get_dataset_file_url`
+**`openhexa_get_dataset_file_url`**
 
 Get a temporary URL that downloads one file of an OpenHEXA dataset version.
 
@@ -122,68 +110,56 @@ hour after it was issued depending on the storage; storage then answers HTTP 400
 or 403, and this tool issues a new URL. The response also gives the URL's host,
 the version's name and ID, and the file's size in bytes and type.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `dataset` | string | required | The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace. |
-| `path` | string | required | Path of the file, as listed by openhexa_list_dataset_files. |
-| `version` | string | optional | Name or ID of the dataset version. Defaults to the latest version. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `dataset` (string, required): The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace.
+- `path` (string, required): Path of the file, as listed by openhexa_list_dataset_files.
+- `version` (string, optional): Name or ID of the dataset version. Defaults to the latest version.
 
-### `openhexa_update_dataset` (**write**)
+**`openhexa_update_dataset`** (**write**)
 
 Rename an OpenHEXA dataset or replace its description.
 
 The slug, which identifies the dataset in tools, does not change with the name.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `dataset` | string | required | The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace. |
-| `name` | string | optional | New display name. Unchanged if omitted. |
-| `description` | string | optional | New description in Markdown, replacing the whole current one. Unchanged if omitted. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `dataset` (string, required): The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace.
+- `name` (string, optional): New display name. Unchanged if omitted.
+- `description` (string, optional): New description in Markdown, replacing the whole current one. Unchanged if omitted.
 
-### `openhexa_set_dataset_attribute` (**write**)
+**`openhexa_set_dataset_attribute`** (**write**)
 
 Set a custom metadata attribute of an OpenHEXA dataset, replacing any previous value.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `dataset` | string | required | The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace. |
-| `key` | string | required | Name of the attribute, such as 'source'. |
-| `value` | JSON | required | Any JSON value, such as text, a number or a list. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `dataset` (string, required): The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace.
+- `key` (string, required): Name of the attribute, such as 'source'.
+- `value` (JSON, required): Any JSON value, such as text, a number or a list.
 
-### `openhexa_delete_dataset_attribute` (**write**)
+**`openhexa_delete_dataset_attribute`** (**write**)
 
 Remove a custom metadata attribute from an OpenHEXA dataset.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `dataset` | string | required | The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace. |
-| `key` | string | required | Name of the attribute to remove. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `dataset` (string, required): The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace.
+- `key` (string, required): Name of the attribute to remove.
 
 ## Database
 
-### `openhexa_list_database_tables`
+**`openhexa_list_database_tables`**
 
 List the tables of an OpenHEXA workspace's PostgreSQL database, with row counts.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `limit` | integer (≥ 1) | default `100` | Maximum number of items to return. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `limit` (integer (≥ 1), default `100`): Maximum number of items to return.
 
-### `openhexa_get_database_table`
+**`openhexa_get_database_table`**
 
 Read the columns, PostgreSQL types and row count of an OpenHEXA database table.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `table` | string | required | Name of the table, as given by openhexa_list_database_tables or openhexa_search. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `table` (string, required): Name of the table, as given by openhexa_list_database_tables or openhexa_search.
 
-### `openhexa_query_database`
+**`openhexa_query_database`**
 
 Run a read-only SQL query on an OpenHEXA workspace's PostgreSQL database.
 
@@ -194,53 +170,45 @@ strings and numerics are strings, to keep their precision. truncated is true whe
 rows or values are missing, and note says which. OpenHEXA records every query in
 its audit log under the user's name.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `sql` | string | required | A single read-only PostgreSQL statement. |
-| `max_rows` | integer (1-1000) | default `100` | Maximum number of rows to return. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `sql` (string, required): A single read-only PostgreSQL statement.
+- `max_rows` (integer (1-1000), default `100`): Maximum number of rows to return.
 
-### `openhexa_list_saved_queries`
+**`openhexa_list_saved_queries`**
 
 List the SQL queries saved in an OpenHEXA workspace's Data Studio, without their SQL.
 
 Lists the queries shared with the workspace and the user's own private ones,
 most recently updated first. shared is false for a query only its author sees.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `search` | string | optional | Only list queries whose name or description contains this text. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `search` (string, optional): Only list queries whose name or description contains this text.
 
-### `openhexa_get_saved_query`
+**`openhexa_get_saved_query`**
 
 Read a saved query of an OpenHEXA workspace, with its SQL.
 
 openhexa_query_database runs the SQL.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `query` | string | required | Slug of the query, as given by openhexa_list_saved_queries or openhexa_search. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `query` (string, required): Slug of the query, as given by openhexa_list_saved_queries or openhexa_search.
 
-### `openhexa_create_saved_query` (**write**)
+**`openhexa_create_saved_query`** (**write**)
 
 Save a SQL query in an OpenHEXA workspace's Data Studio.
 
 OpenHEXA saves the SQL without checking or running it. Each call saves a new
 query, even with the same name.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `name` | string | required | Display name. |
-| `sql` | string | required | A single read-only PostgreSQL statement. |
-| `description` | string | optional | What the query is for and how to read its result. |
-| `shared` | boolean | default `false` | Whether every workspace member can see the query. By default only its author can. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `name` (string, required): Display name.
+- `sql` (string, required): A single read-only PostgreSQL statement.
+- `description` (string, optional): What the query is for and how to read its result.
+- `shared` (boolean, default `false`): Whether every workspace member can see the query. By default only its author can.
 
 ## Pipelines
 
-### `openhexa_list_pipelines`
+**`openhexa_list_pipelines`**
 
 List the pipelines of an OpenHEXA workspace, with their description and schedule.
 
@@ -249,13 +217,11 @@ running a notebook of the workspace. schedule is a cron expression, or null if
 unscheduled. latest_version is the label of the latest version, such as 'v3' or
 'fix [v3]', or null if none was deployed.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `last_run_status` | `queued` \| `running` \| `terminating` \| `success` \| `failed` \| `stopped` \| `skipped` | optional | Only list pipelines whose latest run has this status, such as 'failed' for the pipelines whose latest run failed. |
-| `limit` | integer (≥ 1) | default `100` | Maximum number of items to return. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `last_run_status` (`queued` | `running` | `terminating` | `success` | `failed` | `stopped` | `skipped`, optional): Only list pipelines whose latest run has this status, such as 'failed' for the pipelines whose latest run failed.
+- `limit` (integer (≥ 1), default `100`): Maximum number of items to return.
 
-### `openhexa_get_pipeline`
+**`openhexa_get_pipeline`**
 
 Read an OpenHEXA pipeline: a version with its parameters, and its versions.
 
@@ -267,14 +233,12 @@ timeout is in seconds, null for OpenHEXA's default. Values of secret parameters
 are masked as '\<secret>'. A version's code and parameters do not change once
 deployed; versions are listed newest first.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `pipeline` | string | required | Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search. |
-| `version` | string | optional | Version label, name or ID, such as 'v3'. Defaults to the latest version. |
-| `version_limit` | integer (≥ 1) | default `10` | Maximum number of versions to list, newest first. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `pipeline` (string, required): Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search.
+- `version` (string, optional): Version label, name or ID, such as 'v3'. Defaults to the latest version.
+- `version_limit` (integer (≥ 1), default `10`): Maximum number of versions to list, newest first.
 
-### `openhexa_list_pipeline_runs`
+**`openhexa_list_pipeline_runs`**
 
 List the runs of an OpenHEXA pipeline, newest first, with their status.
 
@@ -283,13 +247,11 @@ Statuses are 'queued', 'running', 'terminating', 'success', 'failed', 'stopped' 
 progress is reported by the pipeline, from 0 to 100. version and version_id
 identify the version that ran.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `pipeline` | string | required | Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search. |
-| `limit` | integer (≥ 1) | default `20` | Maximum number of runs to return, newest first. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `pipeline` (string, required): Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search.
+- `limit` (integer (≥ 1), default `20`): Maximum number of runs to return, newest first.
 
-### `openhexa_get_pipeline_run`
+**`openhexa_get_pipeline_run`**
 
 Read an OpenHEXA pipeline run: status, parameters, messages and outputs.
 
@@ -307,13 +269,11 @@ the logs: log_length is their size in characters, and
 openhexa_get_pipeline_run_logs returns them. openhexa_get_pipeline_source
 returns the code that ran when given its version_id.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `run` | string | required | ID of the pipeline run, as listed by openhexa_list_pipeline_runs. |
-| `message_limit` | integer (≥ 1) | default `100` | Maximum number of messages to return, the latest ones. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `run` (string, required): ID of the pipeline run, as listed by openhexa_list_pipeline_runs.
+- `message_limit` (integer (≥ 1), default `100`): Maximum number of messages to return, the latest ones.
 
-### `openhexa_get_pipeline_run_logs`
+**`openhexa_get_pipeline_run_logs`**
 
 Read the logs of an OpenHEXA pipeline run: the output of the pipeline process.
 
@@ -322,14 +282,12 @@ are read with an offset. Logs grow while the run is in progress. Tracebacks
 refer to the code of the version that ran, which openhexa_get_pipeline_source
 returns.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `run` | string | required | ID of the pipeline run, as listed by openhexa_list_pipeline_runs. |
-| `offset` | integer (≥ 0) | optional | Position of the first character to return. Defaults to returning the end of the logs. |
-| `length` | integer (≥ 1) | default `20000` | Maximum number of characters to return. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `run` (string, required): ID of the pipeline run, as listed by openhexa_list_pipeline_runs.
+- `offset` (integer (≥ 0), optional): Position of the first character to return. Defaults to returning the end of the logs.
+- `length` (integer (≥ 1), default `20000`): Maximum number of characters to return.
 
-### `openhexa_get_pipeline_source`
+**`openhexa_get_pipeline_source`**
 
 Read the source code of an OpenHEXA pipeline version, such as the one a run ran.
 
@@ -337,14 +295,12 @@ Content is returned as is, so line numbers match those of tracebacks in run logs
 content is null for files that are not text, and for every file when the
 source is too long to return at once.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `pipeline` | string | required | Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search. |
-| `version` | string | optional | Version label, name or ID, such as 'v3'. Defaults to the latest version. |
-| `path` | string | optional | Path of one file to read. Defaults to every file, with their content if the source is small enough. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `pipeline` (string, required): Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search.
+- `version` (string, optional): Version label, name or ID, such as 'v3'. Defaults to the latest version.
+- `path` (string, optional): Path of one file to read. Defaults to every file, with their content if the source is small enough.
 
-### `openhexa_start_pipeline_run` (**write**)
+**`openhexa_start_pipeline_run`** (**write**)
 
 Start a run of an OpenHEXA pipeline and return its ID and initial status.
 
@@ -352,27 +308,23 @@ Returns once OpenHEXA has queued the run, without waiting for it to finish. The
 run continues in OpenHEXA; openhexa_get_pipeline_run reads its status, messages
 and outputs. Values of secret parameters are masked as '\<secret>'.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `pipeline` | string | required | Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search. |
-| `version` | string | optional | Version label, name or ID, such as 'v3'. Defaults to the latest version. |
-| `parameters` | object | optional | Parameter values by parameter code, as listed by openhexa_get_pipeline. Parameters without a value use the value configured in OpenHEXA, then their default. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `pipeline` (string, required): Code of the pipeline, as given by openhexa_list_pipelines or openhexa_search.
+- `version` (string, optional): Version label, name or ID, such as 'v3'. Defaults to the latest version.
+- `parameters` (object, optional): Parameter values by parameter code, as listed by openhexa_get_pipeline. Parameters without a value use the value configured in OpenHEXA, then their default.
 
-### `openhexa_stop_pipeline_run` (**write**)
+**`openhexa_stop_pipeline_run`** (**write**)
 
 Stop a queued or running OpenHEXA pipeline run.
 
 OpenHEXA marks the run 'terminating', then 'stopped' once the process has ended.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `run` | string | required | ID of the pipeline run, as listed by openhexa_list_pipeline_runs. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `run` (string, required): ID of the pipeline run, as listed by openhexa_list_pipeline_runs.
 
 ## Webapps
 
-### `openhexa_list_webapps`
+**`openhexa_list_webapps`**
 
 List the webapps of an OpenHEXA workspace, with their type and URL.
 
@@ -380,12 +332,10 @@ Types are 'STATIC' for sites published from files, 'IFRAME' for an embedded URL
 and 'SUPERSET' for a dashboard. public is true when anyone can open the webapp
 without signing in.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `limit` | integer (≥ 1) | default `100` | Maximum number of items to return. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `limit` (integer (≥ 1), default `100`): Maximum number of items to return.
 
-### `openhexa_get_webapp`
+**`openhexa_get_webapp`**
 
 Read an OpenHEXA webapp: its description and, for static webapps, files and versions.
 
@@ -395,9 +345,7 @@ published_version_id, which may be earlier than the latest one; files are that
 version's, with sizes in bytes, and versions are listed newest first. Other
 webapps have no files or versions.
 
-| Argument | Type | | Description |
-| --- | --- | --- | --- |
-| `workspace` | string | required | Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces. |
-| `webapp` | string | required | Slug of the webapp, as given by openhexa_list_webapps or openhexa_search. |
-| `file_limit` | integer (≥ 1) | default `200` | Maximum number of files to return. |
-| `version_limit` | integer (≥ 1) | default `10` | Maximum number of versions to return, newest first. |
+- `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
+- `webapp` (string, required): Slug of the webapp, as given by openhexa_list_webapps or openhexa_search.
+- `file_limit` (integer (≥ 1), default `200`): Maximum number of files to return.
+- `version_limit` (integer (≥ 1), default `10`): Maximum number of versions to return, newest first.
