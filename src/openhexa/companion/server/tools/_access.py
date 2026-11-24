@@ -40,7 +40,7 @@ class Access:
         if access is None:
             slugs = [ws.slug for ws in await self.workspaces()]
             raise ToolError(
-                f"Workspace '{workspace}' is not connected to this connector. Connected "
+                f"Workspace '{workspace}' is not connected to this MCP server. Connected "
                 f"workspaces: {format_options(slugs)}"
             )
 

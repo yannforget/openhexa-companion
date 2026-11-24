@@ -1,4 +1,4 @@
-"""The MCP connector through its HTTP interface: OAuth, the connect page and tools."""
+"""The MCP service through its HTTP interface: OAuth, the connect page and tools."""
 
 import base64
 import hashlib
@@ -305,7 +305,7 @@ def _data(data: Mapping[str, Any]) -> httpx2.Response:
 
 
 @dataclass
-class Connector:
+class Service:
     """A running companion and an HTTP client for it."""
 
     http: httpx2.AsyncClient
@@ -314,9 +314,9 @@ class Connector:
 
 
 @asynccontextmanager
-async def running_connector(
+async def running_service(
     openhexa_url: str = "https://openhexa.test", transport: httpx2.BaseTransport | None = None
-) -> AsyncGenerator[Connector]:
+) -> AsyncGenerator[Service]:
     revoked: set[str] = set()
     config = Config(
         public_url=PUBLIC_URL,
@@ -330,7 +330,7 @@ async def running_connector(
         app.router.lifespan_context(app),
         httpx2.AsyncClient(transport=httpx2.ASGITransport(app), base_url=PUBLIC_URL) as http,
     ):
-        yield Connector(http, app, revoked)
+        yield Service(http, app, revoked)
     store.close()
 
 
@@ -424,9 +424,9 @@ async def connect(
 
 
 @asynccontextmanager
-async def mcp_session(connector: Connector, access_token: str) -> AsyncGenerator[MCPClient]:
+async def mcp_session(service: Service, access_token: str) -> AsyncGenerator[MCPClient]:
     http = httpx2.AsyncClient(
-        transport=httpx2.ASGITransport(connector.app),
+        transport=httpx2.ASGITransport(service.app),
         headers={"Authorization": f"Bearer {access_token}"},
     )
     async with (
@@ -436,9 +436,9 @@ async def mcp_session(connector: Connector, access_token: str) -> AsyncGenerator
         yield mcp
 
 
-async def mcp_status(connector: Connector, access_token: str) -> int:
+async def mcp_status(service: Service, access_token: str) -> int:
     """Status of an MCP request made with `access_token`."""
-    response = await connector.http.post(
+    response = await service.http.post(
         "/mcp",
         headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
         json={"jsonrpc": "2.0", "id": 1, "method": "ping"},
@@ -452,12 +452,12 @@ def text(result: CallToolResult) -> str:
 
 @pytest.mark.anyio
 async def test_connect_and_call_tools():
-    async with running_connector() as connector:
+    async with running_service() as service:
         client, tokens = await connect(
-            connector.http, [("cases", "alice-cases"), ("stock", "alice-stock")]
+            service.http, [("cases", "alice-cases"), ("stock", "alice-stock")]
         )
 
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             names = [tool.name for tool in (await mcp.list_tools()).tools]
             instructions = mcp.instructions
             listed = await mcp.call_tool("openhexa_list_workspaces", {})
@@ -474,7 +474,7 @@ async def test_connect_and_call_tools():
         assert workspace.structured_content["homepage"] == "# stock"
         assert "SECRET" not in json.dumps(workspace.structured_content)
 
-        refreshed = await connector.http.post(
+        refreshed = await service.http.post(
             "/token",
             data={
                 "grant_type": "refresh_token",
@@ -484,10 +484,10 @@ async def test_connect_and_call_tools():
             },
         )
         assert refreshed.status_code == 200, refreshed.text
-        assert await mcp_status(connector, tokens["access_token"]) == 401
-        assert await mcp_status(connector, refreshed.json()["access_token"]) == 200
+        assert await mcp_status(service, tokens["access_token"]) == 401
+        assert await mcp_status(service, refreshed.json()["access_token"]) == 200
 
-        await connector.http.post(
+        await service.http.post(
             "/revoke",
             data={
                 "token": refreshed.json()["refresh_token"],
@@ -495,54 +495,54 @@ async def test_connect_and_call_tools():
                 "client_secret": client.client_secret,
             },
         )
-        assert await mcp_status(connector, refreshed.json()["access_token"]) == 401
+        assert await mcp_status(service, refreshed.json()["access_token"]) == 401
 
 
 @pytest.mark.anyio
 async def test_reused_code_revokes_the_grant():
-    async with running_connector() as connector:
-        client = await register(connector.http)
-        connect_url, verifier = await authorize(connector.http, client)
-        response = await submit_connect(connector.http, connect_url, [("cases", "alice-cases")])
+    async with running_service() as service:
+        client = await register(service.http)
+        connect_url, verifier = await authorize(service.http, client)
+        response = await submit_connect(service.http, connect_url, [("cases", "alice-cases")])
         code = parse_qs(urlsplit(response.headers["location"]).query)["code"][0]
 
-        first = await exchange(connector.http, client, code, verifier)
-        second = await exchange(connector.http, client, code, verifier)
+        first = await exchange(service.http, client, code, verifier)
+        second = await exchange(service.http, client, code, verifier)
 
         assert first.status_code == 200
         assert second.json()["error"] == "invalid_grant"
-        assert await mcp_status(connector, first.json()["access_token"]) == 401
+        assert await mcp_status(service, first.json()["access_token"]) == 401
 
 
 @pytest.mark.anyio
 async def test_wrong_pkce_verifier_is_rejected():
-    async with running_connector() as connector:
-        client = await register(connector.http)
-        connect_url, _verifier = await authorize(connector.http, client)
-        response = await submit_connect(connector.http, connect_url, [("cases", "alice-cases")])
+    async with running_service() as service:
+        client = await register(service.http)
+        connect_url, _verifier = await authorize(service.http, client)
+        response = await submit_connect(service.http, connect_url, [("cases", "alice-cases")])
         code = parse_qs(urlsplit(response.headers["location"]).query)["code"][0]
 
-        result = await exchange(connector.http, client, code, secrets.token_urlsafe(32))
+        result = await exchange(service.http, client, code, secrets.token_urlsafe(32))
 
         assert result.json()["error"] == "invalid_grant"
 
 
 @pytest.mark.anyio
 async def test_connect_page_rejects_bad_submissions():
-    async with running_connector() as connector:
-        client = await register(connector.http)
-        connect_url, _verifier = await authorize(connector.http, client)
+    async with running_service() as service:
+        client = await register(service.http)
+        connect_url, _verifier = await authorize(service.http, client)
         request_id = parse_qs(urlsplit(connect_url).query)["request"][0]
 
-        unknown = await connector.http.get("/connect?request=unknown")
-        forged = await connector.http.post(
+        unknown = await service.http.get("/connect?request=unknown")
+        forged = await service.http.post(
             "/connect",
             data={"request": request_id, "csrf": "1.forged", "slug": "cases", "token": "x"},
         )
         mixed = await submit_connect(
-            connector.http, connect_url, [("cases", "alice-cases"), ("stock", "bob-stock")]
+            service.http, connect_url, [("cases", "alice-cases"), ("stock", "bob-stock")]
         )
-        wrong = await submit_connect(connector.http, connect_url, [("stock", "alice-cases")])
+        wrong = await submit_connect(service.http, connect_url, [("stock", "alice-cases")])
 
         assert unknown.status_code == 404
         assert forged.status_code == 400
@@ -555,10 +555,10 @@ async def test_connect_page_rejects_bad_submissions():
 
 @pytest.mark.anyio
 async def test_pages_serve_their_static_files():
-    async with running_connector() as connector:
-        page = await connector.http.get("/connect?request=unknown")
+    async with running_service() as service:
+        page = await service.http.get("/connect?request=unknown")
         paths = re.findall(r'(?:href|src)="(/static/[^"?]+)', page.text)
-        responses = [await connector.http.get(path) for path in paths]
+        responses = [await service.http.get(path) for path in paths]
 
     assert sorted(paths) == [
         "/static/favicon.png",
@@ -571,11 +571,11 @@ async def test_pages_serve_their_static_files():
 
 @pytest.mark.anyio
 async def test_tool_errors_explain_what_to_do():
-    async with running_connector() as connector:
-        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
-        connector.revoked.add("alice-cases")
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        service.revoked.add("alice-cases")
 
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             unknown = await mcp.call_tool("openhexa_get_workspace", {"workspace": "stock"})
             rejected = await mcp.call_tool("openhexa_get_workspace", {"workspace": "cases"})
             listed = await mcp.call_tool("openhexa_list_workspaces", {})
@@ -589,9 +589,9 @@ async def test_tool_errors_explain_what_to_do():
 
 @pytest.mark.anyio
 async def test_file_urls_point_to_storage():
-    async with running_connector() as connector:
-        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             result = await mcp.call_tool(
                 "openhexa_get_dataset_file_url",
                 {"workspace": "cases", "dataset": "stats", "path": "stats.csv"},
@@ -611,9 +611,9 @@ async def test_file_urls_point_to_storage():
 
 @pytest.mark.anyio
 async def test_runs_hide_secrets_and_page_logs():
-    async with running_connector() as connector:
-        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             run = await mcp.call_tool(
                 "openhexa_get_pipeline_run", {"workspace": "cases", "run": RUN_ID}
             )
@@ -640,9 +640,9 @@ async def test_runs_hide_secrets_and_page_logs():
 @pytest.mark.anyio
 async def test_pipeline_source_is_read_by_file():
     args = {"workspace": "cases", "pipeline": "etl", "version": PIPELINE_VERSION_ID}
-    async with running_connector() as connector:
-        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             listed = await mcp.call_tool("openhexa_get_pipeline_source", args)
             code = await mcp.call_tool(
                 "openhexa_get_pipeline_source", {**args, "path": "pipeline.py"}
@@ -682,10 +682,10 @@ async def access_state(http: httpx2.AsyncClient) -> tuple[list[str], dict[str, b
 
 @pytest.mark.anyio
 async def test_account_page_manages_access():
-    async with running_connector() as connector:
-        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
-        _other, other_tokens = await connect(connector.http, [("cases", "alice-cases")])
-        http = connector.http
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        _other, other_tokens = await connect(service.http, [("cases", "alice-cases")])
+        http = service.http
 
         forged = await http.post("/account", data={"csrf": "1.forged", "action": "logout"})
         signed_out = await account_form(http, ("action", "forget"), ("slug", "cases"))
@@ -700,11 +700,11 @@ async def test_account_page_manages_access():
             ("access", f"{newest}:cases"),
             ("access", f"{oldest}:stock"),
         )
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             listed = await mcp.call_tool("openhexa_list_workspaces", {})
         await account_form(http, ("action", "forget"), ("slug", "stock"))
         await account_form(http, ("action", "disconnect"), ("grant", newest))
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             forgotten = await mcp.call_tool("openhexa_list_workspaces", {})
 
         # Bob's token signs the browser in as Bob, who cannot touch Alice's grants.
@@ -723,10 +723,10 @@ async def test_account_page_manages_access():
         }
         assert [ws["workspace"] for ws in listed.structured_content["workspaces"]] == ["stock"]
         assert forgotten.structured_content["workspaces"] == []
-        assert await mcp_status(connector, other_tokens["access_token"]) == 401
+        assert await mcp_status(service, other_tokens["access_token"]) == 401
         assert "bob@example.org" in bob_page.text
         assert oldest not in bob_page.text
-        assert await mcp_status(connector, tokens["access_token"]) == 200
+        assert await mcp_status(service, tokens["access_token"]) == 200
         assert "Signed in" not in (await http.get("/account")).text
         assert "alice-stock" not in bob_page.text
         assert bob_page.headers["X-Frame-Options"] == "DENY"
@@ -734,9 +734,9 @@ async def test_account_page_manages_access():
 
 @pytest.mark.anyio
 async def test_write_tools():
-    async with running_connector() as connector:
-        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             homepage = await mcp.call_tool(
                 "openhexa_update_workspace_homepage",
                 {"workspace": "cases", "homepage": "# New homepage"},
@@ -771,9 +771,9 @@ async def test_write_tools():
 
 @pytest.mark.anyio
 async def test_sql_tools():
-    async with running_connector() as connector:
-        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             few = await mcp.call_tool(
                 "openhexa_query_database", {"workspace": "cases", "sql": "select", "max_rows": 2}
             )
@@ -798,9 +798,9 @@ async def test_sql_tools():
 
 @pytest.mark.anyio
 async def test_search_finds_items_for_the_read_tools():
-    async with running_connector() as connector:
-        _client, tokens = await connect(connector.http, [("cases", "alice-cases")])
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             found = await mcp.call_tool(
                 "openhexa_search", {"workspace": "cases", "query": "malaria district", "limit": 1}
             )
@@ -835,12 +835,12 @@ async def test_search_finds_items_for_the_read_tools():
 @pytest.mark.anyio
 async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
     env = demo_env
-    async with running_connector(env["OPENHEXA_URL"], httpx2.HTTPTransport()) as connector:
+    async with running_service(env["OPENHEXA_URL"], httpx2.HTTPTransport()) as service:
         _client, tokens = await connect(
-            connector.http, [(env["OPENHEXA_WORKSPACE"], env["OPENHEXA_TOKEN"])]
+            service.http, [(env["OPENHEXA_WORKSPACE"], env["OPENHEXA_TOKEN"])]
         )
 
-        async with mcp_session(connector, tokens["access_token"]) as mcp:
+        async with mcp_session(service, tokens["access_token"]) as mcp:
             listed = await mcp.call_tool("openhexa_list_workspaces", {})
             workspace = await mcp.call_tool(
                 "openhexa_get_workspace", {"workspace": env["OPENHEXA_WORKSPACE"]}
@@ -889,11 +889,9 @@ async def test_dataset_write_tools_with_demo_workspace(demo_env: dict[str, str])
     with Client(env["OPENHEXA_URL"], workspace, env["OPENHEXA_TOKEN"]) as library:
         dataset = library.datasets.create(f"companion test {uuid.uuid4().hex[:8]}", "Temporary")
         try:
-            async with running_connector(env["OPENHEXA_URL"], httpx2.HTTPTransport()) as connector:
-                _client, tokens = await connect(
-                    connector.http, [(workspace, env["OPENHEXA_TOKEN"])]
-                )
-                async with mcp_session(connector, tokens["access_token"]) as mcp:
+            async with running_service(env["OPENHEXA_URL"], httpx2.HTTPTransport()) as service:
+                _client, tokens = await connect(service.http, [(workspace, env["OPENHEXA_TOKEN"])])
+                async with mcp_session(service, tokens["access_token"]) as mcp:
                     args = {"workspace": workspace, "dataset": dataset.slug}
                     updated = await mcp.call_tool(
                         "openhexa_update_dataset",

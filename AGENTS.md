@@ -4,23 +4,24 @@
 
 OpenHEXA Companion is a Python library for working with OpenHEXA workspaces, with
 two interfaces built on it: the `hexa` CLI for people and coding agents working
-locally, and a remote MCP connector for AI clients such as Claude. It needs no
+locally, and a remote MCP server for AI clients such as Claude. It needs no
 changes to OpenHEXA and is limited to what the GraphQL API allows with a workspace
 token.
 
-Read [docs/architecture.md](docs/architecture.md) for the goals, use cases and
-architecture.
+Read [README.md](README.md) for what the project does and how it is used, and
+[docs/architecture.md](docs/architecture.md) for how it is built.
 
 ## Project structure
 
 - `src/openhexa/companion/`: the library. `openhexa` is a namespace package
   shared with `openhexa.sdk`, so never add `src/openhexa/__init__.py`.
 - `src/openhexa/companion/cli/`: the `hexa` CLI.
-- `src/openhexa/companion/server/`: the MCP connector. Its
+- `src/openhexa/companion/server/`: the MCP server. Its
   dependencies are in an optional `server` extra; the library and CLI must not
   import it.
 - `tests/`: tests.
-- `docs/`: design documents.
+- `README.md` and `docs/`: user and operator documentation, written for people. Keep
+  them in step with the code; don't put agent instructions there.
 - `guidelines/`: rules for writing code in this project.
 - `plans/`: temporary implementation plans for handing context between sessions.
   Not tracked by Git and not documentation.
@@ -39,7 +40,7 @@ Sibling checkouts, relative to this repository:
   shares the `openhexa` namespace with this project.
 - `../openhexa-docker-images/images/base/`: the image that runs pipelines, and its
   entrypoint. Relevant to local runs.
-- `../openhexa-app/backend/hexa/mcp/`: the native OpenHEXA MCP that the connector
+- `../openhexa-app/backend/hexa/mcp/`: the native OpenHEXA MCP that this MCP server
   replaces.
 - `../openhexa-dev-env/`: the previous `hexa` CLI, which this project replaces.
   Useful for knowing which GraphQL operations, storage behaviour and edge cases to
@@ -55,7 +56,7 @@ Read the relevant guidelines before changing code:
 - [guidelines/python.md](guidelines/python.md): any Python code.
 - [guidelines/library.md](guidelines/library.md): the library, outside `cli/` and `server/`.
 - [guidelines/cli.md](guidelines/cli.md): the `hexa` CLI, in `cli/`.
-- [guidelines/mcp.md](guidelines/mcp.md): the MCP connector, in `server/`.
+- [guidelines/mcp.md](guidelines/mcp.md): the MCP server, in `server/`.
 - [guidelines/skills.md](guidelines/skills.md): the agent skills, in `skills/`.
 
 For Python changes, run:
@@ -68,8 +69,9 @@ uv run pyrefly check
 ```
 
 - Use demo workspace credentials in `.env` for testing (OPENHEXA_URL, OPENHEXA_WORKSPACE, OPENHEXA_TOKEN).
-- To test the MCP connector with an AI client such as Claude, see
-  [docs/local-development.md](docs/local-development.md).
+- To test the MCP server with an AI client such as Claude, see
+  [docs/deployment.md](docs/deployment.md#testing-with-claude). Ask the user for
+  the public URL, the local port and the env file; never read or print its secret key.
 
 ## Commit conventions
 

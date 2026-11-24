@@ -1,5 +1,5 @@
 # Attaches each skill in skills/ as a zip to every release, for clients that install
-# skills from a file. The connector's instructions link to the latest release.
+# skills from a file. The MCP server's instructions link to the latest release.
 name: Skills
 
 on:

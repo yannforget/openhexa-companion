@@ -1,1 +1,1 @@
-"""MCP connector."""
+"""MCP server."""

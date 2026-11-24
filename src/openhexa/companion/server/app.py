@@ -18,7 +18,7 @@ from openhexa.companion.server.pages import Pages
 from openhexa.companion.server.store import Store
 from openhexa.companion.server.tools import Access, register_tools
 
-# Where users download the openhexa-connector skill, released with the connector.
+# Where users download the openhexa-mcp skill, released with the MCP server.
 SKILL_URL = "https://github.com/yannforget/openhexa-companion/releases/latest"
 
 # Orientation for clients that show it. Some drop it or show only its first line, which
@@ -33,7 +33,7 @@ saved queries, pipelines (with versions and runs) and webapps. Start with \
 openhexa_list_workspaces, then openhexa_search or the list tools. The workspace \
 homepage and dataset descriptions document the data. Ask the user before any write.
 
-The openhexa-connector skill (version {version}) gives guidance for analysing data and \
+The openhexa-mcp skill (version {version}) gives guidance for analysing data and \
 investigating runs: {url}. If it is not installed, tell the user once.\
 """
 

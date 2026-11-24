@@ -1,9 +1,9 @@
 ---
-name: openhexa-connector
-description: Analyse OpenHEXA workspace data and investigate pipeline runs through the OpenHEXA Companion connector's `openhexa_*` tools, in a chat client, usually with a code sandbox. Use when the `openhexa_*` tools are available and a question involves OpenHEXA datasets, database tables, saved queries, pipelines or runs.
+name: openhexa-mcp
+description: Analyse OpenHEXA workspace data and investigate pipeline runs through the OpenHEXA Companion MCP server's `openhexa_*` tools, in a chat client, usually with a code sandbox. Use when the `openhexa_*` tools are available and a question involves OpenHEXA datasets, database tables, saved queries, pipelines or runs.
 ---
 
-# OpenHEXA through the connector
+# OpenHEXA through MCP
 
 <!-- Shared with openhexa-cli: change both. -->
 
@@ -98,4 +98,4 @@ around it.
   (the `host` of the URL). The user can allow that host in their client's network
   settings.
 - A workspace with `token_rejected`, or tools failing with a rejected token: the user
-  replaces the token on the connector's account page.
+  replaces the token on the MCP server's account page.

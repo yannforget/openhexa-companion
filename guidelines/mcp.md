@@ -1,6 +1,6 @@
 # MCP guidelines
 
-These rules apply to the connector's tools and server instructions, in
+These rules apply to the MCP server's tools and server instructions, in
 `src/openhexa/companion/server/`. They keep the tools predictable for models that see
 only a list of names and descriptions.
 
@@ -11,7 +11,7 @@ only a list of names and descriptions.
     user or describe workflows across tools.
   - Server instructions are a short orientation: what OpenHEXA is, where to start,
     asking before writes, and where to get the skill.
-  - The `openhexa-connector` skill holds the workflows and judgement.
+  - The `openhexa-mcp` skill holds the workflows and judgement.
 - Naming:
   - Tools are `openhexa_<verb>_<noun>`, reusing `list`, `get`, `create`, `update`,
     `delete`, `set`, `start` and `stop`.

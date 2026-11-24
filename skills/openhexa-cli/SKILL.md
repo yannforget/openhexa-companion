@@ -5,7 +5,7 @@ description: Work with an OpenHEXA workspace from a shell with the `hexa` CLI - 
 
 # OpenHEXA with the `hexa` CLI
 
-<!-- Shared with openhexa-connector: change both. -->
+<!-- Shared with openhexa-mcp: change both. -->
 
 ## OpenHEXA in short
 

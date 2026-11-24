@@ -17,7 +17,7 @@ class WorkspaceSummary(BaseModel):
 
 
 class WorkspaceList(BaseModel):
-    workspaces: list[WorkspaceSummary] = Field(description="Workspaces this connector can access.")
+    workspaces: list[WorkspaceSummary] = Field(description="Workspaces this MCP server can access.")
 
 
 class WorkspaceDetails(BaseModel):
@@ -34,10 +34,10 @@ def register(server: MCPServer, access: Access) -> None:
         annotations=READ_ONLY,
     )
     async def list_workspaces() -> WorkspaceList:
-        """List the OpenHEXA workspaces this connector can access, by slug and name.
+        """List the OpenHEXA workspaces this MCP server can access, by slug and name.
 
         The user chooses these workspaces when connecting, and changes them on the
-        connector's account page. token_rejected is true when OpenHEXA rejected the
+        MCP server's account page. token_rejected is true when OpenHEXA rejected the
         workspace's stored token on its last use: tools for that workspace fail until the
         user replaces the token on the account page.
         """

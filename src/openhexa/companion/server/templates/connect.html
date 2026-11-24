@@ -9,7 +9,7 @@
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <h2>Workspaces</h2>
 <p class="muted">For each workspace, enter its slug and a workspace token. {{ token_help(openhexa_url) }}
-The connector can then do in each workspace what the token allows.</p>
+OpenHEXA Companion can then do in each workspace what the token allows.</p>
 <fieldset data-rows>
 <legend class="visually-hidden">Workspaces to connect</legend>
 {% for slug in slugs %}{{ workspace_row(slug) }}

@@ -1,12 +1,12 @@
 # Skill guidelines
 
-These rules apply to the skills in `skills/`. The `hexa` CLI and the MCP connector
+These rules apply to the skills in `skills/`. The `hexa` CLI and the MCP server
 document each command and tool on their own, through help text, tool descriptions and
 error messages; the user documentation explains how to install and use them. The skills
 fill the remaining gap: they teach an agent how to do real work with OpenHEXA across
 several commands or tools, such as how the data model fits together, which version to
 use and cite, and when to ask before writing. `openhexa-cli` is for coding agents with a
-shell, `openhexa-connector` for chat clients with the connector.
+shell, `openhexa-mcp` for chat clients with the MCP server.
 
 - The description says what the skill is for and in which environment, so the right
   one loads.

@@ -1,70 +1,66 @@
-# OpenHEXA Companion
+# Architecture
 
-OpenHEXA Companion is a Python library for working with OpenHEXA workspaces, with two interfaces built on it: a command-line tool for people and coding agents working locally, and a remote Model Context Protocol (MCP) connector for people using AI clients such as Claude Web or Desktop.
+The companion is one Python package with three parts:
 
-It replaces two existing tools: the `hexa` CLI from `openhexa-dev-env`, whose commands it is free to redesign, and, for users who enable the connector, the native OpenHEXA MCP. Users are not expected to enable both connectors at once.
+```
+terminal, coding agent ──▶ hexa CLI ───────┐
+                                           ├──▶ library ──▶ OpenHEXA API
+AI chat client ─────────▶ MCP server ──────┘
+```
 
-The companion requires no changes to OpenHEXA. It can do what the OpenHEXA GraphQL API allows a workspace token to do, and nothing more.
+| Part | Code | Role |
+| --- | --- | --- |
+| Library | `src/openhexa/companion/` | Workspace operations over the OpenHEXA GraphQL API |
+| CLI | `src/openhexa/companion/cli/` | The `hexa` command, including local pipeline runs |
+| MCP server | `src/openhexa/companion/server/` | MCP server with OAuth, for AI chat clients |
 
-## Naming
+The CLI and the MCP server both call the library. The server's dependencies are in
+the `server` extra, so installing the CLI doesn't pull them in.
 
-| Surface | Name |
-| --- | --- |
-| Project and connector display name | OpenHEXA Companion |
-| GitHub repository and Python distribution | `openhexa-companion` |
-| Python import namespace | `openhexa.companion` (alongside `openhexa.sdk`) |
-| CLI command | `hexa` |
+## Principles
 
-## Use cases
+- **No changes to OpenHEXA.** Everything goes through the public API, with workspace
+  tokens, so the companion can do what a token allows and nothing more.
+- **One workspace at a time.** A library client, and a `hexa` project, work with one
+  workspace. The MCP server holds one token per workspace.
+- **No hosted compute.** The MCP server doesn't process data: AI clients download
+  dataset files from OpenHEXA's storage and analyse them in their own sandbox. Local
+  runs use your machine.
 
-### Analysing complete datasets from an AI client
+## Library
 
-This is the use case that motivates the connector. A user should be able to ask “Which district had the highest total last year?” and get an answer computed from a specific dataset version, informed by what the workspace documents about the data, such as its description or homepage. Browsing metadata or showing sample rows helps with discovery, but does not meet this need.
+`Client` is the entry point, with an attribute per area: `datasets`, `files`,
+`database`, `saved_queries`, `connections`, `pipelines`, `runs` and `webapps`. It takes
+credentials explicitly, never reads configuration, and raises the exceptions in
+`errors.py`.
 
-### Writing and deploying pipelines
+## CLI
 
-A person or a coding agent writes a pipeline in a local project linked to a workspace, runs it locally against real workspace data, then deploys it to OpenHEXA.
+One module per command group. Configuration is read from the environment and `.env`.
 
-### Investigating runs
+`hexa local run` starts the pipeline image with a small stand-in for the OpenHEXA API,
+which serves the local copies and forwards everything else to the workspace. The
+pipeline runs unchanged, with the image's own SDK. The code is in `cli/local/` and
+`cli/_runtime/`.
 
-A user finds out what a pipeline run did and why it failed: its parameters, logs, outputs and the code version that ran.
+## MCP server
 
-### Publishing webapps
+An ASGI application built on the official MCP Python SDK. It serves:
 
-A user publishes or updates a static webapp in a workspace.
+- `/mcp`, the MCP endpoint, with the tools in `server/tools/`;
+- an OAuth authorization server for AI clients;
+- `/connect`, where users enter workspace tokens when connecting a client;
+- `/account`, where users manage their clients and tokens.
 
-### Interfaces per use case
+Workspace tokens are stored encrypted in SQLite. AI clients receive the server's own
+OAuth tokens, never OpenHEXA's.
 
-Each use case will be supported through the CLI, the MCP connector or both, whichever is simpler. This will be decided later.
+## Skills
 
-## Architecture
+`skills/` holds the `openhexa-cli` and `openhexa-mcp` agent skills. They are
+attached to each GitHub release.
 
-| Component | Responsibility |
-| --- | --- |
-| **Python library** | A workspace-scoped client usable directly from Python. Given explicit credentials, it performs workspace operations, such as reading a file from a dataset version. It does not decide how credentials are collected, how results are displayed or where the bytes go. |
-| **CLI** | The local interface: loads configuration, presents results, works with files on disk and runs pipelines locally. It calls the library directly and works without the companion service. |
-| **MCP connector** | The hosted interface for AI clients. It calls the same library directly, not through a shell, and is deployed separately. |
+## Stack
 
-The project starts as one Python distribution, with the service’s dependencies optional.
-
-### Workspace access
-
-A user selects **Connect** in the AI client and enters an OpenHEXA token on the companion’s authorization page, never in chat. The companion verifies access, stores the token encrypted and binds it to a revocable grant. Through OAuth, the AI client receives a credential for the companion, not for OpenHEXA. What the user can do through the connector is what their OpenHEXA token allows.
-
-Ideally one grant holds several workspaces, each with its own token. One connector per workspace is an acceptable simplification.
-
-A workspace token proves access to a workspace, not an individual OpenHEXA identity.
-
-### Full files without hosted compute
-
-When the assistant selects a dataset file, the companion returns the signed download URL that OpenHEXA issues for that file in that exact version. The AI client downloads it from storage directly, so file bytes never pass through the companion. The URL is a temporary bearer credential that expires within minutes (10 on GCS); it never contains the OpenHEXA token.
-
-The AI client’s own Python environment downloads and analyses the file. A follow-up question can reuse the same file, and the answer can cite the dataset version and path. The companion runs no analysis itself.
-
-The CLI shares the same library operation, but saves the bytes to disk.
-
-**Main risk:** the AI client’s execution environment must reach the storage host, such as `storage.googleapis.com` on hosted OpenHEXA. Claude’s sandbox blocks it by default: users, or Team and Enterprise admins, must allow it. Storage that only OpenHEXA can reach, such as filesystem storage or a private MinIO, is not supported.
-
-## Left for later
-
-The Python interface, the CLI commands and the MCP tool catalogue will be designed in separate documents.
+Python 3.15, uv, click, httpx2, the MCP Python SDK with Starlette and uvicorn, Jinja2,
+SQLite and cryptography. Tests use pytest; linting and type checks use ruff and pyrefly.
