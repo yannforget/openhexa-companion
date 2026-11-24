@@ -55,6 +55,7 @@ Read the relevant guidelines before changing code:
 - [guidelines/python.md](guidelines/python.md): any Python code.
 - [guidelines/library.md](guidelines/library.md): the library, outside `cli/` and `server/`.
 - [guidelines/cli.md](guidelines/cli.md): the `hexa` CLI, in `cli/`.
+- [guidelines/mcp.md](guidelines/mcp.md): the MCP connector, in `server/`.
 
 For Python changes, run:
 
