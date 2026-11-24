@@ -96,11 +96,14 @@ class SavedQueries:
         self._transport = transport
         self._workspace = workspace
 
-    def list(self, search: str | None = None) -> builtins.list[SavedQuerySummary]:
+    def list(
+        self, search: str | None = None, *, limit: int | None = None
+    ) -> builtins.list[SavedQuerySummary]:
         """List the saved queries, most recently updated first.
 
         Args:
             search: Only list queries whose name or description contains it.
+            limit: Maximum number of queries, or `None` for all of them.
         """
 
         def fetch_page(page: int, per_page: int) -> dict[str, Any]:
@@ -115,7 +118,7 @@ class SavedQueries:
                 raise workspace_not_found(self._transport, self._workspace)
             return data["savedQueries"]
 
-        return [_summary(item) for item in self._transport.paginate(fetch_page)]
+        return [_summary(item) for item in self._transport.paginate(fetch_page, limit)]
 
     def get(self, slug: str) -> SavedQuery:
         """Get the saved query `slug`, with its SQL.

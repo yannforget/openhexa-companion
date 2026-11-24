@@ -1,9 +1,19 @@
 """`hexa connections` and `hexa database` commands."""
 
+from typing import Any
+
 import click
 
+from openhexa.companion import Connection
 from openhexa.companion.cli._context import LazyClient, pass_client
-from openhexa.companion.cli._output import json_option, print_json, print_table
+from openhexa.companion.cli._output import (
+    cut,
+    fetch_limit,
+    json_option,
+    limit_option,
+    print_json,
+    print_table,
+)
 
 # Shown instead of secret values that are not requested.
 HIDDEN = "********"
@@ -21,18 +31,20 @@ def connections() -> None:
 
 
 @connections.command("list")
+@limit_option("connections")
 @json_option
 @pass_client
-def list_connections(client: LazyClient, as_json: bool) -> None:
-    """List the connections of the workspace."""
-    items = client.get().connections.list()
+def list_connections(client: LazyClient, limit: int | None, as_json: bool) -> None:
+    """List the connections of the workspace, with secret values hidden."""
+    library = client.get()
+    items = cut(
+        library.connections.list(),
+        limit,
+        empty=f"No connections in workspace {library.workspace}",
+        complete=True,
+    )
     if as_json:
-        print_json(
-            [
-                {"slug": c.slug, "name": c.name, "type": c.type, "description": c.description}
-                for c in items
-            ]
-        )
+        print_json([connection_json(c, show_secrets=False) for c in items])
         return
     print_table([(c.slug, c.type, c.name) for c in items], ("connection", "type", "name"))
 
@@ -47,15 +59,7 @@ def show(client: LazyClient, slug: str, show_secrets: bool, as_json: bool) -> No
     connection = client.get().connections.get(slug)
     values = connection.values(include_secrets=show_secrets)
     if as_json:
-        print_json(
-            {
-                "slug": connection.slug,
-                "name": connection.name,
-                "type": connection.type,
-                "description": connection.description,
-                "fields": values,
-            }
-        )
+        print_json(connection_json(connection, show_secrets=show_secrets))
         return
     click.echo(f"{connection.name} ({connection.slug}, {connection.type})")
     if connection.description:
@@ -67,17 +71,37 @@ def show(client: LazyClient, slug: str, show_secrets: bool, as_json: bool) -> No
         click.echo(f"  {item.code}={value}")
 
 
+def connection_json(connection: Connection, *, show_secrets: bool) -> dict[str, Any]:
+    """The JSON of a connection, with `fields` mapping codes to values.
+
+    Secret values are `null` unless `show_secrets` is set. `hexa run` reads this JSON
+    as a local copy of the connection.
+    """
+    return {
+        "slug": connection.slug,
+        "name": connection.name,
+        "type": connection.type,
+        "description": connection.description,
+        "fields": connection.values(include_secrets=show_secrets),
+    }
+
+
 @click.group()
 def database() -> None:
     """Read the tables and credentials of the workspace database."""
 
 
 @database.command()
+@limit_option("tables")
 @json_option
 @pass_client
-def tables(client: LazyClient, as_json: bool) -> None:
+def tables(client: LazyClient, limit: int | None, as_json: bool) -> None:
     """List the tables of the workspace database."""
-    items = client.get().database.tables()
+    items = cut(
+        client.get().database.tables(limit=fetch_limit(limit)),
+        limit,
+        empty="The workspace database has no tables",
+    )
     if as_json:
         print_json(items)
         return

@@ -6,7 +6,15 @@ import click
 
 from openhexa.companion import SavedQuery
 from openhexa.companion.cli._context import LazyClient, pass_client
-from openhexa.companion.cli._output import format_time, json_option, print_json, print_table
+from openhexa.companion.cli._output import (
+    cut,
+    fetch_limit,
+    format_time,
+    json_option,
+    limit_option,
+    print_json,
+    print_table,
+)
 
 
 @click.group()
@@ -19,11 +27,18 @@ def queries() -> None:
 
 @queries.command("list")
 @click.option("--search", help="Only list queries whose name or description contains this.")
+@limit_option("queries")
 @json_option
 @pass_client
-def list_queries(client: LazyClient, search: str | None, as_json: bool) -> None:
+def list_queries(client: LazyClient, search: str | None, limit: int | None, as_json: bool) -> None:
     """List the saved queries, most recently updated first."""
-    items = client.get().saved_queries.list(search)
+    library = client.get()
+    items = cut(
+        library.saved_queries.list(search, limit=fetch_limit(limit)),
+        limit,
+        empty=f"No saved queries in workspace {library.workspace}"
+        + (f" matching '{search}'" if search else ""),
+    )
     if as_json:
         print_json(items)
         return

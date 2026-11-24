@@ -15,9 +15,13 @@ from openhexa.companion.cli._local import (
     upload_pairs,
 )
 from openhexa.companion.cli._output import (
+    cut,
+    fetch_limit,
     format_size,
     format_time,
     json_option,
+    limit_option,
+    nest,
     print_json,
     print_table,
 )
@@ -39,12 +43,17 @@ def datasets() -> None:
 
 
 @datasets.command("list")
+@limit_option("datasets")
 @json_option
 @pass_client
-def list_datasets(client: LazyClient, as_json: bool) -> None:
+def list_datasets(client: LazyClient, limit: int | None, as_json: bool) -> None:
     """List the datasets of the workspace, including those shared with it."""
     workspace = client.get().workspace
-    items = client.get().datasets.list()
+    items = cut(
+        client.get().datasets.list(limit=fetch_limit(limit)),
+        limit,
+        empty=f"No datasets in workspace {workspace}",
+    )
     if as_json:
         print_json(items)
         return
@@ -80,11 +89,16 @@ def show(client: LazyClient, dataset: str, as_json: bool) -> None:
 
 @datasets.command()
 @dataset_argument
+@limit_option("versions", default=20)
 @json_option
 @pass_client
-def versions(client: LazyClient, dataset: str, as_json: bool) -> None:
+def versions(client: LazyClient, dataset: str, limit: int, as_json: bool) -> None:
     """List the versions of a dataset, newest first."""
-    items = client.get().datasets.versions(dataset)
+    items = cut(
+        client.get().datasets.versions(dataset, limit=fetch_limit(limit)),
+        limit,
+        empty=f"Dataset {dataset} has no version yet",
+    )
     if as_json:
         print_json(items)
         return
@@ -97,17 +111,27 @@ def versions(client: LazyClient, dataset: str, as_json: bool) -> None:
 @datasets.command()
 @dataset_argument
 @version_option
+@limit_option("files")
 @json_option
 @pass_client
-def files(client: LazyClient, dataset: str, version_name: str | None, as_json: bool) -> None:
-    """List the files of a dataset version."""
+def files(
+    client: LazyClient, dataset: str, version_name: str | None, limit: int | None, as_json: bool
+) -> None:
+    """List the files of a dataset version.
+
+    Each file names its version, also printed on stderr.
+    """
     library = client.get()
     version = library.datasets.version(dataset, version_name)
-    items = library.datasets.files(version)
-    if as_json:
-        print_json({"version": version, "files": items})
-        return
     click.echo(f"Version {version.name}", err=True)
+    items = cut(
+        library.datasets.files(version, limit=fetch_limit(limit)),
+        limit,
+        empty=f"Version {version.name} of dataset {dataset} has no files",
+    )
+    if as_json:
+        print_json(items)
+        return
     print_table(
         [(f.path, format_size(f.size), f.content_type) for f in items],
         ("path", "size", "content type"),
@@ -126,6 +150,7 @@ def files(client: LazyClient, dataset: str, version_name: str | None, as_json: b
     "of the local workspace used by `hexa run`.",
 )
 @click.option("--force", is_flag=True, help="Replace local files that already exist.")
+@json_option
 @pass_client
 def download(
     client: LazyClient,
@@ -135,6 +160,7 @@ def download(
     version_name: str | None,
     output: Path | None,
     force: bool,
+    as_json: bool,
 ) -> None:
     """Download files of a dataset version: those at PATHS, or all of them.
 
@@ -142,7 +168,8 @@ def download(
     .hexa/workspace/datasets/SLUG/VERSION/, where `hexa run` reads the dataset instead
     of the workspace's. Use --output to save them elsewhere. Existing local files are
     left untouched unless --force is given; the command stops before downloading
-    anything if one exists.
+    anything if one exists. With --json, prints the files written, with their
+    `local_path`.
     """
     library = client.get()
     version = library.datasets.version(dataset, version_name)
@@ -163,6 +190,8 @@ def download(
     click.echo(f"Downloaded {len(targets)} file(s) of version {version.name} to {output}", err=True)
     if local:
         click.echo(f"`hexa run` now reads dataset {version.dataset} from there.", err=True)
+    if as_json:
+        print_json([nest(file, local_path=str(target)) for file, target in targets])
 
 
 def _check_local_slug(library: Client, version: DatasetVersion) -> None:
@@ -221,6 +250,7 @@ def upload(
 
     Files are added at the root of the version. The files in a directory keep their
     path relative to it; hidden files and directories, such as `.env`, are skipped.
+    With --json, prints the version with its `files`.
     """
     uploads = upload_pairs(sources)
     library = client.get()
@@ -230,7 +260,7 @@ def upload(
         uploaded.append(library.datasets.upload(version, local, path))
         click.echo(f"{path} ({format_size(local.stat().st_size)})", err=True)
     if as_json:
-        print_json({"version": version, "files": uploaded})
+        print_json(nest(version, files=uploaded))
         return
     click.echo(f"Published version {version.name} with {len(uploaded)} file(s)", err=True)
 
@@ -291,11 +321,15 @@ def update(
     help="Delete only this version and its files, instead of the whole dataset.",
 )
 @yes_option
+@json_option
 @pass_client
-def delete(client: LazyClient, dataset: str, version_name: str | None, yes: bool) -> None:
+def delete(
+    client: LazyClient, dataset: str, version_name: str | None, yes: bool, as_json: bool
+) -> None:
     """Delete a dataset with all its versions and files, or a single version.
 
-    Deleting the latest version makes the previous one the latest.
+    Deleting the latest version makes the previous one the latest. With --json, prints
+    what was deleted.
     """
     library = client.get()
     item = library.datasets.get(dataset)
@@ -309,11 +343,15 @@ def delete(client: LazyClient, dataset: str, version_name: str | None, yes: bool
         )
         library.datasets.delete_version(version)
         click.echo(f"Deleted version {version.name} of dataset {item.reference}", err=True)
+        if as_json:
+            print_json(version)
         return
     count = len(library.datasets.versions(dataset))
     confirm(f"Delete dataset '{item.reference}' and its {count} version(s)", yes=yes)
     library.datasets.delete(dataset)
     click.echo(f"Deleted dataset {item.reference}", err=True)
+    if as_json:
+        print_json(item)
 
 
 @datasets.group()
@@ -329,11 +367,13 @@ def attributes() -> None:
 @dataset_argument
 @click.argument("key")
 @click.argument("value")
+@json_option
 @pass_client
-def set_attribute(client: LazyClient, dataset: str, key: str, value: str) -> None:
+def set_attribute(client: LazyClient, dataset: str, key: str, value: str, as_json: bool) -> None:
     """Set the attribute KEY of a dataset to VALUE, replacing any previous value.
 
     VALUE is read as JSON if it can be (2025, true, ["COD","SEN"]), as text otherwise.
+    With --json, prints the dataset.
     """
     try:
         parsed = json.loads(value)
@@ -341,13 +381,18 @@ def set_attribute(client: LazyClient, dataset: str, key: str, value: str) -> Non
         parsed = value
     item = client.get().datasets.set_attribute(dataset, key, parsed)
     click.echo(f"Set {key}={json.dumps(parsed, ensure_ascii=False)} on {item.reference}", err=True)
+    if as_json:
+        print_json(item)
 
 
 @attributes.command("delete")
 @dataset_argument
 @click.argument("key")
+@json_option
 @pass_client
-def delete_attribute(client: LazyClient, dataset: str, key: str) -> None:
-    """Remove the attribute KEY of a dataset."""
+def delete_attribute(client: LazyClient, dataset: str, key: str, as_json: bool) -> None:
+    """Remove the attribute KEY of a dataset. With --json, prints the dataset."""
     item = client.get().datasets.delete_attribute(dataset, key)
     click.echo(f"Removed {key} from {item.reference}", err=True)
+    if as_json:
+        print_json(item)

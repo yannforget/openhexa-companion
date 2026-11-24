@@ -8,10 +8,15 @@ import click
 
 from openhexa.companion import Client, Run
 from openhexa.companion.cli._context import LazyClient, pass_client
+from openhexa.companion.cli._errors import RUN_FAILED_EXIT_CODE
 from openhexa.companion.cli._output import (
+    cut,
+    fetch_limit,
     format_size,
     format_time,
     json_option,
+    limit_option,
+    nest,
     print_json,
     print_table,
 )
@@ -19,8 +24,6 @@ from openhexa.companion.cli._parameters import parameter_options, read_parameter
 
 # Seconds between two checks of a run that is followed.
 POLL_INTERVAL = 5
-# Exit code of `start --wait` and `logs --follow` when the run did not succeed.
-RUN_FAILED_EXIT_CODE = 2
 
 run_id_argument = click.argument("run_id")
 
@@ -35,12 +38,16 @@ def runs() -> None:
 
 @runs.command("list")
 @click.argument("pipeline")
-@click.option("-n", "--limit", default=20, show_default=True, help="Number of runs to show.")
+@limit_option("runs", default=20)
 @json_option
 @pass_client
 def list_runs(client: LazyClient, pipeline: str, limit: int, as_json: bool) -> None:
     """List the runs of a pipeline, newest first."""
-    items = client.get().runs.list(pipeline, limit=limit)
+    items = cut(
+        client.get().runs.list(pipeline, limit=fetch_limit(limit)),
+        limit,
+        empty=f"Pipeline {pipeline} has no runs",
+    )
     if as_json:
         print_json(items)
         return
@@ -67,19 +74,20 @@ def list_runs(client: LazyClient, pipeline: str, limit: int, as_json: bool) -> N
 def show(client: LazyClient, run_id: str, as_json: bool) -> None:
     """Show a run: status, parameters, messages and outputs.
 
-    Use `hexa runs logs` for the full output of the pipeline.
+    Use `hexa runs logs` for the full output of the pipeline. With --json, prints the
+    run with its `messages`, `outputs` and `dataset_versions`.
     """
     library = client.get()
     run = library.runs.get(run_id)
     details = library.runs.details(run_id)
     if as_json:
         print_json(
-            {
-                "run": run,
-                "messages": details.messages,
-                "outputs": details.outputs,
-                "dataset_versions": details.dataset_versions,
-            }
+            nest(
+                run,
+                messages=details.messages,
+                outputs=details.outputs,
+                dataset_versions=details.dataset_versions,
+            )
         )
         return
     click.echo(f"Run {run.id} of {run.pipeline}, version {run.version or 'unknown'}")
@@ -111,18 +119,23 @@ def show(client: LazyClient, run_id: str, as_json: bool) -> None:
 @runs.command()
 @run_id_argument
 @click.option("-f", "--follow", is_flag=True, help="Keep printing new logs until the run ends.")
+@json_option
 @pass_client
-def logs(client: LazyClient, run_id: str, follow: bool) -> None:
+def logs(client: LazyClient, run_id: str, follow: bool, as_json: bool) -> None:
     """Print the logs of a run.
 
-    With --follow, the command exits with code 2 if the run does not succeed.
+    With --follow, the command exits with code 5 if the run does not succeed. With
+    --json, prints the run with its `logs` once it is followed to the end.
     """
     library = client.get()
-    if not follow:
+    if not follow and not as_json:
         click.echo(library.runs.details(run_id).logs, nl=False)
         return
-    run = _follow(library, run_id, print_logs=True)
-    _exit_on_failure(run)
+    run = _follow(library, run_id, print_logs=not as_json) if follow else library.runs.get(run_id)
+    if as_json:
+        print_json(nest(run, logs=library.runs.details(run_id).logs))
+    if follow:
+        _exit_on_failure(run)
 
 
 @runs.command()
@@ -149,7 +162,7 @@ def start(
     """Start a run of PIPELINE and print its ID.
 
     Parameters without a value use the value configured in OpenHEXA, then the default
-    declared in the code. With --wait, the command exits with code 2 if the run does
+    declared in the code. With --wait, the command exits with code 5 if the run does
     not succeed.
     """
     parameters = read_parameters(params, params_file)
@@ -169,11 +182,14 @@ def start(
 
 @runs.command()
 @run_id_argument
+@json_option
 @pass_client
-def stop(client: LazyClient, run_id: str) -> None:
-    """Stop a run."""
-    client.get().runs.stop(run_id)
+def stop(client: LazyClient, run_id: str, as_json: bool) -> None:
+    """Stop a run. With --json, prints the run, which is terminating."""
+    run = client.get().runs.stop(run_id)
     click.echo(f"Stopping run {run_id}", err=True)
+    if as_json:
+        print_json(run)
 
 
 def _follow(library: Client, run_id: str, *, print_logs: bool) -> Run:

@@ -195,14 +195,18 @@ class Webapps:
         self._transport = transport
         self._workspace = workspace
 
-    def list(self) -> builtins.list[Webapp]:
-        """List the webapps of the workspace."""
+    def list(self, *, limit: int | None = None) -> builtins.list[Webapp]:
+        """List the webapps of the workspace.
+
+        Args:
+            limit: Maximum number of webapps, or `None` for all of them.
+        """
 
         def fetch_page(page: int, per_page: int) -> dict[str, Any]:
             variables = {"workspace": self._workspace, "page": page, "perPage": per_page}
             return self._transport.query(LIST_QUERY, variables)["webapps"]
 
-        return [_webapp(item) for item in self._transport.paginate(fetch_page)]
+        return [_webapp(item) for item in self._transport.paginate(fetch_page, limit)]
 
     def get(self, slug: str) -> Webapp:
         """Get the webapp `slug`.

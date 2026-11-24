@@ -242,12 +242,15 @@ class Pipelines:
         self._transport = transport
         self._workspace = workspace
 
-    def list(self, *, last_run_status: str | None = None) -> builtins.list[Pipeline]:
+    def list(
+        self, *, last_run_status: str | None = None, limit: int | None = None
+    ) -> builtins.list[Pipeline]:
         """List the pipelines of the workspace, by name.
 
         Args:
             last_run_status: Only list pipelines whose latest run has this status, such
                 as `failed`.
+            limit: Maximum number of pipelines, or `None` for all of them.
         """
         states = [last_run_status] if last_run_status else None
 
@@ -260,7 +263,7 @@ class Pipelines:
             }
             return self._transport.query(LIST_QUERY, variables)["pipelines"]
 
-        return [_pipeline(item) for item in self._transport.paginate(fetch_page)]
+        return [_pipeline(item) for item in self._transport.paginate(fetch_page, limit)]
 
     def get(self, code: str) -> Pipeline:
         """Get the pipeline `code`.
@@ -270,8 +273,14 @@ class Pipelines:
         """
         return _pipeline(self._find(GET_QUERY, code))
 
-    def versions(self, pipeline: str) -> builtins.list[PipelineVersion]:
+    def versions(
+        self, pipeline: str, *, limit: int | None = None
+    ) -> builtins.list[PipelineVersion]:
         """List the versions of a pipeline, newest first.
+
+        Args:
+            pipeline: Code of the pipeline.
+            limit: Maximum number of versions, or `None` for all of them.
 
         Raises:
             NotFoundError: The workspace has no such pipeline.
@@ -280,7 +289,7 @@ class Pipelines:
         def fetch_page(page: int, per_page: int) -> dict[str, Any]:
             return self._find(VERSIONS_QUERY, pipeline, page=page, perPage=per_page)["versions"]
 
-        return [_version(item) for item in self._transport.paginate(fetch_page)]
+        return [_version(item) for item in self._transport.paginate(fetch_page, limit)]
 
     def version(
         self, pipeline: str, name: str | None = None, *, version_id: str | None = None

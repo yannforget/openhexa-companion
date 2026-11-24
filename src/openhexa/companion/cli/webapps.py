@@ -7,9 +7,13 @@ import click
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._local import check_targets, local_path, save_stream
 from openhexa.companion.cli._output import (
+    cut,
+    fetch_limit,
     format_size,
     format_time,
     json_option,
+    limit_option,
+    nest,
     print_json,
     print_table,
 )
@@ -47,11 +51,17 @@ def webapps() -> None:
 
 
 @webapps.command("list")
+@limit_option("webapps")
 @json_option
 @pass_client
-def list_webapps(client: LazyClient, as_json: bool) -> None:
+def list_webapps(client: LazyClient, limit: int | None, as_json: bool) -> None:
     """List the webapps of the workspace."""
-    items = client.get().webapps.list()
+    library = client.get()
+    items = cut(
+        library.webapps.list(limit=fetch_limit(limit)),
+        limit,
+        empty=f"No webapps in workspace {library.workspace}",
+    )
     if as_json:
         print_json(items)
         return
@@ -66,13 +76,16 @@ def list_webapps(client: LazyClient, as_json: bool) -> None:
 @json_option
 @pass_client
 def show(client: LazyClient, webapp: str, as_json: bool) -> None:
-    """Show a webapp, its files and its latest versions."""
+    """Show a webapp, its files and its latest versions.
+
+    With --json, prints the webapp with its `files` and latest `versions`.
+    """
     library = client.get()
     item = library.webapps.get(webapp)
     files = library.webapps.files(webapp) if item.type == "STATIC" else []
     versions = library.webapps.versions(webapp, limit=5) if item.type == "STATIC" else []
     if as_json:
-        print_json({"webapp": item, "files": files, "versions": versions})
+        print_json(nest(item, files=files, versions=versions))
         return
     click.echo(f"{item.name} ({item.slug}, {item.type})")
     click.echo(f"URL: {item.url}")
@@ -102,11 +115,21 @@ def show(client: LazyClient, webapp: str, as_json: bool) -> None:
     help="Directory to save the files in. Defaults to WEBAPP.",
 )
 @click.option("--force", is_flag=True, help="Replace local files that already exist.")
+@json_option
 @pass_client
 def download(
-    client: LazyClient, *, webapp: str, version: str | None, output: Path | None, force: bool
+    client: LazyClient,
+    *,
+    webapp: str,
+    version: str | None,
+    output: Path | None,
+    force: bool,
+    as_json: bool,
 ) -> None:
-    """Download the files of a static webapp."""
+    """Download the files of a static webapp.
+
+    With --json, prints the files written, with their `local_path`.
+    """
     target_dir = output or Path(webapp)
     files = client.get().webapps.files(webapp, version=version, content=True)
     unreadable = [f.path for f in files if f.content is None]
@@ -119,6 +142,13 @@ def download(
     for file, target in targets:
         save_stream([file.content or b""], target)
     click.echo(f"Downloaded {len(targets)} file(s) to {target_dir}", err=True)
+    if as_json:
+        print_json(
+            [
+                {"path": file.path, "size": file.size, "local_path": str(target)}
+                for file, target in targets
+            ]
+        )
 
 
 @webapps.command()
@@ -161,7 +191,8 @@ def publish(
 
     The webapp ends up with exactly the files of --source; files no longer there are
     removed. Hidden files and directories (such as .env and .git), node_modules and
-    __pycache__ are not sent. The change is live at once.
+    __pycache__ are not sent. The change is live at once. With --json, prints the
+    webapp with the paths `uploaded` and `deleted`.
     """
     if (webapp is None) == (create_name is None):
         raise click.UsageError("Give either WEBAPP or --create NAME")
@@ -184,19 +215,22 @@ def publish(
 @webapps.command()
 @click.argument("webapp")
 @yes_option
+@json_option
 @pass_client
-def delete(client: LazyClient, webapp: str, yes: bool) -> None:
-    """Delete a webapp."""
+def delete(client: LazyClient, webapp: str, yes: bool, as_json: bool) -> None:
+    """Delete a webapp. With --json, prints the webapp."""
     library = client.get()
     item = library.webapps.get(webapp)
     confirm(f"Delete webapp '{item.slug}' served at {item.url}", yes=yes)
     library.webapps.delete(webapp)
     click.echo(f"Deleted webapp {item.slug}", err=True)
+    if as_json:
+        print_json(item)
 
 
 def _report(result: Publication, *, as_json: bool) -> None:
     if as_json:
-        print_json(result)
+        print_json(nest(result.webapp, uploaded=result.uploaded, deleted=result.deleted))
         return
     click.echo(
         f"Published {len(result.uploaded)} file(s), removed {len(result.deleted)}: "

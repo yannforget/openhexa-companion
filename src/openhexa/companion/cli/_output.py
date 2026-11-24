@@ -1,4 +1,4 @@
-"""Printing command results as tables or JSON."""
+"""Printing command results as tables or JSON, and notes about lists."""
 
 import dataclasses
 import json
@@ -8,14 +8,77 @@ from typing import Any
 
 import click
 
+# Environment variable that turns on `--json` for every command.
+JSON_ENVVAR = "HEXA_JSON"
+# Key of `click.Context.meta` recording whether the command prints JSON, for errors.
+JSON_META_KEY = "hexa.json"
+
+
+def _record_json(ctx: click.Context, _param: click.Parameter, value: bool) -> bool:
+    ctx.meta[JSON_META_KEY] = value
+    return value
+
+
 json_option = click.option(
-    "--json", "as_json", is_flag=True, help="Print the result as JSON, for scripts and agents."
+    "--json",
+    "as_json",
+    is_flag=True,
+    envvar=JSON_ENVVAR,
+    callback=_record_json,
+    help=f"Print the result as JSON, for scripts and agents. {JSON_ENVVAR}=1 turns it on.",
 )
+
+
+def limit_option(what: str, default: int | None = None) -> Any:
+    """Add `-n/--limit`, the maximum number of `what` to list: all by default, or `default`."""
+    return click.option(
+        "-n",
+        "--limit",
+        type=click.IntRange(min=1),
+        default=default,
+        show_default=default is not None,
+        help=f"Maximum number of {what} to show."
+        + ("" if default is not None else " Defaults to all."),
+    )
+
+
+def fetch_limit(limit: int | None) -> int | None:
+    """The number of items to fetch to show `limit` of them and tell whether there are more."""
+    return None if limit is None else limit + 1
+
+
+def cut[T](items: Sequence[T], limit: int | None, *, empty: str, complete: bool = False) -> list[T]:
+    """Return the first `limit` items, saying on stderr if the list is empty or cut.
+
+    Args:
+        items: The items, fetched with `fetch_limit(limit)` or all of them.
+        limit: Maximum number of items to show, or `None` for all of them.
+        empty: Note printed when there are no items, such as "No datasets in workspace X".
+        complete: `items` holds every item, so the note can give their number.
+    """
+    if not items:
+        note(empty)
+    elif limit is not None and len(items) > limit:
+        if complete:
+            note(f"Showing {limit} of {len(items)}; use -n to show more")
+        else:
+            note(f"Showing the first {limit}; use -n to show more")
+    return list(items[:limit])
+
+
+def note(message: str) -> None:
+    """Print a note about the result on stderr."""
+    click.echo(message, err=True)
 
 
 def print_json(value: Any) -> None:
     """Print dataclasses, lists of them and plain values as indented JSON."""
     click.echo(json.dumps(value, default=_to_json, indent=2, ensure_ascii=False))
+
+
+def nest(item: Any, **fields: Any) -> dict[str, Any]:
+    """Turn the dataclass `item` into a dict for JSON, with related data as extra `fields`."""
+    return {**_to_json(item), **fields}
 
 
 def print_table(rows: Sequence[Sequence[Any]], headers: Sequence[str]) -> None:

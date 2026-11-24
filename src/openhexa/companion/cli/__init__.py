@@ -4,8 +4,8 @@ from pathlib import Path
 
 import click
 
-from openhexa.companion import OpenHexaError
 from openhexa.companion.cli._context import LazyClient
+from openhexa.companion.cli._errors import Group
 from openhexa.companion.cli.connections import connections, database
 from openhexa.companion.cli.datasets import datasets
 from openhexa.companion.cli.files import files
@@ -16,16 +16,6 @@ from openhexa.companion.cli.runs import runs
 from openhexa.companion.cli.search import search
 from openhexa.companion.cli.webapps import webapps
 from openhexa.companion.cli.workspace import workspace
-
-
-class Group(click.Group):
-    """Turns library errors into a one-line message and exit code 1."""
-
-    def invoke(self, ctx: click.Context) -> object:
-        try:
-            return super().invoke(ctx)
-        except OpenHexaError as err:
-            raise click.ClickException(str(err)) from err
 
 
 @click.group(cls=Group)
@@ -40,7 +30,13 @@ class Group(click.Group):
 )
 @click.pass_context
 def main(ctx: click.Context, env_file: Path) -> None:
-    """Work with an OpenHEXA workspace."""
+    """Work with an OpenHEXA workspace.
+
+    Every command accepts --json, which HEXA_JSON=1 turns on; errors are then printed
+    as {"error": {"type", "message"}} on stderr. Exit codes: 1 for an error, 2 for
+    misuse, 3 for not found, 4 for permission denied or a rejected token, 5 for a run
+    that did not succeed.
+    """
     ctx.obj = LazyClient(env_file)
     ctx.call_on_close(ctx.obj.close)
 

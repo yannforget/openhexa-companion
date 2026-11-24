@@ -8,7 +8,16 @@ from typing import get_args
 import click
 
 from openhexa.companion.cli._context import LazyClient, pass_client
-from openhexa.companion.cli._output import format_time, json_option, print_json, print_table
+from openhexa.companion.cli._output import (
+    cut,
+    fetch_limit,
+    format_time,
+    json_option,
+    limit_option,
+    nest,
+    print_json,
+    print_table,
+)
 from openhexa.companion.cli._prompt import confirm, yes_option
 from openhexa.companion.runs import RunStatus
 
@@ -33,11 +42,20 @@ def pipelines() -> None:
     type=click.Choice(get_args(RunStatus)),
     help="Only list pipelines whose latest run has this status, such as failed.",
 )
+@limit_option("pipelines")
 @json_option
 @pass_client
-def list_pipelines(client: LazyClient, last_run_status: str | None, as_json: bool) -> None:
+def list_pipelines(
+    client: LazyClient, last_run_status: str | None, limit: int | None, as_json: bool
+) -> None:
     """List the pipelines of the workspace."""
-    items = client.get().pipelines.list(last_run_status=last_run_status)
+    library = client.get()
+    items = cut(
+        library.pipelines.list(last_run_status=last_run_status, limit=fetch_limit(limit)),
+        limit,
+        empty=f"No pipelines in workspace {library.workspace}"
+        + (f" whose last run is {last_run_status}" if last_run_status else ""),
+    )
     if as_json:
         print_json(items)
         return
@@ -53,12 +71,15 @@ def list_pipelines(client: LazyClient, last_run_status: str | None, as_json: boo
 @json_option
 @pass_client
 def show(client: LazyClient, pipeline: str, version_name: str | None, as_json: bool) -> None:
-    """Show a pipeline version and its parameters."""
+    """Show a pipeline and a version with its parameters.
+
+    With --json, prints the pipeline with the version as `version`.
+    """
     library = client.get()
     item = library.pipelines.get(pipeline)
     version = library.pipelines.version(pipeline, version_name)
     if as_json:
-        print_json({"pipeline": item, "version": version})
+        print_json(nest(item, version=version))
         return
     click.echo(f"{item.name} ({item.code})")
     if item.schedule:
@@ -88,11 +109,16 @@ def show(client: LazyClient, pipeline: str, version_name: str | None, as_json: b
 
 @pipelines.command()
 @click.argument("pipeline")
+@limit_option("versions", default=20)
 @json_option
 @pass_client
-def versions(client: LazyClient, pipeline: str, as_json: bool) -> None:
+def versions(client: LazyClient, pipeline: str, limit: int, as_json: bool) -> None:
     """List the versions of a pipeline, newest first."""
-    items = client.get().pipelines.versions(pipeline)
+    items = cut(
+        client.get().pipelines.versions(pipeline, limit=fetch_limit(limit)),
+        limit,
+        empty=f"Pipeline {pipeline} has no version yet",
+    )
     if as_json:
         print_json(items)
         return
@@ -112,6 +138,7 @@ def versions(client: LazyClient, pipeline: str, as_json: bool) -> None:
     help="Directory to extract the source in. Defaults to PIPELINE-VERSION.",
 )
 @click.option("--force", is_flag=True, help="Extract into a directory that already exists.")
+@json_option
 @pass_client
 def source(
     client: LazyClient,
@@ -120,17 +147,25 @@ def source(
     version_name: str | None,
     output: Path | None,
     force: bool,
+    as_json: bool,
 ) -> None:
-    """Download the source code of a pipeline version."""
+    """Download the source code of a pipeline version.
+
+    With --json, prints the paths of the files written.
+    """
     library = client.get()
     version = library.pipelines.version(pipeline, version_name)
     target = output or Path(f"{pipeline}-v{version.number}")
     if target.exists() and not force:
         raise click.ClickException(f"{target} already exists. Use --force to extract into it.")
-    # `extractall` drops absolute paths and `..` parts, so nothing lands outside `target`.
+    # `extract` drops absolute paths and `..` parts, so nothing lands outside `target`.
     with zipfile.ZipFile(io.BytesIO(library.pipelines.source(version))) as archive:
-        archive.extractall(target)
+        written = [
+            archive.extract(member, target) for member in archive.infolist() if not member.is_dir()
+        ]
     click.echo(f"Extracted version {version.label} of {pipeline} to {target}", err=True)
+    if as_json:
+        print_json(written)
 
 
 @pipelines.command()
@@ -189,12 +224,15 @@ def deploy(
 @pipelines.command()
 @click.argument("pipeline")
 @yes_option
+@json_option
 @pass_client
-def delete(client: LazyClient, pipeline: str, yes: bool) -> None:
-    """Delete a pipeline with its versions and runs."""
+def delete(client: LazyClient, pipeline: str, yes: bool, as_json: bool) -> None:
+    """Delete a pipeline with its versions and runs. With --json, prints the pipeline."""
     library = client.get()
     item = library.pipelines.get(pipeline)
     count = len(library.pipelines.versions(pipeline))
     confirm(f"Delete pipeline '{item.code}' and its {count} version(s) and runs", yes=yes)
     library.pipelines.delete(pipeline)
     click.echo(f"Deleted pipeline {item.code}", err=True)
+    if as_json:
+        print_json(item)

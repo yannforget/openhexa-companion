@@ -20,6 +20,7 @@ import click
 from openhexa.companion import Workspace
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._local import LOCAL_WORKSPACE, local_workspace
+from openhexa.companion.cli._output import json_option
 from openhexa.companion.cli._parameters import parameter_options, read_parameters
 from openhexa.companion.pipelines import source_files
 
@@ -88,7 +89,7 @@ class Mount:
 @click.option(
     "--dry-run", is_flag=True, help="Run the checks and print the engine command, then stop."
 )
-@click.option("--json", "as_json", is_flag=True, help="Print the end-of-run summary as JSON.")
+@json_option
 @pass_client
 def run(
     client: LazyClient,

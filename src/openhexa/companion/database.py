@@ -163,8 +163,12 @@ class Database:
         self._transport = transport
         self._workspace = workspace
 
-    def tables(self) -> builtins.list[DatabaseTable]:
-        """List the tables of the workspace database."""
+    def tables(self, *, limit: int | None = None) -> builtins.list[DatabaseTable]:
+        """List the tables of the workspace database.
+
+        Args:
+            limit: Maximum number of tables, or `None` for all of them.
+        """
 
         def fetch_page(page: int, per_page: int) -> dict[str, Any]:
             variables = {"workspace": self._workspace, "page": page, "perPage": per_page}
@@ -172,7 +176,7 @@ class Database:
 
         return [
             DatabaseTable(name=item["name"], rows=item["count"])
-            for item in self._transport.paginate(fetch_page)
+            for item in self._transport.paginate(fetch_page, limit)
         ]
 
     def table(self, name: str) -> DatabaseTable:

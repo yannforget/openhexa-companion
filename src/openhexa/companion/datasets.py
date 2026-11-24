@@ -322,8 +322,11 @@ class Datasets:
         self._transport = transport
         self._workspace = workspace
 
-    def list(self) -> builtins.list[Dataset]:
+    def list(self, *, limit: int | None = None) -> builtins.list[Dataset]:
         """List the datasets of the workspace, including those shared with it.
+
+        Args:
+            limit: Maximum number of datasets, or `None` for all of them.
 
         Raises:
             NotFoundError: The workspace does not exist or the token cannot access it.
@@ -337,7 +340,8 @@ class Datasets:
                 raise workspace_not_found(self._transport, self._workspace)
             return data["datasets"]
 
-        return [_dataset(item["dataset"]) for item in self._transport.paginate(fetch_page)]
+        items = self._transport.paginate(fetch_page, limit)
+        return [_dataset(item["dataset"]) for item in items]
 
     def get(self, dataset: str) -> Dataset:
         """Get a dataset.
@@ -347,8 +351,12 @@ class Datasets:
         """
         return _dataset(self._find(GET_QUERY, dataset))
 
-    def versions(self, dataset: str) -> builtins.list[DatasetVersion]:
+    def versions(self, dataset: str, *, limit: int | None = None) -> builtins.list[DatasetVersion]:
         """List the versions of a dataset, newest first.
+
+        Args:
+            dataset: Slug of the dataset.
+            limit: Maximum number of versions, or `None` for all of them.
 
         Raises:
             NotFoundError: The workspace has no such dataset.
@@ -360,7 +368,7 @@ class Datasets:
             found.setdefault("dataset", data)
             return data["versions"]
 
-        versions = list(self._transport.paginate(fetch_page))
+        versions = list(self._transport.paginate(fetch_page, limit))
         return [_version(item, found["dataset"]) for item in versions]
 
     def version(
@@ -403,8 +411,14 @@ class Datasets:
             )
         return _version(data["latestVersion"], data)
 
-    def files(self, version: DatasetVersion) -> builtins.list[DatasetFile]:
+    def files(
+        self, version: DatasetVersion, *, limit: int | None = None
+    ) -> builtins.list[DatasetFile]:
         """List the files of a dataset version.
+
+        Args:
+            version: The version.
+            limit: Maximum number of files, or `None` for all of them.
 
         Raises:
             NotFoundError: The dataset or version no longer exists.
@@ -414,7 +428,7 @@ class Datasets:
             data = self._find_version(FILES_QUERY, version, page=page, perPage=per_page)
             return data["files"]
 
-        return [_file(item, version) for item in self._transport.paginate(fetch_page)]
+        return [_file(item, version) for item in self._transport.paginate(fetch_page, limit)]
 
     def file(self, version: DatasetVersion, path: str) -> DatasetFile:
         """Get the file at `path` in a dataset version.

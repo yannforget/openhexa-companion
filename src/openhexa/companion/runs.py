@@ -325,8 +325,10 @@ class Runs:
         )
         return _run(result["run"])
 
-    def stop(self, run_id: str) -> None:
-        """Ask OpenHEXA to stop a run; its status becomes `terminating`, then `stopped`.
+    def stop(self, run_id: str) -> Run:
+        """Ask OpenHEXA to stop a run and return the run.
+
+        Its status becomes `terminating`, then `stopped` once the process has ended.
 
         Raises:
             InvalidInputError: `run_id` is not a run ID.
@@ -342,6 +344,7 @@ class Runs:
             action=f"stop run '{run_id}' in workspace '{self._workspace}'",
             reasons=RUN_ERRORS,
         )
+        return self.get(run_id)
 
     def _find(self, query: str, run_id: str) -> dict[str, Any]:
         """Run a query on the run `run_id`, checking it belongs to the workspace."""

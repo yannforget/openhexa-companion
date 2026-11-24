@@ -502,8 +502,7 @@ def register_writes(server: MCPServer, access: Access) -> None:
         """
 
         def stop(client: Client) -> tuple[Run, set[str]]:
-            client.runs.stop(run)
-            stopped = client.runs.get(run)
+            stopped = client.runs.stop(run)
             return stopped, _run_secret_codes(client, stopped)
 
         stopped, secrets = await access.run(workspace, stop)
