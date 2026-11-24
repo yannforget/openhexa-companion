@@ -32,10 +32,11 @@ from openhexa.companion.search import ITEM_TYPES
 def search(
     client: LazyClient, query: tuple[str, ...], types: tuple[str, ...], limit: int, as_json: bool
 ) -> None:
-    """Find datasets, pipelines, webapps and database tables matching any word of QUERY.
+    """Find datasets, pipelines, webapps, saved queries and tables matching any word of QUERY.
 
     Searches names, slugs, descriptions and pipeline tags, ignoring case and accents.
-    Datasets shared with the workspace are included; tables are searched by name. Give
+    Datasets shared with the workspace are included, and saved queries you can see;
+    database tables are searched by name. Give
     alternatives at once, such as `malaria paludisme`. Without QUERY, lists the most
     recently updated items. With --json, prints the matching items, each with the
     `extract` that matched.

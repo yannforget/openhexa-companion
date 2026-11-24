@@ -390,7 +390,7 @@ def container_command(engine: Engine, image: str, name: str, mounts: list[Mount]
 
 
 def stage(source: Path, files: list[Path], run_dir: Path) -> None:
-    """Copy the pipeline files `deploy` would send and the runtime scripts into `run_dir`."""
+    """Copy the files `pipelines publish` would send and the runtime scripts into `run_dir`."""
     for path in files:
         target = run_dir / "pipeline" / path.relative_to(source)
         target.parent.mkdir(parents=True, exist_ok=True)

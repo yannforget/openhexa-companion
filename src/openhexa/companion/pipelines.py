@@ -120,6 +120,15 @@ mutation DeletePipeline($input: DeletePipelineInput!) {
 }
 """
 
+DELETE_VERSION_MUTATION = """
+mutation DeletePipelineVersion($input: DeletePipelineVersionInput!) {
+  deletePipelineVersion(input: $input) {
+    success
+    errors
+  }
+}
+"""
+
 # Explanations of the error codes returned when creating or deploying a pipeline.
 DEPLOY_ERRORS = {
     "CANNOT_UPDATE_NOTEBOOK_PIPELINE": "notebook pipelines cannot receive new versions",
@@ -366,6 +375,7 @@ class Pipelines:
         *,
         description: str | None = None,
         version_name: str | None = None,
+        version_description: str | None = None,
     ) -> PipelineVersion:
         """Create a pipeline from the code in the directory `source`.
 
@@ -376,6 +386,7 @@ class Pipelines:
             source: Directory with `pipeline.py` at its root.
             description: What the pipeline does.
             version_name: Name of the first version. Defaults to its number, `v1`.
+            version_description: Description of the first version.
 
         Returns:
             The first version, whose `pipeline` is the code of the new pipeline.
@@ -386,7 +397,12 @@ class Pipelines:
             APIError: OpenHEXA rejected the code, with the reason in the message.
         """
         archive, timeout = package_pipeline(source)
-        version = {"name": version_name, "zipfile": archive, "timeout": timeout}
+        version = {
+            "name": version_name,
+            "description": version_description,
+            "zipfile": archive,
+            "timeout": timeout,
+        }
         result = self._transport.mutate(
             "createPipeline",
             CREATE_MUTATION,
@@ -464,6 +480,30 @@ class Pipelines:
             {"input": {"id": pipeline_id}},
             action=f"delete pipeline '{pipeline}' in workspace '{self._workspace}'",
             reasons={"PERMISSION_DENIED": "the token may not delete this pipeline"},
+        )
+
+    def delete_version(self, version: PipelineVersion) -> None:
+        """Delete a version of a pipeline with its runs.
+
+        If it was the latest version, the previous one becomes the latest. OpenHEXA
+        refuses to delete the only version of a pipeline: delete the pipeline instead.
+
+        Raises:
+            NotFoundError: The version no longer exists.
+            PermissionDeniedError: The token may not delete versions of the pipeline, or
+                the version is the pipeline's only one.
+        """
+        self._transport.mutate(
+            "deletePipelineVersion",
+            DELETE_VERSION_MUTATION,
+            {"input": {"id": version.id}},
+            action=f"delete version '{version.label}' of pipeline '{version.pipeline}' in "
+            f"workspace '{self._workspace}'",
+            reasons={
+                "PERMISSION_DENIED": "the token may not delete versions of this pipeline, or "
+                "it is the pipeline's only version",
+                "PIPELINE_VERSION_NOT_FOUND": "the version no longer exists",
+            },
         )
 
     def _find(self, query: str, code: str, **variables: Any) -> dict[str, Any]:

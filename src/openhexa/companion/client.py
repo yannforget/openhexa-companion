@@ -101,15 +101,16 @@ class Client:
         return update_description(self._transport, self.workspace, content)
 
     def catalog(self, types: Iterable[str] | None = None) -> Catalog:
-        """List the datasets, pipelines, webapps and database tables of the workspace.
+        """List the datasets, pipelines, webapps, saved queries and tables of the workspace.
 
         Pass the items to `search` to find those matching keywords. Datasets include
-        those shared with the workspace. Tables are only named; if the workspace database
+        those shared with the workspace; saved queries are those the token's user can
+        see, shared or their own. Tables are only named; if the workspace database
         cannot be read, the other items are returned and `errors` says why.
 
         Args:
-            types: Only list items of these types: `dataset`, `pipeline`, `webapp` or
-                `table`.
+            types: Only list items of these types: `dataset`, `pipeline`, `webapp`,
+                `query` or `table`.
 
         Raises:
             InvalidInputError: A type is unknown.

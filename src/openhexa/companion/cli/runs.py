@@ -2,7 +2,6 @@
 
 import json
 import time
-from pathlib import Path
 
 import click
 
@@ -20,7 +19,6 @@ from openhexa.companion.cli._output import (
     print_json,
     print_table,
 )
-from openhexa.companion.cli._parameters import parameter_options, read_parameters
 
 # Seconds between two checks of a run that is followed.
 POLL_INTERVAL = 5
@@ -30,9 +28,10 @@ run_id_argument = click.argument("run_id")
 
 @click.group()
 def runs() -> None:
-    """Start, stop and inspect pipeline runs.
+    """Inspect and stop pipeline runs on OpenHEXA.
 
-    RUN_ID is the ID of a run, as shown by `hexa runs list PIPELINE`.
+    Start a run with `hexa pipelines run`. RUN_ID is the ID of a run, as shown by
+    `hexa runs list PIPELINE`.
     """
 
 
@@ -131,53 +130,13 @@ def logs(client: LazyClient, run_id: str, follow: bool, as_json: bool) -> None:
     if not follow and not as_json:
         click.echo(library.runs.details(run_id).logs, nl=False)
         return
-    run = _follow(library, run_id, print_logs=not as_json) if follow else library.runs.get(run_id)
+    run = (
+        follow_run(library, run_id, print_logs=not as_json) if follow else library.runs.get(run_id)
+    )
     if as_json:
         print_json(nest(run, logs=library.runs.details(run_id).logs))
     if follow:
-        _exit_on_failure(run)
-
-
-@runs.command()
-@click.argument("pipeline")
-@click.option(
-    "--version",
-    "version_name",
-    help="Version name or number, such as v3. Defaults to the latest version.",
-)
-@parameter_options
-@click.option("--wait", is_flag=True, help="Wait for the run to end, printing its logs.")
-@json_option
-@pass_client
-def start(
-    client: LazyClient,
-    *,
-    pipeline: str,
-    version_name: str | None,
-    params: tuple[str, ...],
-    params_file: Path | None,
-    wait: bool,
-    as_json: bool,
-) -> None:
-    """Start a run of PIPELINE and print its ID.
-
-    Parameters without a value use the value configured in OpenHEXA, then the default
-    declared in the code. With --wait, the command exits with code 5 if the run does
-    not succeed.
-    """
-    parameters = read_parameters(params, params_file)
-    library = client.get()
-    version = library.pipelines.version(pipeline, version_name)
-    run = library.runs.start(version, parameters)
-    click.echo(f"Started run {run.id} of {pipeline} version {version.label}", err=True)
-    if wait:
-        run = _follow(library, run.id, print_logs=not as_json)
-    if as_json:
-        print_json(run)
-    else:
-        click.echo(run.id)
-    if wait:
-        _exit_on_failure(run)
+        exit_on_failure(run)
 
 
 @runs.command()
@@ -192,7 +151,7 @@ def stop(client: LazyClient, run_id: str, as_json: bool) -> None:
         print_json(run)
 
 
-def _follow(library: Client, run_id: str, *, print_logs: bool) -> Run:
+def follow_run(library: Client, run_id: str, *, print_logs: bool) -> Run:
     """Poll a run until it ends, printing new logs to stderr, and return it."""
     printed = 0
     status = None
@@ -211,6 +170,7 @@ def _follow(library: Client, run_id: str, *, print_logs: bool) -> Run:
         time.sleep(POLL_INTERVAL)
 
 
-def _exit_on_failure(run: Run) -> None:
+def exit_on_failure(run: Run) -> None:
+    """Exit with code 5 if the run did not succeed."""
     if run.status != "success":
         raise click.exceptions.Exit(RUN_FAILED_EXIT_CODE)

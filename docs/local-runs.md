@@ -3,7 +3,7 @@
 `hexa run` runs a pipeline from a local directory, without deploying it, in the same
 image as hosted runs. Workspace files, datasets and connections can be local copies, so
 you can iterate without changing the workspace; anything not copied is read from the
-real workspace. When the pipeline works, deploy it with `hexa pipelines deploy`.
+real workspace. When the pipeline works, publish it with `hexa pipelines publish`.
 
 ```console
 $ hexa datasets download population
@@ -43,7 +43,7 @@ The project must then be in a folder the host sees, such as your home folder.
 
 ### The image
 
-The pipeline runs in the workspace's image (`hexa workspace` shows it), else
+The pipeline runs in the workspace's image (`hexa workspace show` shows it), else
 `blsq/openhexa-blsq-environment:latest`, or the image given with `--image`. The API
 does not expose the instance's default image, so when the workspace sets none, hosted
 runs may use another one: `hexa run` says which image it uses and why.
@@ -105,10 +105,10 @@ hexa run [SOURCE] [-p CODE=VALUE ...] [--params-file FILE] [--image IMAGE]
 ```
 
 - `SOURCE` is the directory with `pipeline.py`, the current directory by default. The
-  files `hexa pipelines deploy` would send are copied and run; hidden files, `.env` and
+  files `hexa pipelines publish` would send are copied and run; hidden files, `.env` and
   a `workspace/` folder are left out. A `requirements.txt` is installed at each run, as
   in hosted runs.
-- Parameters are given as in `hexa runs start`: `-p CODE=VALUE`, with VALUE read as
+- Parameters are given as in `hexa pipelines run`: `-p CODE=VALUE`, with VALUE read as
   JSON when it can be (`-p year=2025`, `-p 'districts=["A","B"]'`), or `--params-file`
   with a JSON object. Datasets, connections and files are given by slug or path.
 - The output of the pipeline is printed as it runs, then a summary: messages, outputs,
@@ -134,7 +134,7 @@ Local datasets:
 - `create_version` creates a folder, and `add_file` writes into it. Neither replaces
   an existing version or file. Unlike OpenHEXA, any version accepts new files, not only
   the latest. Publish a version with
-  `hexa datasets upload population .hexa/workspace/datasets/population/v5 --version v5`.
+  `hexa datasets publish population .hexa/workspace/datasets/population/v5 --name v5`.
 - A dataset shared from another workspace is saved under its slug, as pipelines name
   it. Calls naming its source workspace (`source_workspace_slug`) read the workspace.
 

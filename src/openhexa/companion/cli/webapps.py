@@ -32,13 +32,11 @@ SCOPES = (
     "PIPELINES_RUN",
 )
 
-source_option = click.option(
-    "--source",
+source_argument = click.argument(
     "source_dir",
+    metavar="[SOURCE]",
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     default=".",
-    show_default=True,
-    help="Directory with index.html at its root, such as a build output.",
 )
 
 
@@ -107,7 +105,10 @@ def show(client: LazyClient, webapp: str, as_json: bool) -> None:
 
 @webapps.command()
 @click.argument("webapp")
-@click.option("--version", help="ID of a version. Defaults to the latest one.")
+@click.option(
+    "--version",
+    help="ID of a version, as shown by `hexa webapps versions list`. Defaults to the latest one.",
+)
 @click.option(
     "-o",
     "--output",
@@ -152,63 +153,71 @@ def download(
 
 
 @webapps.command()
-@click.argument("webapp", required=False)
-@source_option
-@click.option("-m", "--message", help="Description of the change.")
-@click.option(
-    "--create",
-    "create_name",
-    metavar="NAME",
-    help="Create a new static webapp named NAME instead of publishing to WEBAPP.",
-)
-@click.option("--description", help="With --create: what the webapp shows.")
-@click.option(
-    "--public", is_flag=True, help="With --create: let anyone open it without signing in."
-)
+@click.argument("name")
+@source_argument
+@click.option("-d", "--description", help="What the webapp shows.")
+@click.option("--public", is_flag=True, help="Let anyone open it without signing in.")
 @click.option(
     "--scope",
     "scopes",
     multiple=True,
     type=click.Choice(SCOPES, case_sensitive=False),
-    help="With --create: an OpenHEXA operation the webapp may perform for the person "
-    "viewing it. Repeat for each scope.",
+    help="An OpenHEXA operation the webapp may perform for the person viewing it. Repeat "
+    "for each scope.",
 )
 @json_option
 @pass_client
-def publish(
+def create(
     client: LazyClient,
     *,
-    webapp: str | None,
+    name: str,
     source_dir: Path,
-    message: str | None,
-    create_name: str | None,
     description: str | None,
     public: bool,
     scopes: tuple[str, ...],
     as_json: bool,
 ) -> None:
-    """Publish the site in --source as the new content of WEBAPP.
+    """Create a static webapp named NAME from the site in SOURCE and print its slug.
 
-    The webapp ends up with exactly the files of --source; files no longer there are
-    removed. Hidden files and directories (such as .env and .git), node_modules and
-    __pycache__ are not sent. The change is live at once. With --json, prints the
-    webapp with the paths `uploaded` and `deleted`.
+    SOURCE is a directory with index.html at its root, such as a build output, the
+    current directory by default. OpenHEXA derives the slug from NAME. See `hexa
+    webapps publish` for the files sent. With --json, prints the webapp with the paths
+    `uploaded`.
     """
-    if (webapp is None) == (create_name is None):
-        raise click.UsageError("Give either WEBAPP or --create NAME")
-    if webapp is not None and (description or public or scopes):
-        raise click.UsageError("--description, --public and --scope need --create")
-    library = client.get()
-    if webapp is None:
-        result = library.webapps.create(
-            create_name or "",
-            source_dir,
-            description=description,
-            public=public,
-            scopes=[scope.upper() for scope in scopes],
-        )
-    else:
-        result = library.webapps.publish(webapp, source_dir, message=message)
+    result = client.get().webapps.create(
+        name,
+        source_dir,
+        description=description,
+        public=public,
+        scopes=[scope.upper() for scope in scopes],
+    )
+    _report(result, as_json=as_json)
+
+
+@webapps.command()
+@click.argument("webapp")
+@source_argument
+@click.option("-m", "--message", help="What changed in this version.")
+@json_option
+@pass_client
+def publish(
+    client: LazyClient,
+    *,
+    webapp: str,
+    source_dir: Path,
+    message: str | None,
+    as_json: bool,
+) -> None:
+    """Publish the site in SOURCE as a new version of WEBAPP and serve it.
+
+    SOURCE is a directory with index.html at its root, such as a build output, the
+    current directory by default. The webapp ends up with exactly the files of SOURCE;
+    files no longer there are removed. Hidden files and directories (such as .env and
+    .git), node_modules and __pycache__ are not sent. The new version is live at once,
+    even if an earlier version was being served after a rollback. With --json, prints
+    the webapp with the paths `uploaded` and `deleted`.
+    """
+    result = client.get().webapps.publish(webapp, source_dir, message=message)
     _report(result, as_json=as_json)
 
 
@@ -226,6 +235,35 @@ def delete(client: LazyClient, webapp: str, yes: bool, as_json: bool) -> None:
     click.echo(f"Deleted webapp {item.slug}", err=True)
     if as_json:
         print_json(item)
+
+
+@webapps.group()
+def versions() -> None:
+    """List the versions of a static webapp."""
+
+
+@versions.command("list")
+@click.argument("webapp")
+@limit_option("versions", default=20)
+@json_option
+@pass_client
+def list_versions(client: LazyClient, webapp: str, limit: int, as_json: bool) -> None:
+    """List the versions of a static webapp, newest first.
+
+    Give a version's ID to `hexa webapps download --version`.
+    """
+    items = cut(
+        client.get().webapps.versions(webapp, limit=fetch_limit(limit)),
+        limit,
+        empty=f"Webapp {webapp} has no versions",
+    )
+    if as_json:
+        print_json(items)
+        return
+    print_table(
+        [(v.id, format_time(v.created_at), v.author, v.message) for v in items],
+        ("version", "published", "author", "message"),
+    )
 
 
 def _report(result: Publication, *, as_json: bool) -> None:

@@ -72,7 +72,13 @@ def test_types_filter_and_counts():
     assert len(result.hits) == 2
     assert result.matches == {"dataset": 3}
     assert result.searched == 3
-    assert everything.matches == {"dataset": 3, "pipeline": 0, "webapp": 0, "table": 1}
+    assert everything.matches == {
+        "dataset": 3,
+        "pipeline": 0,
+        "webapp": 0,
+        "query": 0,
+        "table": 1,
+    }
     with pytest.raises(InvalidInputError, match="'file'"):
         search(items, "cases", types=["file"])
 
@@ -114,6 +120,16 @@ def test_catalog_reads_shared_datasets_and_survives_a_failing_database():
                                 {"dataset": dataset | {"workspace": {"slug": "other"}}},
                             ]
                         },
+                        "savedQueries": {
+                            "items": [
+                                {
+                                    "slug": "pop-by-region",
+                                    "name": "Population by region",
+                                    "description": None,
+                                    "updatedAt": "2026-01-01T00:00:00Z",
+                                }
+                            ]
+                        },
                     },
                     "pipelines": {"items": []},
                     "webapps": {"items": []},
@@ -127,9 +143,10 @@ def test_catalog_reads_shared_datasets_and_survives_a_failing_database():
         catalog = client.catalog()
         only_datasets = client.catalog(["dataset"])
 
-    assert [(i.reference, i.shared) for i in catalog.items] == [
-        ("pop", False),
-        ("other/pop", True),
+    assert [(i.type, i.reference, i.shared) for i in catalog.items] == [
+        ("dataset", "pop", False),
+        ("dataset", "other/pop", True),
+        ("query", "pop-by-region", False),
     ]
     assert "database unavailable" in catalog.errors["table"]
     assert only_datasets.errors == {}
@@ -140,6 +157,7 @@ def test_catalog_reads_shared_datasets_and_survives_a_failing_database():
         "datasets": True,
         "pipelines": False,
         "webapps": False,
+        "queries": False,
     }
 
 

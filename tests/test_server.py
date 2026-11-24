@@ -806,6 +806,7 @@ async def test_search_finds_items_for_the_read_tools():
             "dataset": 1,
             "pipeline": 1,
             "webapp": 0,
+            "query": 0,
             "table": 0,
         }
         assert "Could not search tables" in found.structured_content["note"]

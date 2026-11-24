@@ -1,4 +1,4 @@
-"""Finding datasets, pipelines, webapps and database tables of a workspace by keywords."""
+"""Finding datasets, pipelines, webapps, saved queries and database tables of a workspace."""
 
 import re
 import sqlite3
@@ -16,7 +16,7 @@ from openhexa.companion._util import format_options
 from openhexa.companion.errors import APIError, InvalidInputError
 from openhexa.companion.workspace import workspace_not_found
 
-type ItemType = Literal["dataset", "pipeline", "webapp", "table"]
+type ItemType = Literal["dataset", "pipeline", "webapp", "query", "table"]
 
 # Every type of item, in the order results count them.
 ITEM_TYPES: tuple[ItemType, ...] = get_args(ItemType.__value__)
@@ -32,12 +32,15 @@ WORD = re.compile(r"[^\W_]+")
 CATALOG_QUERY = """
 query Catalog(
   $workspace: String!, $perPage: Int!,
-  $datasets: Boolean!, $pipelines: Boolean!, $webapps: Boolean!
+  $datasets: Boolean!, $pipelines: Boolean!, $webapps: Boolean!, $queries: Boolean!
 ) {
   workspace(slug: $workspace) {
     slug
     datasets(perPage: $perPage) @include(if: $datasets) {
       items { dataset { id slug name description updatedAt workspace { slug } } }
+    }
+    savedQueries(perPage: $perPage) @include(if: $queries) {
+      items { slug name description updatedAt }
     }
   }
   pipelines(workspaceSlug: $workspace, perPage: $perPage) @include(if: $pipelines) {
@@ -93,10 +96,10 @@ class CatalogItem:
     """Something of the workspace that search can find.
 
     Attributes:
-        type: `dataset`, `pipeline`, `webapp` or `table`.
+        type: `dataset`, `pipeline`, `webapp`, `query` or `table`.
         reference: Identifies the item in other operations: the slug of a dataset, or
             `workspace/slug` for one shared from another workspace; the code of a
-            pipeline; the slug of a webapp; the name of a table.
+            pipeline; the slug of a webapp or saved query; the name of a table.
         name: Display name.
         slug: Identifier within its workspace: slug, pipeline code or table name.
         description: Documentation of the item, in Markdown.
@@ -196,6 +199,7 @@ def fetch_catalog(
             executor.submit(transport.query, TABLES_QUERY, variables) if "table" in wanted else None
         )
         flags = {f"{t}s": t in wanted for t in ("dataset", "pipeline", "webapp")}
+        flags["queries"] = "query" in wanted
         data = transport.query(CATALOG_QUERY, variables | flags)
         if data["workspace"] is None:
             raise workspace_not_found(transport, workspace)
@@ -367,6 +371,19 @@ def _items(data: dict[str, Any], workspace: str) -> list[CatalogItem]:
                 name=webapp["name"],
                 slug=webapp["slug"],
                 description=webapp["description"] or "",
+                workspace=workspace,
+            )
+        )
+    queries = data["workspace"].get("savedQueries")
+    for query in queries["items"] if queries else []:
+        items.append(
+            CatalogItem(
+                type="query",
+                reference=query["slug"],
+                name=query["name"],
+                slug=query["slug"],
+                description=query["description"] or "",
+                updated_at=_datetime(query["updatedAt"]),
                 workspace=workspace,
             )
         )

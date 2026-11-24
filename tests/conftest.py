@@ -1,9 +1,13 @@
-from collections.abc import Iterator
+import json
+from collections.abc import Callable, Iterator
 from pathlib import Path
+from typing import Any
 
+import httpx2
 import pytest
 
 from openhexa.companion import Client
+from openhexa.companion.cli._context import LazyClient
 
 ENV_FILE = Path(__file__).parent.parent / ".env"
 
@@ -49,3 +53,31 @@ def saved_query_slugs(client: Client) -> Iterator[list[str]]:
                 "{ deleteSavedQuery(input: $input) { success } }",
                 {"input": {"id": found["id"]}},
             )
+
+
+# Answers a GraphQL request body with the `data` of the response, or an HTTP response.
+Handler = Callable[[dict[str, Any]], dict[str, Any] | httpx2.Response]
+
+
+@pytest.fixture
+def fake_openhexa(monkeypatch: pytest.MonkeyPatch) -> Callable[[Handler], list[str]]:
+    """Make the CLI talk to a fake OpenHEXA; return the queries it receives."""
+    monkeypatch.delenv("HEXA_JSON", raising=False)
+
+    def install(handler: Handler) -> list[str]:
+        queries: list[str] = []
+
+        def respond(request: httpx2.Request) -> httpx2.Response:
+            body = json.loads(request.content)
+            queries.append(body["query"])
+            answer = handler(body)
+            if isinstance(answer, httpx2.Response):
+                return answer
+            return httpx2.Response(200, json={"data": answer})
+
+        transport = httpx2.MockTransport(respond)
+        client = Client("https://openhexa.test", "ws", "token", http_transport=transport)
+        monkeypatch.setattr(LazyClient, "get", lambda _self: client)
+        return queries
+
+    return install

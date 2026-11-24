@@ -9,36 +9,10 @@ import httpx2
 import pytest
 from click.testing import CliRunner, Result
 
-from openhexa.companion import Client
 from openhexa.companion.cli import main
-from openhexa.companion.cli._context import LazyClient
 
 # Answers a GraphQL request body with the `data` of the response, or an HTTP response.
 Handler = Callable[[dict[str, Any]], dict[str, Any] | httpx2.Response]
-
-
-@pytest.fixture
-def fake_openhexa(monkeypatch: pytest.MonkeyPatch) -> Callable[[Handler], list[str]]:
-    """Make the CLI talk to a fake OpenHEXA; return the queries it receives."""
-    monkeypatch.delenv("HEXA_JSON", raising=False)
-
-    def install(handler: Handler) -> list[str]:
-        queries: list[str] = []
-
-        def respond(request: httpx2.Request) -> httpx2.Response:
-            body = json.loads(request.content)
-            queries.append(body["query"])
-            answer = handler(body)
-            if isinstance(answer, httpx2.Response):
-                return answer
-            return httpx2.Response(200, json={"data": answer})
-
-        transport = httpx2.MockTransport(respond)
-        client = Client("https://openhexa.test", "ws", "token", http_transport=transport)
-        monkeypatch.setattr(LazyClient, "get", lambda _self: client)
-        return queries
-
-    return install
 
 
 def _invoke(*args: str, env: dict[str, str] | None = None) -> Result:
@@ -60,7 +34,7 @@ def _homepage_refused(_body: dict[str, Any]) -> dict[str, Any]:
     [
         (["connections", "show", "dhis2"], _missing_connection, "NotFoundError", 3),
         (
-            ["workspace", "homepage", "--edit", "-"],
+            ["workspace", "update", "--homepage", "-"],
             _homepage_refused,
             "PermissionDeniedError",
             4,

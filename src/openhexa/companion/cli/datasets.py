@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -85,27 +86,6 @@ def show(client: LazyClient, dataset: str, as_json: bool) -> None:
     if item.description:
         click.echo()
         click.echo(item.description)
-
-
-@datasets.command()
-@dataset_argument
-@limit_option("versions", default=20)
-@json_option
-@pass_client
-def versions(client: LazyClient, dataset: str, limit: int, as_json: bool) -> None:
-    """List the versions of a dataset, newest first."""
-    items = cut(
-        client.get().datasets.versions(dataset, limit=fetch_limit(limit)),
-        limit,
-        empty=f"Dataset {dataset} has no version yet",
-    )
-    if as_json:
-        print_json(items)
-        return
-    print_table(
-        [(v.name, format_time(v.created_at), v.changelog or "") for v in items],
-        ("version", "created", "changelog"),
-    )
 
 
 @datasets.command()
@@ -216,16 +196,51 @@ def _check_local_slug(library: Client, version: DatasetVersion) -> None:
         )
 
 
+description_option = click.option(
+    "-d", "--description", help="Description of the dataset, in Markdown."
+)
+message_option = click.option("-m", "--message", help="What changed in this version.")
+
+
 @datasets.command()
 @click.argument("name")
-@click.option("--description", default="", help="Description of the dataset, in Markdown.")
+@click.argument("sources", nargs=-1, type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--name",
+    "version_name",
+    help="Name of the first version, when SOURCES are given. Defaults to v1.",
+)
+@description_option
+@message_option
 @json_option
 @pass_client
-def create(client: LazyClient, name: str, description: str, as_json: bool) -> None:
-    """Create an empty dataset named NAME in the workspace and print its slug."""
-    item = client.get().datasets.create(name, description)
+def create(
+    client: LazyClient,
+    *,
+    name: str,
+    sources: tuple[Path, ...],
+    version_name: str | None,
+    description: str | None,
+    message: str | None,
+    as_json: bool,
+) -> None:
+    """Create a dataset named NAME and print its slug.
+
+    With SOURCES, publishes them as its first version, as `hexa datasets publish` does;
+    without them, the dataset is empty. With --json, prints the dataset, with the first
+    version and its `files` as `version` when SOURCES are given.
+    """
+    if not sources and (version_name is not None or message is not None):
+        raise click.UsageError("--name and --message apply to the first version: give SOURCES")
+    uploads = upload_pairs(sources) if sources else []
+    library = client.get()
+    item = library.datasets.create(name, description or "")
+    version = None
+    if uploads:
+        version = _publish(library, item.slug, uploads, version_name or "v1", message)
+        item = library.datasets.get(item.slug)
     if as_json:
-        print_json(item)
+        print_json(item if version is None else nest(item, version=version))
         return
     click.echo(item.slug)
 
@@ -233,125 +248,185 @@ def create(client: LazyClient, name: str, description: str, as_json: bool) -> No
 @datasets.command()
 @dataset_argument
 @click.argument("sources", nargs=-1, required=True, type=click.Path(exists=True, path_type=Path))
-@click.option("--version", "version_name", required=True, help="Name of the new version.")
-@click.option("--changelog", help="What changed in this version.")
+@click.option("--name", "version_name", required=True, help="Name of the new version.")
+@message_option
 @json_option
 @pass_client
-def upload(
+def publish(
     client: LazyClient,
     *,
     dataset: str,
     sources: tuple[Path, ...],
     version_name: str,
-    changelog: str | None,
+    message: str | None,
     as_json: bool,
 ) -> None:
-    """Publish SOURCES as a new version of a dataset.
+    """Publish SOURCES as a new version of a dataset, which becomes its latest version.
 
     Files are added at the root of the version. The files in a directory keep their
     path relative to it; hidden files and directories, such as `.env`, are skipped.
     With --json, prints the version with its `files`.
     """
     uploads = upload_pairs(sources)
-    library = client.get()
-    version = library.datasets.create_version(dataset, version_name, changelog)
+    version = _publish(client.get(), dataset, uploads, version_name, message)
+    if as_json:
+        print_json(version)
+        return
+    click.echo(version["name"])
+
+
+def _publish(
+    library: Client,
+    dataset: str,
+    uploads: list[tuple[Path, str]],
+    version_name: str,
+    message: str | None,
+) -> dict[str, Any]:
+    """Create a version of `dataset` with the files of `uploads`, reporting progress.
+
+    Returns:
+        The version as JSON, with its `files`.
+    """
+    version = library.datasets.create_version(dataset, version_name, message)
     uploaded = []
     for local, path in uploads:
         uploaded.append(library.datasets.upload(version, local, path))
         click.echo(f"{path} ({format_size(local.stat().st_size)})", err=True)
-    if as_json:
-        print_json(nest(version, files=uploaded))
-        return
-    click.echo(f"Published version {version.name} with {len(uploaded)} file(s)", err=True)
+    click.echo(
+        f"Published version {version.name} of {dataset} with {len(uploaded)} file(s)", err=True
+    )
+    return nest(version, files=uploaded)
 
 
 @datasets.command()
 @dataset_argument
-@click.option(
-    "--version",
-    "version_name",
-    help="Update this version instead of the dataset: --name renames it.",
-)
-@click.option("--name", help="New name of the dataset, or of the version with --version.")
-@click.option("--description", help="New description of the dataset, in Markdown.")
-@click.option("--changelog", help="New changelog of the version given with --version.")
+@click.option("--name", help="New name of the dataset. Its slug does not change.")
+@description_option
 @json_option
 @pass_client
 def update(
     client: LazyClient,
     *,
     dataset: str,
-    version_name: str | None,
     name: str | None,
     description: str | None,
-    changelog: str | None,
     as_json: bool,
 ) -> None:
-    """Change the name or description of a dataset, or the name or changelog of a version.
+    """Change the name or description of a dataset.
 
-    The slug of the dataset does not change with its name.
+    Use `hexa datasets versions update` to change a version. With --json, prints the
+    dataset.
     """
-    library = client.get()
-    if version_name is None:
-        if changelog is not None:
-            raise click.UsageError("--changelog needs --version")
-        if name is None and description is None:
-            raise click.UsageError("Give --name or --description")
-        result = library.datasets.update(dataset, name=name, description=description)
-        message = f"Updated dataset {result.reference}"
-    else:
-        if description is not None:
-            raise click.UsageError("--description applies to the dataset, not a version")
-        if name is None and changelog is None:
-            raise click.UsageError("Give --name or --changelog")
-        version = library.datasets.version(dataset, version_name)
-        result = library.datasets.update_version(version, name=name, changelog=changelog)
-        message = f"Updated version {result.name} of dataset {dataset}"
+    if name is None and description is None:
+        raise click.UsageError("Give --name or --description")
+    item = client.get().datasets.update(dataset, name=name, description=description)
+    click.echo(f"Updated dataset {item.reference}", err=True)
     if as_json:
-        print_json(result)
-        return
-    click.echo(message, err=True)
+        print_json(item)
 
 
 @datasets.command()
 @dataset_argument
-@click.option(
-    "--version",
-    "version_name",
-    help="Delete only this version and its files, instead of the whole dataset.",
-)
 @yes_option
 @json_option
 @pass_client
-def delete(
-    client: LazyClient, dataset: str, version_name: str | None, yes: bool, as_json: bool
-) -> None:
-    """Delete a dataset with all its versions and files, or a single version.
+def delete(client: LazyClient, dataset: str, yes: bool, as_json: bool) -> None:
+    """Delete a dataset with all its versions and files.
 
-    Deleting the latest version makes the previous one the latest. With --json, prints
-    what was deleted.
+    Use `hexa datasets versions delete` to delete a single version. With --json, prints
+    the dataset.
     """
     library = client.get()
     item = library.datasets.get(dataset)
-    if version_name is not None:
-        version = library.datasets.version(dataset, version_name)
-        count = len(library.datasets.files(version))
-        confirm(
-            f"Delete version '{version.name}' of dataset '{item.reference}' and its "
-            f"{count} file(s)",
-            yes=yes,
-        )
-        library.datasets.delete_version(version)
-        click.echo(f"Deleted version {version.name} of dataset {item.reference}", err=True)
-        if as_json:
-            print_json(version)
-        return
     count = len(library.datasets.versions(dataset))
     confirm(f"Delete dataset '{item.reference}' and its {count} version(s)", yes=yes)
     library.datasets.delete(dataset)
     click.echo(f"Deleted dataset {item.reference}", err=True)
     if as_json:
         print_json(item)
+
+
+@datasets.group()
+def versions() -> None:
+    """List, rename and delete the versions of a dataset.
+
+    VERSION is the name of a version, as shown by `hexa datasets versions list`.
+    """
+
+
+@versions.command("list")
+@dataset_argument
+@limit_option("versions", default=20)
+@json_option
+@pass_client
+def list_versions(client: LazyClient, dataset: str, limit: int, as_json: bool) -> None:
+    """List the versions of a dataset, newest first."""
+    items = cut(
+        client.get().datasets.versions(dataset, limit=fetch_limit(limit)),
+        limit,
+        empty=f"Dataset {dataset} has no version yet",
+    )
+    if as_json:
+        print_json(items)
+        return
+    print_table(
+        [(v.name, format_time(v.created_at), v.changelog or "") for v in items],
+        ("version", "created", "message"),
+    )
+
+
+@versions.command("update")
+@dataset_argument
+@click.argument("version_name", metavar="VERSION")
+@click.option("--name", help="New name of the version.")
+@click.option("-m", "--message", help="New description of what changed in the version.")
+@json_option
+@pass_client
+def update_version(
+    client: LazyClient,
+    *,
+    dataset: str,
+    version_name: str,
+    name: str | None,
+    message: str | None,
+    as_json: bool,
+) -> None:
+    """Rename a version of a dataset or change its message. With --json, prints the version."""
+    if name is None and message is None:
+        raise click.UsageError("Give --name or --message")
+    library = client.get()
+    version = library.datasets.version(dataset, version_name)
+    result = library.datasets.update_version(version, name=name, changelog=message)
+    click.echo(f"Updated version {result.name} of dataset {dataset}", err=True)
+    if as_json:
+        print_json(result)
+
+
+@versions.command("delete")
+@dataset_argument
+@click.argument("version_name", metavar="VERSION")
+@yes_option
+@json_option
+@pass_client
+def delete_version(
+    client: LazyClient, dataset: str, version_name: str, yes: bool, as_json: bool
+) -> None:
+    """Delete a version of a dataset and its files.
+
+    Deleting the latest version makes the previous one the latest. With --json, prints
+    the version.
+    """
+    library = client.get()
+    version = library.datasets.version(dataset, version_name)
+    count = len(library.datasets.files(version))
+    confirm(
+        f"Delete version '{version.name}' of dataset '{dataset}' and its {count} file(s)",
+        yes=yes,
+    )
+    library.datasets.delete_version(version)
+    click.echo(f"Deleted version {version.name} of dataset {dataset}", err=True)
+    if as_json:
+        print_json(version)
 
 
 @datasets.group()

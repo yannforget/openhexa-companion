@@ -8,14 +8,16 @@ from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._output import json_option, print_json
 
 
-@click.group(invoke_without_command=True)
+@click.group()
+def workspace() -> None:
+    """Read and edit the workspace configured in .env."""
+
+
+@workspace.command()
 @json_option
-@click.pass_context
 @pass_client
-def workspace(client: LazyClient, ctx: click.Context, as_json: bool) -> None:
+def show(client: LazyClient, as_json: bool) -> None:
     """Show the workspace: name, Docker image, configuration and homepage."""
-    if ctx.invoked_subcommand is not None:
-        return
     info = client.get().get_workspace()
     if as_json:
         print_json(info)
@@ -32,30 +34,39 @@ def workspace(client: LazyClient, ctx: click.Context, as_json: bool) -> None:
 
 
 @workspace.command()
+@json_option
+@pass_client
+def homepage(client: LazyClient, as_json: bool) -> None:
+    """Print the workspace homepage, in Markdown.
+
+    The homepage documents the workspace for its members and for assistants. Change it
+    with `hexa workspace update --homepage`. With --json, prints the workspace, whose
+    `description` is the homepage.
+    """
+    info = client.get().get_workspace()
+    if as_json:
+        print_json(info)
+        return
+    # Printed as stored, so that saving it to a file and editing it back is exact.
+    click.echo(info.description, nl=False)
+
+
+@workspace.command()
 @click.option(
-    "--edit",
+    "--homepage",
     "source",
+    required=True,
     type=click.File("r", encoding="utf-8"),
     help="Replace the homepage with the Markdown in this file, or - for stdin.",
 )
 @json_option
 @pass_client
-def homepage(client: LazyClient, source: TextIO | None, as_json: bool) -> None:
-    """Print the workspace homepage in Markdown, or replace it with --edit.
+def update(client: LazyClient, source: TextIO, as_json: bool) -> None:
+    """Change the workspace homepage.
 
-    The homepage documents the workspace for its members and for assistants. Only
-    workspace editors and admins may replace it. With --json, prints the workspace,
-    whose `description` is the homepage.
+    Only workspace editors and admins may change it. With --json, prints the workspace.
     """
     library = client.get()
-    if source is None:
-        info = library.get_workspace()
-        if as_json:
-            print_json(info)
-            return
-        # Printed as stored, so that saving it to a file and editing it back is exact.
-        click.echo(info.description, nl=False)
-        return
     info = library.update_homepage(source.read())
     click.echo(f"Updated the homepage of workspace {library.workspace}", err=True)
     if as_json:

@@ -58,6 +58,9 @@ def test_deploy_and_run(client: Client, tmp_path: Path):
         assert "hi from second" in messages
         succeeded = client.pipelines.list(last_run_status="success")
         assert first.pipeline in {pipeline.code for pipeline in succeeded}
+
+        client.pipelines.delete_version(second)
+        assert client.pipelines.version(first.pipeline).id == first.id
     finally:
         client.pipelines.delete(first.pipeline)
 

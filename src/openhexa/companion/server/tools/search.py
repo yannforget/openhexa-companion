@@ -1,4 +1,4 @@
-"""Tool finding datasets, pipelines, webapps and database tables by keywords."""
+"""Tool finding datasets, pipelines, webapps, saved queries and database tables by keywords."""
 
 from datetime import datetime
 from typing import Annotated
@@ -17,10 +17,10 @@ MAX_LIMIT = 100
 
 
 class Hit(BaseModel):
-    type: ItemType = Field(description="'dataset', 'pipeline', 'webapp' or 'table'.")
+    type: ItemType = Field(description="'dataset', 'pipeline', 'webapp', 'query' or 'table'.")
     reference: str = Field(
         description="Identifies the item in other tools: the dataset argument of dataset "
-        "tools, the pipeline code, the webapp slug or the table name."
+        "tools, the pipeline code, the webapp or saved query slug, or the table name."
     )
     name: str = Field(description="Display name.")
     owner_workspace: str | None = Field(
@@ -70,13 +70,13 @@ def register(server: MCPServer, access: Access) -> None:
             int, Field(ge=1, le=MAX_LIMIT, description="Maximum number of hits.")
         ] = DEFAULT_LIMIT,
     ) -> SearchResults:
-        """Find datasets, pipelines, webapps and database tables in an OpenHEXA workspace.
+        """Find datasets, pipelines, webapps, saved queries and tables in an OpenHEXA workspace.
 
         Searches the names, slugs, descriptions and pipeline tags of the workspace's
         items, including datasets shared with it; tables are searched by name only.
         Words match the start of words, ignoring case and accents, but not misspellings.
-        Read a hit with openhexa_get_dataset, openhexa_get_pipeline, openhexa_get_webapp
-        or openhexa_get_database_table, passing its reference.
+        Read a hit with openhexa_get_dataset, openhexa_get_pipeline, openhexa_get_webapp,
+        openhexa_get_saved_query or openhexa_get_database_table, passing its reference.
         """
 
         def run(client: Client) -> tuple[Catalog, SearchResult]:

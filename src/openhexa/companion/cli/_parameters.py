@@ -1,4 +1,4 @@
-"""Pipeline parameter values given on the command line, for `runs start` and `run`."""
+"""Pipeline parameter values given on the command line, for `pipelines run` and `run`."""
 
 import json
 from collections.abc import Callable

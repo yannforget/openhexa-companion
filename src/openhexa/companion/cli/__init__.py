@@ -6,7 +6,8 @@ import click
 
 from openhexa.companion.cli._context import LazyClient
 from openhexa.companion.cli._errors import Group
-from openhexa.companion.cli.connections import connections, database
+from openhexa.companion.cli.connections import connections
+from openhexa.companion.cli.database import database
 from openhexa.companion.cli.datasets import datasets
 from openhexa.companion.cli.files import files
 from openhexa.companion.cli.pipelines import pipelines
