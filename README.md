@@ -78,6 +78,8 @@ hexa pipelines publish import-data pipelines/import_data -m "Handle missing dist
 hexa pipelines run import-data -p country=BFA --wait
 ```
 
+To deploy from GitHub Actions, see [Deploying pipelines from CI](docs/ci.md).
+
 Investigate a run:
 
 ```bash
