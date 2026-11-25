@@ -90,6 +90,8 @@ def show(client: LazyClient, pipeline: str, version_name: str | None, as_json: b
     if item.schedule:
         click.echo(f"Schedule: {item.schedule}")
     click.echo(f"Version: {version.label}, deployed {format_time(version.created_at)}")
+    if version.external_link:
+        click.echo(f"Link: {version.external_link}")
     if version.timeout:
         click.echo(f"Timeout: {version.timeout} s")
     if item.description:
@@ -221,6 +223,12 @@ SOURCE_HELP = (
 @click.option("-d", "--description", help="What the pipeline does.")
 @click.option("--name", "version_name", help="Name of the first version. Defaults to v1.")
 @click.option("-m", "--message", help="Description of the first version.")
+@click.option(
+    "--link",
+    "external_link",
+    metavar="URL",
+    help="URL with more about the version, such as its commit.",
+)
 @json_option
 @pass_client
 def create(
@@ -231,6 +239,7 @@ def create(
     description: str | None,
     version_name: str | None,
     message: str | None,
+    external_link: str | None,
     as_json: bool,
 ) -> None:
     """Create a pipeline named NAME from the code in SOURCE and print its code.
@@ -244,6 +253,7 @@ def create(
         description=description,
         version_name=version_name,
         version_description=message,
+        external_link=external_link,
     )
     _report(version, "Created pipeline", as_json=as_json)
 
@@ -253,6 +263,12 @@ def create(
 @source_argument
 @click.option("--name", "version_name", help="Name of the new version. Defaults to its number.")
 @click.option("-m", "--message", help="What changed in this version.")
+@click.option(
+    "--link",
+    "external_link",
+    metavar="URL",
+    help="URL with more about the version, such as its commit.",
+)
 @json_option
 @pass_client
 def publish(
@@ -262,6 +278,7 @@ def publish(
     source_dir: Path,
     version_name: str | None,
     message: str | None,
+    external_link: str | None,
     as_json: bool,
 ) -> None:
     """Deploy the code in SOURCE as a new version of PIPELINE.
@@ -270,7 +287,11 @@ def publish(
     schedules use unless they name another. With --json, prints the version.
     """
     version = client.get().pipelines.deploy(
-        pipeline, source_dir, version_name=version_name, description=message
+        pipeline,
+        source_dir,
+        version_name=version_name,
+        description=message,
+        external_link=external_link,
     )
     _report(version, "Published", as_json=as_json)
 

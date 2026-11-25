@@ -401,6 +401,7 @@ version. With --json, prints the first version, whose `pipeline` is the code.
 - `-d, --description TEXT`: What the pipeline does.
 - `--name TEXT`: Name of the first version. Defaults to v1.
 - `-m, --message TEXT`: Description of the first version.
+- `--link URL`: URL with more about the version, such as its commit.
 
 **`hexa pipelines publish PIPELINE [SOURCE]`**
 
@@ -411,6 +412,7 @@ schedules use unless they name another. With --json, prints the version.
 
 - `--name TEXT`: Name of the new version. Defaults to its number.
 - `-m, --message TEXT`: What changed in this version.
+- `--link URL`: URL with more about the version, such as its commit.
 
 **`hexa pipelines update PIPELINE`**
 

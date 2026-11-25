@@ -53,7 +53,10 @@ def _pipelines(body: dict[str, Any]) -> dict[str, Any]:
         if f"{mutation}(" in query:
             version = body["variables"]["input"].get("version", body["variables"]["input"])
             created = _pipeline_version(
-                name=version["name"], description=version["description"], versionNumber=2
+                name=version["name"],
+                description=version["description"],
+                externalLink=version.get("externalLink"),
+                versionNumber=2,
             )
             return {mutation: {"success": True, "errors": [], "pipelineVersion": created}}
     if "pipelineVersion(" in query:
@@ -119,7 +122,17 @@ def test_pipelines_create_and_publish_take_source_name_and_message(
 
     fake_openhexa(record)
 
-    result = _invoke("pipelines", *args, str(tmp_path), "--name", "v2", "-m", "Faster")
+    result = _invoke(
+        "pipelines",
+        *args,
+        str(tmp_path),
+        "--name",
+        "v2",
+        "-m",
+        "Faster",
+        "--link",
+        "https://example.org/c/1",
+    )
 
     assert result.exit_code == 0, result.output
     assert result.stdout == "etl\n"
@@ -127,6 +140,7 @@ def test_pipelines_create_and_publish_take_source_name_and_message(
     version = sent.get("version", sent)
     assert mutation in bodies[-1]["query"]
     assert (version["name"], version["description"]) == ("v2", "Faster")
+    assert version["externalLink"] == "https://example.org/c/1"
 
 
 def test_queries_show_prints_details_and_sql_prints_only_sql(fake_openhexa: FakeOpenHexa):

@@ -29,6 +29,7 @@ VERSION_FIELDS = """
   name
   versionNumber
   description
+  externalLink
   createdAt
   timeout
   config
@@ -226,6 +227,7 @@ class PipelineVersion:
         number: Number of the version, increasing from 1 within the pipeline.
         name: Name given when deploying, if any.
         description: What changed in this version, if documented.
+        external_link: URL with more about the version, such as its commit, if given.
         created_at: When the version was deployed.
         timeout: Seconds after which runs are stopped, or `None` for the default.
         parameters: Parameters of the version.
@@ -238,6 +240,7 @@ class PipelineVersion:
     number: int
     name: str | None
     description: str | None
+    external_link: str | None
     created_at: datetime
     timeout: int | None
     parameters: builtins.list[PipelineParameter]
@@ -397,6 +400,7 @@ class Pipelines:
         description: str | None = None,
         version_name: str | None = None,
         version_description: str | None = None,
+        external_link: str | None = None,
     ) -> PipelineVersion:
         """Create a pipeline from the code in the directory `source`.
 
@@ -408,6 +412,7 @@ class Pipelines:
             description: What the pipeline does.
             version_name: Name of the first version. Defaults to its number, `v1`.
             version_description: Description of the first version.
+            external_link: URL with more about the first version, such as its commit.
 
         Returns:
             The first version, whose `pipeline` is the code of the new pipeline.
@@ -421,6 +426,7 @@ class Pipelines:
         version = {
             "name": version_name,
             "description": version_description,
+            "externalLink": external_link,
             "zipfile": archive,
             "timeout": timeout,
         }
@@ -447,6 +453,7 @@ class Pipelines:
         *,
         version_name: str | None = None,
         description: str | None = None,
+        external_link: str | None = None,
     ) -> PipelineVersion:
         """Deploy the code in the directory `source` as a new version of a pipeline.
 
@@ -460,6 +467,7 @@ class Pipelines:
             source: Directory with `pipeline.py` at its root.
             version_name: Name of the version. Defaults to its number, such as `v4`.
             description: What changed in this version.
+            external_link: URL with more about this version, such as its commit.
 
         Raises:
             InvalidInputError: `source` is not a pipeline directory.
@@ -477,6 +485,7 @@ class Pipelines:
                     "pipelineCode": pipeline,
                     "name": version_name,
                     "description": description,
+                    "externalLink": external_link,
                     "zipfile": archive,
                     "timeout": timeout,
                 }
@@ -756,6 +765,7 @@ def _version(data: dict[str, Any]) -> PipelineVersion:
         number=data["versionNumber"],
         name=data["name"],
         description=data["description"],
+        external_link=data.get("externalLink"),
         created_at=datetime.fromisoformat(data["createdAt"]),
         timeout=data["timeout"],
         parameters=[_parameter(item) for item in data["parameters"]],
