@@ -16,8 +16,8 @@ single-page apps: use hash routing.
   app needs; `*_write` and `pipelines_run` let it change data, so ask first. A query
   selecting any field outside the scopes is refused with a 403 that names the field.
 - Public apps reach only what is public: the files in `public/` (below) and public saved
-  queries. Datasets are not reachable. To show other workspace data publicly, produce it
-  as a file in `public/`, for example from a pipeline.
+  queries. Datasets are not reachable from a public app. To show other workspace data
+  publicly, produce it as a file in `public/`, for example from a pipeline.
 - The database is reached only through saved queries (`executeSavedQuery`), never raw
   SQL. Dataset files are read by fetching the `downloadUrl` of a dataset version file,
   without credentials.
