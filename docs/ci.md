@@ -166,13 +166,17 @@ Use your project's package manager and its matching setup step, with a frozen lo
 --frozen-lockfile`. For a site without a build step, publish its directory as is and drop
 the Node steps. To deploy several webapps, use one workflow per webapp, as for pipelines.
 
-### Webapps sharing a workspace
+### Several webapps in one repository, with shared code
 
-When webapps live in one workspace (here pnpm) with a root lockfile and shared packages,
-install at the root and build only the webapp. Its `paths` must also list the shared
-code and the lockfile, or a change to them would not redeploy the webapps that use them.
+When several webapps share a root lockfile and packages (here as a pnpm workspace, a
+monorepo layout), install at the root and build only the webapp. The `paths` must also
+list the shared code and the lockfile, or a change to them would not redeploy the webapps
+that use them.
 
 ```yaml
+# .github/workflows/deploy-district-dashboard.yml
+name: Deploy district-dashboard
+
 on:
   push:
     branches: [main]
@@ -181,9 +185,11 @@ on:
       - packages/**
       - pnpm-lock.yaml
       - .github/workflows/deploy-district-dashboard.yml
-```
+  workflow_dispatch: # Deploy by hand.
 
-```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
