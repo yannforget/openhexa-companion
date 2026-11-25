@@ -185,6 +185,7 @@ def _workspace_and_user(body: dict[str, Any]) -> dict[str, Any]:
         "description": "# Home\n",
         "configuration": {},
         "dockerImage": None,
+        "publicFiles": {"url": "https://openhexa.test/files/ws/public/"},
     }
     return {"workspace": workspace}
 
@@ -198,6 +199,7 @@ def test_workspace_show_checks_the_configuration(fake_openhexa: FakeOpenHexa):
     assert text.exit_code == 0, text.output
     assert "OpenHEXA: https://openhexa.test" in text.stdout
     assert "User: ana@example.org" in text.stdout
+    assert "Public files: https://openhexa.test/files/ws/public/" in text.stdout
     shown = json.loads(as_json.stdout)
     assert shown["slug"] == "ws"
     assert shown["url"] == "https://openhexa.test"

@@ -154,7 +154,8 @@ def upload(
     The files in a directory keep their path relative to it; hidden files and
     directories, such as .env, are skipped. Existing workspace files are left untouched
     unless --force is given; the command stops before uploading anything if one exists.
-    With --json, prints the files uploaded.
+    Anyone with the link can download files in `public/` once the workspace enables
+    public files (see `hexa workspace show`). With --json, prints the files uploaded.
     """
     prefix = f"{destination.strip('/')}/" if destination.strip("/") else ""
     library = client.get()
@@ -166,6 +167,8 @@ def upload(
         uploaded.append(library.files.upload(local, path))
         click.echo(f"{path} ({format_size(local.stat().st_size)})", err=True)
     click.echo(f"Uploaded {len(pairs)} file(s)", err=True)
+    if any(path.startswith("public/") for _, path in pairs):
+        click.echo("Warning: anyone with the link can download files in public/", err=True)
     if as_json:
         print_json(uploaded)
 

@@ -33,6 +33,7 @@ def show(client: LazyClient, as_json: bool) -> None:
     click.echo(f"OpenHEXA: {library.url}")
     click.echo(f"User: {user.email}")
     click.echo(f"Docker image: {info.docker_image or 'default'}")
+    click.echo(f"Public files: {info.public_files_url or 'disabled'}")
     if info.configuration:
         click.echo("Configuration:")
         for key, value in info.configuration.items():

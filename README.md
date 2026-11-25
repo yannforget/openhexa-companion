@@ -95,6 +95,10 @@ Publish a webapp:
 hexa webapps publish district-dashboard dist/
 ```
 
+A public webapp can read the files in the workspace's `public/` folder, such as Parquet or
+PMTiles files: `hexa files upload data.parquet --to public/`. Anyone with the link can
+download them. See [Public files](https://docs.openhexa.com/files/#public-files).
+
 Every command accepts `--json`, for scripts and agents.
 
 ### Local pipeline runs

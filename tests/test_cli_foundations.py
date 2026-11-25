@@ -129,3 +129,29 @@ def test_upload_refuses_to_replace_workspace_files(
     assert "data/cases.csv already exist" in result.stderr
     assert "--force" in result.stderr
     assert not any("prepareObjectUpload" in query for query in queries)
+
+
+def test_files_upload_to_public_warns(
+    fake_openhexa: Callable[[Handler], list[str]], tmp_path: Path
+):
+    (tmp_path / "a.csv").write_text("a\n")
+
+    def answer(body: dict[str, Any]) -> dict[str, Any] | httpx2.Response:
+        if "url" in body:
+            return httpx2.Response(200)
+        if "prepareObjectUpload" in body["query"]:
+            result = {"success": True, "errors": [], "uploadUrl": "https://storage.test/up"}
+            return {"prepareObjectUpload": {**result, "headers": None}}
+        item = {"key": "public/a.csv", "type": "FILE", "size": 2, "updatedAt": None}
+        return {
+            "workspace": {
+                "bucket": {"object": item, "objects": {"hasNextPage": False, "items": []}}
+            }
+        }
+
+    fake_openhexa(answer)
+
+    result = _invoke("files", "upload", str(tmp_path / "a.csv"), "--to", "public")
+
+    assert result.exit_code == 0, result.output
+    assert "anyone with the link" in result.stderr

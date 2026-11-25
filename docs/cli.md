@@ -262,7 +262,8 @@ Upload SOURCES to the workspace files.
 The files in a directory keep their path relative to it; hidden files and
 directories, such as .env, are skipped. Existing workspace files are left untouched
 unless --force is given; the command stops before uploading anything if one exists.
-With --json, prints the files uploaded.
+Anyone with the link can download files in `public/` once the workspace enables
+public files (see `hexa workspace show`). With --json, prints the files uploaded.
 
 - `--to TEXT`: Directory of the workspace files to upload to. Defaults to the root.
 - `--force`: Replace workspace files that already exist.

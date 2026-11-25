@@ -12,6 +12,7 @@ WORKSPACE_FIELDS = """
   description
   configuration
   dockerImage
+  publicFiles { url }
 """
 
 WORKSPACE_QUERY = f"""
@@ -41,6 +42,8 @@ class Workspace:
         description: The workspace homepage, in Markdown.
         configuration: Environment variables given to pipelines and notebooks.
         docker_image: Image running pipelines and notebooks, or `None` for the default.
+        public_files_url: Base URL under which the files in `public/` are served to anyone,
+            or `None` while public files are not enabled.
     """
 
     slug: str
@@ -48,6 +51,7 @@ class Workspace:
     description: str
     configuration: dict[str, Any]
     docker_image: str | None
+    public_files_url: str | None
 
 
 def get_workspace(transport: Transport, slug: str) -> Workspace:
@@ -91,6 +95,7 @@ def _workspace(data: dict[str, Any]) -> Workspace:
         description=data["description"] or "",
         configuration=data["configuration"] or {},
         docker_image=data["dockerImage"] or None,
+        public_files_url=(data.get("publicFiles") or {}).get("url"),
     )
 
 

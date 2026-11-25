@@ -15,11 +15,18 @@ single-page apps: use hash routing.
 - Scopes are set with `--scope` on `hexa webapps create` or `update`. Grant only what the
   app needs; `*_write` and `pipelines_run` let it change data, so ask first. A query
   selecting any field outside the scopes is refused with a 403 that names the field.
-- Public apps can't call `/graphql/`. To show workspace data publicly, bundle it as a
-  file, for example produced by a pipeline.
+- Public apps reach only what is public: the files in `public/` (below) and public saved
+  queries. Datasets are not reachable. To show other workspace data publicly, produce it
+  as a file in `public/`, for example from a pipeline.
 - The database is reached only through saved queries (`executeSavedQuery`), never raw
   SQL. Dataset files are read by fetching the `downloadUrl` of a dataset version file,
   without credentials.
+- **Public files.** Files in `public/` at the root of the workspace files are readable
+  by anyone with their link, and by public apps through `prepareObjectDownload` with
+  `objectKey: "public/..."`, which returns a `downloadUrl` for libraries that take a
+  URL (parquet, pmtiles). Upload with `hexa files upload FILE --to public/...`. They are
+  served only once an admin enables public files; `hexa workspace show` says whether
+  they are. Never put sensitive data there, and ask before uploading.
 - OpenHEXA sets `window.OPENHEXA` with `workspaceSlug` and `webappSlug`; read them rather
   than hard-coding slugs.
 
