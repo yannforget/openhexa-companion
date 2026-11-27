@@ -3,9 +3,10 @@
 .env.*
 !.env.example
 
-# Local plans and research notes
+# Local plans, research notes and reviews
 plans/
 research/
+reviews/
 
 # Python
 __pycache__/
