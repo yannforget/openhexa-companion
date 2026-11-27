@@ -1,6 +1,6 @@
 [project]
 name = "openhexa-companion"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
     { name = "Yann Forget", email = "yforget@bluesquarehub.com" }
 ]
