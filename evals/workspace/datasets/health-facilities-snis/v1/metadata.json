@@ -1,0 +1,81 @@
+{
+  "columns": [
+    {
+      "name": "org_unit_id",
+      "label": "ID",
+      "type": "string",
+      "description": "SNIS DHIS2 ID of the facility.",
+      "pi": false
+    },
+    {
+      "name": "name",
+      "label": "Name",
+      "type": "string",
+      "description": "Name as recorded in SNIS.",
+      "pi": false
+    },
+    {
+      "name": "facility_type",
+      "label": "Type",
+      "type": "string",
+      "description": "Centre de santé, Poste de santé or Hôpital général de référence.",
+      "pi": false
+    },
+    {
+      "name": "health_area_id",
+      "label": "Health area ID",
+      "type": "string",
+      "description": "SNIS ID of the health area.",
+      "pi": false
+    },
+    {
+      "name": "health_zone_id",
+      "label": "Health zone ID",
+      "type": "string",
+      "description": "SNIS ID of the health zone.",
+      "pi": false
+    },
+    {
+      "name": "health_zone",
+      "label": "Health zone",
+      "type": "string",
+      "description": "Name of the health zone. Not unique: use `health_zone_id`.",
+      "pi": false
+    },
+    {
+      "name": "province",
+      "label": "Province",
+      "type": "string",
+      "description": "Name of the province.",
+      "pi": false
+    },
+    {
+      "name": "latitude",
+      "label": "Latitude",
+      "type": "float",
+      "description": "WGS 84 latitude; null when not recorded.",
+      "pi": false
+    },
+    {
+      "name": "longitude",
+      "label": "Longitude",
+      "type": "float",
+      "description": "WGS 84 longitude; null when not recorded.",
+      "pi": false
+    },
+    {
+      "name": "opening_date",
+      "label": "Opening date",
+      "type": "date",
+      "description": "Date the facility opened.",
+      "pi": false
+    },
+    {
+      "name": "closed_date",
+      "label": "Closing date",
+      "type": "date",
+      "description": "Date the facility closed; null if open.",
+      "pi": false
+    }
+  ]
+}

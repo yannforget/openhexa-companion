@@ -1,0 +1,20 @@
+# Environment of every eval session: pi, uv, Python 3.13 with data libraries, and `hexa`.
+# Built by pi.sh from the repository root.
+FROM docker.io/library/node:24-trixie-slim
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl git ripgrep podman-remote \
+  && rm -rf /var/lib/apt/lists/*
+COPY --from=ghcr.io/astral-sh/uv:0.13 /uv /uvx /usr/local/bin/
+RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent@1.4.0
+
+# `hexa`, from the checkout.
+COPY pyproject.toml uv.lock README.md /tmp/companion/
+COPY src /tmp/companion/src
+RUN uv tool install --python 3.15 /tmp/companion && rm -rf /tmp/companion
+ENV PATH=/root/.local/bin:$PATH
+
+# The uv project each session starts in.
+WORKDIR /work
+COPY evals/env/pyproject.toml evals/env/uv.lock ./
+RUN uv sync --locked

@@ -1,0 +1,1 @@
+{ "mcpServers": { "companion": { "url": "http://localhost:8765/mcp", "exposure": "direct" } } }

@@ -1,0 +1,877 @@
+record_id,province,health_zone,health_area,child_age_months,child_sex,received_penta1,received_penta3,received_mcv1,caregiver_name,phone_number,gps_latitude,gps_longitude
+2025-00001,Bas-Uele,Buta,Loliko,19,female,true,false,true,Rachel Ngoy,+243 81 770 3316,2.5426,24.38175
+2025-00002,Bas-Uele,Buta,Loliko,10,male,true,true,true,Sarah Lukusa,+243 83 998 2008,3.3876,24.96536
+2025-00003,Bas-Uele,Buta,Loliko,22,male,true,true,true,Sarah Lukusa,+243 83 998 2008,3.3876,24.96536
+2025-00004,Bas-Uele,Buta,Loliko,8,female,true,true,false,Grace Ilunga,+243 83 816 8876,2.2583,24.36571
+2025-00005,Bas-Uele,Buta,Loliko,7,male,true,true,false,Sarah Lukusa,+243 84 221 1959,2.3947,24.48345
+2025-00006,Bas-Uele,Buta,Loliko,16,female,,,false,Sarah Lukusa,+243 84 221 1959,2.3947,24.48345
+2025-00007,Bas-Uele,Buta,Loliko,17,male,true,false,true,Jeanne Bokele,+243 82 642 3939,2.40424,24.27025
+2025-00008,Bas-Uele,Buta,Loliko,15,male,true,true,true,Jeanne Bokele,+243 82 642 3939,2.40424,24.27025
+2025-00009,Bas-Uele,Buta,Loliko,20,female,true,true,true,Jeanne Bokele,+243 82 642 3939,2.40424,24.27025
+2025-00010,Bas-Uele,Buta,Loliko,10,male,true,false,true,Esther Lukusa,+243 88 998 7653,3.55594,24.18461
+2025-00011,Bas-Uele,Buta,Loliko,11,female,true,true,true,Esther Kasongo,+243 87 813 8378,2.86042,24.13789
+2025-00012,Bas-Uele,Buta,Loliko,12,female,true,false,true,Esther Kasongo,+243 83 211 6379,2.5208,25.79125
+2025-00013,Bas-Uele,Buta,Loliko,21,male,true,false,false,Marie Lukusa,+243 87 811 1861,3.17886,24.45385
+2025-00014,Bas-Uele,Buta,Loliko,6,female,true,true,false,Grace Lukusa,+243 87 868 6065,2.83184,24.39657
+2025-00015,Bas-Uele,Buta,Loliko,22,male,true,true,true,Jeanne Ngoy,+243 82 379 5454,3.12138,24.83223
+2025-00016,Bas-Uele,Buta,Loliko,18,female,true,true,true,Ruth Mukendi,+243 82 432 3224,2.75052,23.76537
+2025-00017,Bas-Uele,Buta,Loliko,23,male,true,false,true,Sarah Bokele,+243 84 206 7987,3.23445,25.07501
+2025-00018,Bas-Uele,Buta,Loliko,18,female,true,true,true,Marie Mukendi,+243 84 371 6949,3.01445,25.65672
+2025-00019,Bas-Uele,Buta,Loliko,23,female,,,false,Ruth Kasongo,+243 85 175 6477,2.66306,24.64263
+2025-00020,Bas-Uele,Buta,Loliko,11,male,true,false,true,Ruth Kasongo,+243 85 175 6477,2.66306,24.64263
+2025-00021,Bas-Uele,Buta,Loliko,22,female,true,true,false,Ruth Lukusa,+243 86 265 8760,2.37637,24.21137
+2025-00022,Bas-Uele,Buta,Loliko,17,male,true,true,true,Sarah Ngoy,+243 84 843 6007,1.77481,24.7778
+2025-00023,Bas-Uele,Buta,Loliko,14,male,true,false,true,Sarah Ngoy,+243 84 843 6007,1.77481,24.7778
+2025-00024,Bas-Uele,Buta,Loliko,23,male,false,false,false,Jeanne Lukusa,+243 81 221 3828,3.30079,24.8819
+2025-00025,Bas-Uele,Buta,Loliko,18,male,true,true,true,Jeanne Lukusa,+243 81 221 3828,3.30079,24.8819
+2025-00026,Bas-Uele,Buta,Loliko,8,male,true,false,false,Esther Mukendi,+243 82 384 8722,3.07852,24.3403
+2025-00027,Bas-Uele,Buta,Loliko,19,female,true,true,true,Josephine Kabila,+243 85 526 5636,2.88076,25.07304
+2025-00028,Bas-Uele,Buta,Loliko,20,male,true,false,true,Josephine Kabila,+243 85 526 5636,2.88076,25.07304
+2025-00029,Bas-Uele,Buta,Buta Centre,16,female,,,true,Rachel Ngoy,+243 86 507 6702,3.19461,24.50233
+2025-00030,Bas-Uele,Buta,Buta Centre,15,male,false,false,false,Rachel Ngoy,+243 86 507 6702,3.19461,24.50233
+2025-00031,Bas-Uele,Buta,Buta Centre,5,female,true,false,false,Jeanne Mukendi,+243 81 531 3321,2.53891,24.4882
+2025-00032,Bas-Uele,Buta,Buta Centre,7,male,true,true,false,Jeanne Mukendi,+243 81 531 3321,2.53891,24.4882
+2025-00033,Bas-Uele,Buta,Buta Centre,6,male,true,true,false,Josephine Kasongo,+243 88 481 5038,3.04007,25.19449
+2025-00034,Bas-Uele,Buta,Buta Centre,18,female,true,true,true,Josephine Mbuyi,+243 84 722 5970,1.85568,24.68824
+2025-00035,Bas-Uele,Buta,Buta Centre,6,female,true,true,false,Sarah Kasongo,+243 87 587 7995,1.62092,24.86522
+2025-00036,Bas-Uele,Buta,Buta Centre,21,female,true,true,true,Jeanne Mukendi,+243 84 331 7038,2.44622,25.15916
+2025-00037,Bas-Uele,Buta,Buta Centre,6,male,false,false,false,Esther Kasongo,+243 81 861 5296,2.39924,24.52619
+2025-00038,Bas-Uele,Buta,Buta Centre,5,female,false,false,false,Sarah Bokele,+243 86 741 6280,2.37603,25.35302
+2025-00039,Bas-Uele,Buta,Buta Centre,15,male,true,true,true,Ruth Mbuyi,+243 81 394 5194,2.47048,25.59301
+2025-00040,Bas-Uele,Buta,Buta Centre,12,female,false,false,false,Ruth Mbuyi,+243 89 276 3895,2.77831,24.89189
+2025-00041,Bas-Uele,Buta,Buta Centre,15,male,false,false,false,Marie Ilunga,+243 81 787 3052,3.59499,24.23782
+2025-00042,Bas-Uele,Buta,Buta Centre,21,male,true,false,true,Jeanne Mukendi,+243 82 608 8914,3.36458,23.845
+2025-00043,Bas-Uele,Buta,Buta Centre,16,female,true,false,true,Sarah Ngoy,+243 85 578 9269,2.74162,24.09798
+2025-00044,Bas-Uele,Buta,Buta Centre,14,male,true,false,true,Jeanne Mbuyi,+243 88 937 7842,3.23455,25.06244
+2025-00045,Bas-Uele,Buta,Buta Centre,18,female,true,true,true,Jeanne Mbuyi,+243 88 937 7842,3.23455,25.06244
+2025-00046,Bas-Uele,Buta,Buta Centre,7,male,true,true,false,Rachel Bokele,+243 87 361 6944,3.09706,23.97696
+2025-00047,Bas-Uele,Buta,Buta Centre,9,female,true,true,true,Grace Mbuyi,+243 87 792 3952,2.65017,25.66265
+2025-00048,Bas-Uele,Buta,Buta Centre,0,male,,,false,Grace Mbuyi,+243 87 792 3952,2.65017,25.66265
+2025-00049,Bas-Uele,Buta,Buta Centre,23,male,true,false,true,Esther Bokele,+243 89 891 4148,2.20485,24.84249
+2025-00050,Bas-Uele,Buta,Buta Centre,20,male,true,true,true,Esther Bokele,+243 89 891 4148,2.20485,24.84249
+2025-00051,Bas-Uele,Buta,Buta Centre,7,male,,,false,Jeanne Ilunga,+243 82 578 9778,2.14645,24.27312
+2025-00052,Bas-Uele,Buta,Buta Centre,15,female,false,false,false,Ruth Lukusa,+243 86 346 5262,2.92424,23.64096
+2025-00053,Bas-Uele,Buta,Buta Centre,15,male,false,false,,Ruth Lukusa,+243 86 346 5262,2.92424,23.64096
+2025-00054,Bas-Uele,Buta,Buta Centre,14,female,true,true,true,Rachel Ilunga,+243 86 422 4730,3.44833,24.37227
+2025-00055,Bas-Uele,Buta,Sebaba,18,female,true,true,,Grace Kasongo,+243 89 968 8249,2.13327,24.59676
+2025-00056,Bas-Uele,Buta,Sebaba,10,female,false,false,true,Grace Kasongo,+243 89 968 8249,2.13327,24.59676
+2025-00057,Bas-Uele,Buta,Sebaba,12,female,true,true,true,Sarah Ngoy,+243 82 738 5879,3.27489,25.51995
+2025-00058,Bas-Uele,Buta,Sebaba,16,female,true,true,true,Marie Ngoy,+243 82 164 1111,2.31831,24.27503
+2025-00059,Bas-Uele,Buta,Sebaba,4,female,true,true,false,Marie Ngoy,+243 82 164 1111,2.31831,24.27503
+2025-00060,Bas-Uele,Buta,Sebaba,14,female,,,true,Esther Bokele,+243 89 850 7995,2.69678,24.03992
+2025-00061,Bas-Uele,Buta,Sebaba,16,male,true,true,false,Josephine Ilunga,+243 89 739 9992,2.54034,24.97403
+2025-00062,Bas-Uele,Buta,Sebaba,11,male,true,true,true,Josephine Ilunga,+243 89 739 9992,2.54034,24.97403
+2025-00063,Bas-Uele,Buta,Sebaba,4,male,false,false,false,Jeanne Kabila,+243 81 678 4232,3.082,24.42181
+2025-00064,Bas-Uele,Buta,Sebaba,14,male,true,true,true,Sarah Ilunga,+243 85 669 6972,3.12133,25.09801
+2025-00065,Bas-Uele,Buta,Sebaba,17,female,true,true,true,Jeanne Mbuyi,+243 81 938 5375,2.54753,25.44406
+2025-00066,Bas-Uele,Buta,Sebaba,2,male,true,false,false,Jeanne Ilunga,+243 88 534 7032,3.53148,24.28266
+2025-00067,Bas-Uele,Buta,Sebaba,14,male,true,true,false,Jeanne Ilunga,+243 88 534 7032,3.53148,24.28266
+2025-00068,Bas-Uele,Buta,Sebaba,4,female,true,true,false,Jeanne Ilunga,+243 88 534 7032,3.53148,24.28266
+2025-00069,Bas-Uele,Buta,Sebaba,6,male,true,true,false,Ruth Lukusa,+243 86 636 5548,2.87436,24.75046
+2025-00070,Bas-Uele,Buta,Sebaba,20,male,true,false,true,Grace Kabila,+243 82 478 2062,3.50543,25.30742
+2025-00071,Bas-Uele,Buta,Sebaba,13,female,true,true,true,Grace Kabila,+243 82 478 2062,3.50543,25.30742
+2025-00072,Bas-Uele,Buta,Sebaba,12,female,,,false,Grace Mbuyi,+243 89 989 8392,2.55347,24.80365
+2025-00073,Bas-Uele,Buta,Sebaba,21,male,true,true,false,Rachel Lukusa,+243 83 127 1690,2.32832,23.69646
+2025-00074,Bas-Uele,Buta,Sebaba,9,female,false,false,false,Sarah Bokele,+243 87 811 2460,2.02732,25.14061
+2025-00075,Bas-Uele,Buta,Sebaba,6,male,true,false,false,Sarah Bokele,+243 87 811 2460,2.02732,25.14061
+2025-00076,Bas-Uele,Buta,Sebaba,22,female,false,false,false,Ruth Kasongo,+243 88 466 8451,2.84798,24.28127
+2025-00077,Bas-Uele,Buta,Sebaba,16,female,true,true,true,Ruth Lukusa,+243 84 351 9833,3.24514,25.17588
+2025-00078,Bas-Uele,Buta,Sebaba,4,male,true,true,false,Rachel Kasongo,+243 89 958 5613,2.23716,24.66436
+2025-00079,Bas-Uele,Buta,Sebaba,2,male,true,false,false,Sarah Mukendi,+243 83 326 5178,2.93914,24.39662
+2025-00080,Bas-Uele,Buta,Sebaba,6,male,true,true,false,Sarah Kasongo,+243 84 287 1471,3.36925,25.51984
+2025-00081,Bas-Uele,Buta,Sebaba,15,female,true,true,false,Sarah Kasongo,+243 84 287 1471,3.36925,25.51984
+2025-00082,Bas-Uele,Buta,Sebaba,17,female,true,true,true,Sarah Kasongo,+243 84 287 1471,3.36925,25.51984
+2025-00083,Bas-Uele,Buta,Sebaba,5,male,true,false,,Marie Kasongo,+243 86 729 9245,2.85245,24.07623
+2025-00084,Bas-Uele,Buta,Sebaba,16,female,true,true,true,Marie Kasongo,+243 86 729 9245,2.85245,24.07623
+2025-00085,Bas-Uele,Buta,Seyo,0,female,false,false,,Ruth Mukendi,+243 85 505 7151,2.90445,25.34281
+2025-00086,Bas-Uele,Buta,Seyo,5,male,true,true,false,Ruth Mukendi,+243 85 505 7151,2.90445,25.34281
+2025-00087,Bas-Uele,Buta,Seyo,10,female,false,false,,Ruth Mukendi,+243 85 505 7151,2.90445,25.34281
+2025-00088,Bas-Uele,Buta,Seyo,13,female,true,false,true,Ruth Kabila,+243 82 980 6674,2.58904,25.04575
+2025-00089,Bas-Uele,Buta,Seyo,8,female,true,true,false,Ruth Kabila,+243 82 980 6674,2.58904,25.04575
+2025-00090,Bas-Uele,Buta,Seyo,12,male,true,true,true,Esther Kasongo,+243 86 407 9787,2.25006,23.8537
+2025-00091,Bas-Uele,Buta,Seyo,23,male,,,false,Esther Kabila,+243 88 703 5264,2.85149,24.15902
+2025-00092,Bas-Uele,Buta,Seyo,22,female,true,true,true,Esther Kabila,+243 88 703 5264,2.85149,24.15902
+2025-00093,Bas-Uele,Buta,Seyo,20,female,true,true,true,Ruth Kabila,+243 85 847 4742,2.34982,24.61981
+2025-00094,Bas-Uele,Buta,Seyo,13,female,true,false,true,Ruth Kasongo,+243 89 829 1400,2.74251,24.76918
+2025-00095,Bas-Uele,Buta,Seyo,17,female,false,false,false,Rachel Ngoy,+243 82 162 1493,2.23301,24.88197
+2025-00096,Bas-Uele,Buta,Seyo,6,female,,,false,Rachel Ngoy,+243 82 162 1493,2.23301,24.88197
+2025-00097,Bas-Uele,Buta,Seyo,9,female,true,true,true,Marie Bokele,+243 89 621 7952,2.91796,24.71458
+2025-00098,Bas-Uele,Buta,Seyo,4,female,true,true,false,Josephine Mbuyi,+243 83 905 5188,1.87572,25.03505
+2025-00099,Bas-Uele,Buta,Seyo,16,female,true,true,true,Josephine Mbuyi,+243 83 905 5188,1.87572,25.03505
+2025-00100,Bas-Uele,Buta,Seyo,1,male,false,false,false,Sarah Ilunga,+243 86 333 9234,2.67905,24.80126
+2025-00101,Bas-Uele,Buta,Seyo,18,female,false,false,false,Josephine Ilunga,+243 87 773 8860,2.61306,24.5925
+2025-00102,Bas-Uele,Buta,Seyo,5,male,true,true,false,Ruth Ngoy,+243 85 318 6792,3.68267,24.61417
+2025-00103,Bas-Uele,Buta,Seyo,4,male,true,true,false,Jeanne Ilunga,+243 86 961 7883,2.99696,24.11498
+2025-00104,Bas-Uele,Buta,Seyo,20,female,false,false,false,Jeanne Ilunga,+243 86 961 7883,2.99696,24.11498
+2025-00105,Bas-Uele,Buta,Seyo,8,male,true,false,false,Esther Bokele,+243 86 208 7857,3.48515,25.82009
+2025-00106,Bas-Uele,Buta,Seyo,5,male,false,false,false,Rachel Bokele,+243 84 155 5426,3.34547,25.72649
+2025-00107,Bas-Uele,Buta,Seyo,20,male,true,true,true,Marie Kasongo,+243 86 410 7978,3.23543,24.94428
+2025-00108,Bas-Uele,Buta,Seyo,2,female,true,false,false,Josephine Mukendi,+243 81 370 3157,3.66458,23.54898
+2025-00109,Bas-Uele,Buta,Seyo,15,female,true,true,true,Rachel Ilunga,+243 85 766 3404,2.73895,23.76476
+2025-00110,Bas-Uele,Buta,Seyo,0,female,false,false,false,Rachel Ilunga,+243 85 766 3404,2.73895,23.76476
+2025-00111,Bas-Uele,Buta,Seyo,15,male,true,true,true,Rachel Kasongo,+243 89 226 2402,2.73364,24.88418
+2025-00112,Bas-Uele,Buta,Seyo,9,male,true,true,true,Rachel Kasongo,+243 89 226 2402,2.73364,24.88418
+2025-00113,Bas-Uele,Buta,Seyo,6,female,false,false,false,Grace Mbuyi,+243 86 320 2170,3.01544,25.13349
+2025-00114,Bas-Uele,Buta,Seyo,1,male,false,false,false,Grace Mbuyi,+243 86 320 2170,3.01544,25.13349
+2025-00115,Bas-Uele,Buta,Seyo,4,female,true,false,false,Grace Mbuyi,+243 86 320 2170,3.01544,25.13349
+2025-00116,Bas-Uele,Bili,Buba,6,male,true,false,false,Grace Lukusa,+243 83 523 6567,2.36942,24.01414
+2025-00117,Bas-Uele,Bili,Buba,0,male,false,false,false,Grace Lukusa,+243 83 523 6567,2.36942,24.01414
+2025-00118,Bas-Uele,Bili,Buba,20,male,true,true,true,Rachel Kasongo,+243 89 622 4973,3.52369,24.43627
+2025-00119,Bas-Uele,Bili,Buba,7,male,true,false,false,Sarah Kasongo,+243 81 953 8784,2.77388,23.52699
+2025-00120,Bas-Uele,Bili,Buba,17,male,true,false,true,Josephine Mbuyi,+243 84 551 2552,3.97145,24.58223
+2025-00121,Bas-Uele,Bili,Buba,10,male,false,false,false,Marie Bokele,+243 84 174 4263,2.93086,24.86113
+2025-00122,Bas-Uele,Bili,Buba,15,female,,,false,Jeanne Mukendi,+243 82 920 1422,3.39214,25.14338
+2025-00123,Bas-Uele,Bili,Buba,6,male,true,true,false,Rachel Lukusa,+243 82 468 7568,2.8603,24.22709
+2025-00124,Bas-Uele,Bili,Buba,18,female,true,true,true,Esther Mbuyi,+243 82 251 4537,2.72525,24.87248
+2025-00125,Bas-Uele,Bili,Buba,3,male,true,false,false,Esther Mbuyi,+243 82 251 4537,2.72525,24.87248
+2025-00126,Bas-Uele,Bili,Buba,4,female,true,true,false,Jeanne Mbuyi,+243 84 742 2776,2.22153,24.79548
+2025-00127,Bas-Uele,Bili,Buba,2,female,true,false,false,Jeanne Mbuyi,+243 84 742 2776,2.22153,24.79548
+2025-00128,Bas-Uele,Bili,Buba,6,male,false,false,,Esther Kasongo,+243 82 212 2696,3.05635,24.68483
+2025-00129,Bas-Uele,Bili,Buba,16,male,true,true,true,Grace Kasongo,+243 85 220 2204,3.16922,24.9256
+2025-00130,Bas-Uele,Bili,Buba,18,female,false,false,false,Rachel Bokele,+243 81 691 5190,2.97914,24.12039
+2025-00131,Bas-Uele,Bili,Buba,18,male,true,true,true,Josephine Lukusa,+243 86 654 9283,3.03423,24.71905
+2025-00132,Bas-Uele,Bili,Buba,0,male,false,false,false,Grace Mukendi,+243 81 819 1338,2.68583,25.7093
+2025-00133,Bas-Uele,Bili,Buba,16,male,true,true,true,Esther Bokele,+243 89 592 6234,3.04031,24.56033
+2025-00134,Bas-Uele,Bili,Buba,14,male,true,false,true,Grace Ilunga,+243 84 198 7487,2.79365,24.64472
+2025-00135,Bas-Uele,Bili,Buba,6,female,true,true,false,Ruth Mukendi,+243 87 702 9222,2.7631,23.73056
+2025-00136,Bas-Uele,Bili,Buba,22,female,true,true,true,Jeanne Mukendi,+243 81 162 1998,2.73192,23.90038
+2025-00137,Bas-Uele,Bili,Buba,1,female,false,false,false,Jeanne Lukusa,+243 86 345 3989,2.57119,24.70246
+2025-00138,Bas-Uele,Bili,Buba,10,male,true,true,true,Jeanne Lukusa,+243 86 345 3989,2.57119,24.70246
+2025-00139,Bas-Uele,Bili,Buba,17,male,true,false,true,Rachel Lukusa,+243 82 442 5435,4.08491,25.03353
+2025-00140,Bas-Uele,Bili,Komalo,7,male,true,true,false,Sarah Lukusa,+243 89 117 8582,3.24286,25.1504
+2025-00141,Bas-Uele,Bili,Komalo,19,female,true,true,true,Esther Mukendi,+243 83 812 7416,2.16459,24.82622
+2025-00142,Bas-Uele,Bili,Komalo,14,male,false,false,false,Sarah Ngoy,+243 84 451 1592,2.26226,24.83821
+2025-00143,Bas-Uele,Bili,Komalo,5,male,true,true,false,Sarah Ngoy,+243 84 451 1592,2.26226,24.83821
+2025-00144,Bas-Uele,Bili,Komalo,0,female,,,false,Sarah Ngoy,+243 84 451 1592,2.26226,24.83821
+2025-00145,Bas-Uele,Bili,Komalo,14,female,true,true,true,Esther Lukusa,+243 85 193 2440,2.72185,25.53049
+2025-00146,Bas-Uele,Bili,Komalo,22,female,true,true,false,Jeanne Kabila,+243 85 906 3952,2.96557,24.6068
+2025-00147,Bas-Uele,Bili,Komalo,13,female,false,false,,Jeanne Mukendi,+243 86 754 1546,3.31123,25.30273
+2025-00148,Bas-Uele,Bili,Komalo,4,male,false,false,false,Jeanne Mukendi,+243 86 754 1546,3.31123,25.30273
+2025-00149,Bas-Uele,Bili,Komalo,9,male,true,true,false,Marie Mbuyi,+243 88 487 8141,3.35595,23.93788
+2025-00150,Bas-Uele,Bili,Komalo,21,female,true,true,true,Ruth Mbuyi,+243 85 684 5538,2.93891,23.9768
+2025-00151,Bas-Uele,Bili,Komalo,0,female,false,false,,Josephine Mbuyi,+243 85 303 7333,2.98659,24.40048
+2025-00152,Bas-Uele,Bili,Komalo,0,male,,,,Josephine Mbuyi,+243 85 303 7333,2.98659,24.40048
+2025-00153,Bas-Uele,Bili,Komalo,9,male,false,false,true,Josephine Mbuyi,+243 85 303 7333,2.98659,24.40048
+2025-00154,Bas-Uele,Bili,Komalo,11,male,true,false,false,Sarah Ilunga,+243 87 707 8287,2.88652,24.76609
+2025-00155,Bas-Uele,Bili,Komalo,3,female,true,false,false,Grace Lukusa,+243 84 227 6629,3.56564,24.49449
+2025-00156,Bas-Uele,Bili,Komalo,1,female,,,,Josephine Mukendi,+243 85 314 1461,3.38773,24.36933
+2025-00157,Bas-Uele,Bili,Komalo,10,male,,,true,Esther Bokele,+243 86 486 5544,3.45418,25.66672
+2025-00158,Bas-Uele,Bili,Komalo,12,male,true,true,true,Josephine Lukusa,+243 84 948 5692,2.2667,24.49054
+2025-00159,Bas-Uele,Bili,Komalo,8,male,true,true,false,Josephine Bokele,+243 88 571 7522,2.72625,24.67025
+2025-00160,Bas-Uele,Bili,Komalo,22,male,true,false,false,Marie Lukusa,+243 83 937 9705,2.39563,24.86357
+2025-00161,Bas-Uele,Bili,Komalo,7,male,true,false,false,Ruth Mbuyi,+243 81 141 3723,2.90348,24.74394
+2025-00162,Bas-Uele,Bili,Komalo,11,female,false,false,false,Ruth Mbuyi,+243 81 141 3723,2.90348,24.74394
+2025-00163,Bas-Uele,Bili,Komalo,15,female,true,true,true,Ruth Mbuyi,+243 81 141 3723,2.90348,24.74394
+2025-00164,Bas-Uele,Bili,Komalo,10,male,true,true,true,Marie Ngoy,+243 89 274 5668,3.02021,24.34608
+2025-00165,Bas-Uele,Bili,Komalo,18,male,true,false,true,Rachel Ilunga,+243 81 568 2353,3.54929,24.46489
+2025-00166,Bas-Uele,Bili,Komalo,3,female,true,false,false,Rachel Ilunga,+243 81 568 2353,3.54929,24.46489
+2025-00167,Bas-Uele,Bili,Komalo,2,male,true,false,false,Marie Lukusa,+243 89 817 1316,3.00679,24.29981
+2025-00168,Bas-Uele,Bili,Baka,11,female,false,false,,Esther Kabila,+243 87 701 8193,2.64299,24.65485
+2025-00169,Bas-Uele,Bili,Baka,2,male,false,false,,Rachel Ngoy,+243 86 647 5545,2.87575,24.75094
+2025-00170,Bas-Uele,Bili,Baka,20,male,true,true,true,Esther Mbuyi,+243 88 227 4154,4.23538,25.25401
+2025-00171,Bas-Uele,Bili,Baka,20,male,true,true,true,Grace Lukusa,+243 89 571 7298,3.58315,25.09688
+2025-00172,Bas-Uele,Bili,Baka,1,female,false,false,false,Rachel Kasongo,+243 84 517 3047,2.97709,25.17178
+2025-00173,Bas-Uele,Bili,Baka,15,male,true,true,true,Jeanne Mukendi,+243 89 807 4600,2.33541,23.94554
+2025-00174,Bas-Uele,Bili,Baka,9,male,false,false,,Jeanne Ilunga,+243 82 118 8279,2.5758,23.92288
+2025-00175,Bas-Uele,Bili,Baka,21,male,true,true,true,Marie Lukusa,+243 85 496 9602,2.526,24.48895
+2025-00176,Bas-Uele,Bili,Baka,15,female,true,true,true,Marie Lukusa,+243 85 496 9602,2.526,24.48895
+2025-00177,Bas-Uele,Bili,Baka,10,male,true,false,true,Rachel Ilunga,+243 83 385 4649,2.71362,24.38366
+2025-00178,Bas-Uele,Bili,Baka,9,male,false,false,false,Ruth Kasongo,+243 86 642 9403,2.23975,24.73838
+2025-00179,Bas-Uele,Bili,Baka,17,male,,,true,Ruth Kasongo,+243 86 642 9403,2.23975,24.73838
+2025-00180,Bas-Uele,Bili,Baka,7,female,true,true,false,Sarah Ngoy,+243 81 327 3208,3.72852,24.74091
+2025-00181,Bas-Uele,Bili,Baka,6,male,true,true,false,Grace Mbuyi,+243 84 469 3918,2.76939,24.67048
+2025-00182,Bas-Uele,Bili,Baka,12,male,true,true,true,Grace Mbuyi,+243 84 469 3918,2.76939,24.67048
+2025-00183,Bas-Uele,Bili,Baka,12,female,true,true,true,Rachel Lukusa,+243 86 355 9990,2.92261,24.90464
+2025-00184,Bas-Uele,Bili,Baka,16,female,true,true,true,Esther Mbuyi,+243 84 749 5514,2.61801,24.98849
+2025-00185,Bas-Uele,Bili,Baka,21,female,,,,Josephine Kabila,+243 86 342 2866,3.47032,24.60278
+2025-00186,Bas-Uele,Bili,Baka,16,female,true,true,true,Jeanne Mbuyi,+243 85 994 8324,2.21502,24.17375
+2025-00187,Bas-Uele,Bili,Baka,7,male,true,false,false,Marie Kabila,+243 82 426 3939,2.42022,25.1942
+2025-00188,Bas-Uele,Bili,Baka,4,male,true,true,false,Josephine Mukendi,+243 82 218 2737,3.45951,25.49739
+2025-00189,Bas-Uele,Bili,Baka,18,female,true,true,true,Ruth Lukusa,+243 83 185 2817,2.72391,25.82115
+2025-00190,Bas-Uele,Bili,Baka,22,female,true,true,true,Grace Bokele,+243 84 123 8989,2.63881,23.8717
+2025-00191,Bas-Uele,Bili,Baka,11,female,true,true,true,Grace Bokele,+243 84 123 8989,2.63881,23.8717
+2025-00192,Bas-Uele,Bili,Lokowa,1,female,false,false,false,Sarah Lukusa,+243 89 626 3965,2.74747,25.33462
+2025-00193,Bas-Uele,Bili,Lokowa,4,female,false,false,false,Jeanne Ngoy,+243 88 137 3286,2.70332,23.94746
+2025-00194,Bas-Uele,Bili,Lokowa,12,male,false,false,,Marie Mbuyi,+243 87 614 2862,2.2203,25.54647
+2025-00195,Bas-Uele,Bili,Lokowa,4,male,true,true,false,Marie Mbuyi,+243 88 432 5863,3.45922,24.28773
+2025-00196,Bas-Uele,Bili,Lokowa,15,male,,,false,Marie Mbuyi,+243 88 432 5863,3.45922,24.28773
+2025-00197,Bas-Uele,Bili,Lokowa,19,male,true,true,true,Grace Bokele,+243 84 436 9658,3.19314,23.84698
+2025-00198,Bas-Uele,Bili,Lokowa,5,male,true,true,,Marie Ngoy,+243 89 325 4206,3.19942,25.02488
+2025-00199,Bas-Uele,Bili,Lokowa,7,male,true,true,false,Marie Kabila,+243 85 705 3299,3.36963,24.36264
+2025-00200,Bas-Uele,Bili,Lokowa,21,male,true,true,true,Josephine Ngoy,+243 89 817 8119,2.26676,25.59281
+2025-00201,Bas-Uele,Bili,Lokowa,23,male,true,true,true,Grace Ilunga,+243 86 196 5153,3.29613,24.76696
+2025-00202,Bas-Uele,Bili,Lokowa,16,male,true,true,false,Ruth Lukusa,+243 85 369 9272,2.1519,24.55595
+2025-00203,Bas-Uele,Bili,Lokowa,9,male,false,false,false,Ruth Lukusa,+243 85 369 9272,2.1519,24.55595
+2025-00204,Bas-Uele,Bili,Lokowa,0,male,,,false,Grace Ilunga,+243 84 641 1107,3.0004,24.81624
+2025-00205,Bas-Uele,Bili,Lokowa,2,male,true,false,false,Grace Ilunga,+243 84 641 1107,3.0004,24.81624
+2025-00206,Bas-Uele,Bili,Lokowa,4,female,true,true,false,Rachel Kasongo,+243 85 292 7463,2.38566,24.59575
+2025-00207,Bas-Uele,Bili,Lokowa,21,male,false,false,,Sarah Ilunga,+243 81 465 7229,3.12561,25.23014
+2025-00208,Bas-Uele,Bili,Lokowa,10,female,false,false,,Rachel Lukusa,+243 85 486 9145,2.89668,25.51398
+2025-00209,Bas-Uele,Bili,Lokowa,23,male,true,true,,Rachel Lukusa,+243 85 486 9145,2.89668,25.51398
+2025-00210,Bas-Uele,Bili,Lokowa,19,female,true,true,true,Sarah Mukendi,+243 84 994 8747,3.83712,25.01138
+2025-00211,Bas-Uele,Bili,Lokowa,10,female,false,false,false,Jeanne Ilunga,+243 89 453 3082,3.5707,23.94271
+2025-00212,Bas-Uele,Bili,Lokowa,7,female,true,false,false,Grace Kabila,+243 82 855 4589,2.801,24.18314
+2025-00213,Bas-Uele,Bili,Lokowa,2,female,true,false,false,Esther Ilunga,+243 84 358 3486,2.38249,25.45712
+2025-00214,Bas-Uele,Bili,Lokowa,4,female,,,false,Sarah Mbuyi,+243 86 151 2802,3.12795,24.52722
+2025-00215,Bas-Uele,Bili,Lokowa,1,male,false,false,false,Sarah Mbuyi,+243 86 151 2802,3.12795,24.52722
+2025-00216,Bas-Uele,Bili,Lokowa,11,male,true,true,true,Grace Kabila,+243 87 213 2222,3.12443,25.65653
+2025-00217,Bas-Uele,Aketi,Yokoka,13,male,true,false,true,Ruth Ngoy,+243 89 539 7764,2.4067,25.20198
+2025-00218,Bas-Uele,Aketi,Yokoka,22,female,false,false,false,Grace Ilunga,+243 89 978 9772,2.1974,25.71238
+2025-00219,Bas-Uele,Aketi,Yokoka,9,female,false,false,true,Grace Mbuyi,+243 88 840 4288,3.60346,24.48135
+2025-00220,Bas-Uele,Aketi,Yokoka,14,male,true,true,true,Ruth Ilunga,+243 81 220 5647,2.87998,25.09157
+2025-00221,Bas-Uele,Aketi,Yokoka,14,female,true,true,false,Rachel Lukusa,+243 87 973 3774,2.67263,24.56526
+2025-00222,Bas-Uele,Aketi,Yokoka,15,male,true,true,true,Jeanne Mbuyi,+243 86 771 2239,2.74959,23.79468
+2025-00223,Bas-Uele,Aketi,Yokoka,18,female,false,false,true,Sarah Bokele,+243 83 370 2591,2.51349,24.70812
+2025-00224,Bas-Uele,Aketi,Yokoka,14,male,false,false,false,Esther Ngoy,+243 88 851 7640,3.35002,25.21011
+2025-00225,Bas-Uele,Aketi,Yokoka,1,male,false,false,false,Sarah Mbuyi,+243 84 707 7981,2.67848,24.2746
+2025-00226,Bas-Uele,Aketi,Yokoka,22,female,,,true,Rachel Kabila,+243 84 188 1471,2.93976,25.44478
+2025-00227,Bas-Uele,Aketi,Yokoka,7,female,true,true,false,Esther Mbuyi,+243 81 749 3462,3.71515,25.51564
+2025-00228,Bas-Uele,Aketi,Yokoka,2,female,false,false,false,Esther Mbuyi,+243 81 749 3462,3.71515,25.51564
+2025-00229,Bas-Uele,Aketi,Yokoka,7,male,false,false,false,Josephine Ilunga,+243 84 483 1726,3.24851,25.07856
+2025-00230,Bas-Uele,Aketi,Yokoka,13,female,true,true,false,Josephine Ilunga,+243 84 483 1726,3.24851,25.07856
+2025-00231,Bas-Uele,Aketi,Yokoka,13,male,,,false,Jeanne Ilunga,+243 89 547 3190,2.58064,25.20244
+2025-00232,Bas-Uele,Aketi,Yokoka,9,female,true,true,true,Jeanne Ilunga,+243 89 547 3190,2.58064,25.20244
+2025-00233,Bas-Uele,Aketi,Yokoka,20,male,false,false,,Jeanne Ilunga,+243 89 547 3190,2.58064,25.20244
+2025-00234,Bas-Uele,Aketi,Yokoka,11,female,true,true,true,Sarah Kasongo,+243 87 289 7159,3.18163,25.1466
+2025-00235,Bas-Uele,Aketi,Yokoka,11,male,true,false,true,Sarah Kasongo,+243 87 289 7159,3.18163,25.1466
+2025-00236,Bas-Uele,Aketi,Yokoka,22,male,true,false,true,Rachel Bokele,+243 86 824 9944,2.99235,24.85528
+2025-00237,Bas-Uele,Aketi,Yokoka,19,female,true,true,true,Rachel Bokele,+243 86 824 9944,2.99235,24.85528
+2025-00238,Bas-Uele,Aketi,Yokoka,10,female,true,false,true,Rachel Bokele,+243 86 824 9944,2.99235,24.85528
+2025-00239,Bas-Uele,Aketi,Yokoka,13,female,true,true,true,Jeanne Lukusa,+243 83 263 6474,2.73967,25.89891
+2025-00240,Bas-Uele,Aketi,Yokoka,11,female,false,false,,Jeanne Lukusa,+243 83 263 6474,2.73967,25.89891
+2025-00241,Bas-Uele,Aketi,Yokoka,17,male,,,,Sarah Mukendi,+243 83 863 4970,2.72907,24.57889
+2025-00242,Bas-Uele,Aketi,Yokoka,14,male,true,true,true,Sarah Bokele,+243 82 524 8683,2.65492,24.8507
+2025-00243,Bas-Uele,Aketi,Yokoka,11,male,true,true,false,Jeanne Kabila,+243 81 435 3046,2.25573,24.88967
+2025-00244,Bas-Uele,Aketi,Yokoka,4,male,false,false,false,Grace Kabila,+243 88 831 9005,2.94933,25.13004
+2025-00245,Bas-Uele,Aketi,Moyoli,5,female,true,true,false,Jeanne Kabila,+243 88 597 1682,2.59139,24.35034
+2025-00246,Bas-Uele,Aketi,Moyoli,19,female,false,false,false,Jeanne Kabila,+243 88 597 1682,2.59139,24.35034
+2025-00247,Bas-Uele,Aketi,Moyoli,20,male,true,true,false,Ruth Mbuyi,+243 89 362 1350,2.67128,24.74019
+2025-00248,Bas-Uele,Aketi,Moyoli,18,male,,,,Ruth Mbuyi,+243 89 362 1350,2.67128,24.74019
+2025-00249,Bas-Uele,Aketi,Moyoli,13,male,false,false,,Ruth Mukendi,+243 82 272 6987,2.35894,24.32275
+2025-00250,Bas-Uele,Aketi,Moyoli,14,female,true,true,false,Josephine Bokele,+243 81 671 5640,3.87191,24.91657
+2025-00251,Bas-Uele,Aketi,Moyoli,21,female,true,true,true,Esther Lukusa,+243 86 569 4873,2.91339,24.83022
+2025-00252,Bas-Uele,Aketi,Moyoli,7,female,true,false,false,Esther Lukusa,+243 86 569 4873,2.91339,24.83022
+2025-00253,Bas-Uele,Aketi,Moyoli,3,female,true,false,false,Grace Mbuyi,+243 83 343 7697,3.99354,24.85198
+2025-00254,Bas-Uele,Aketi,Moyoli,14,female,true,false,true,Jeanne Kabila,+243 82 247 4714,3.49714,24.33605
+2025-00255,Bas-Uele,Aketi,Moyoli,12,male,false,false,false,Jeanne Kabila,+243 82 247 4714,3.49714,24.33605
+2025-00256,Bas-Uele,Aketi,Moyoli,19,male,true,true,false,Grace Kasongo,+243 85 528 8758,3.38235,24.85692
+2025-00257,Bas-Uele,Aketi,Moyoli,1,female,false,false,false,Josephine Ilunga,+243 81 521 6766,3.19138,24.52255
+2025-00258,Bas-Uele,Aketi,Moyoli,13,male,true,true,true,Josephine Ilunga,+243 81 521 6766,3.19138,24.52255
+2025-00259,Bas-Uele,Aketi,Moyoli,3,male,true,false,false,Rachel Mukendi,+243 84 326 9026,2.37457,24.52099
+2025-00260,Bas-Uele,Aketi,Moyoli,5,female,true,true,false,Grace Mukendi,+243 81 779 1823,3.12288,24.35436
+2025-00261,Bas-Uele,Aketi,Moyoli,19,male,,,,Josephine Mbuyi,+243 83 873 3708,2.62027,25.5533
+2025-00262,Bas-Uele,Aketi,Moyoli,20,male,true,true,true,Josephine Mbuyi,+243 83 873 3708,2.62027,25.5533
+2025-00263,Bas-Uele,Aketi,Moyoli,22,male,false,false,false,Josephine Kasongo,+243 87 612 5325,3.06718,24.58477
+2025-00264,Bas-Uele,Aketi,Moyoli,21,female,true,true,true,Jeanne Mbuyi,+243 88 539 7516,3.7674,24.85753
+2025-00265,Bas-Uele,Aketi,Moyoli,8,female,true,true,false,Esther Bokele,+243 88 506 3564,2.12912,25.20417
+2025-00266,Bas-Uele,Aketi,Moyoli,7,male,true,true,false,Grace Bokele,+243 83 317 5743,2.53329,24.79278
+2025-00267,Bas-Uele,Aketi,Moyoli,7,male,true,true,false,Grace Bokele,+243 83 317 5743,2.53329,24.79278
+2025-00268,Bas-Uele,Aketi,Moyoli,4,female,true,true,false,Marie Bokele,+243 86 190 5415,3.0039,24.82761
+2025-00269,Bas-Uele,Aketi,Moyoli,4,female,true,true,false,Josephine Lukusa,+243 81 479 5597,2.58509,24.69532
+2025-00270,Bas-Uele,Aketi,Moyoli,10,male,false,false,false,Sarah Mbuyi,+243 86 997 3060,2.48493,24.02193
+2025-00271,Bas-Uele,Aketi,Moyoli,13,male,true,true,true,Grace Mbuyi,+243 82 132 4064,2.71354,24.41255
+2025-00272,Bas-Uele,Aketi,Kawa,23,male,false,false,false,Grace Ilunga,+243 83 902 5733,2.55691,24.5009
+2025-00273,Bas-Uele,Aketi,Kawa,7,male,false,false,false,Josephine Kasongo,+243 87 189 7264,1.65502,24.60298
+2025-00274,Bas-Uele,Aketi,Kawa,12,female,false,false,false,Esther Bokele,+243 84 375 7621,3.07616,25.11335
+2025-00275,Bas-Uele,Aketi,Kawa,16,male,true,true,false,Esther Bokele,+243 84 375 7621,3.07616,25.11335
+2025-00276,Bas-Uele,Aketi,Kawa,20,male,true,true,true,Grace Kabila,+243 88 288 7145,3.45978,26.12471
+2025-00277,Bas-Uele,Aketi,Kawa,10,male,true,true,true,Esther Kabila,+243 86 539 6800,2.78289,24.67806
+2025-00278,Bas-Uele,Aketi,Kawa,15,male,,,true,Marie Mukendi,+243 84 562 5886,3.65693,24.58144
+2025-00279,Bas-Uele,Aketi,Kawa,16,female,true,false,,Marie Mukendi,+243 84 562 5886,3.65693,24.58144
+2025-00280,Bas-Uele,Aketi,Kawa,12,female,false,false,false,Marie Mukendi,+243 84 562 5886,3.65693,24.58144
+2025-00281,Bas-Uele,Aketi,Kawa,23,female,,,false,Jeanne Mbuyi,+243 81 987 8367,2.47161,25.89845
+2025-00282,Bas-Uele,Aketi,Kawa,14,female,false,false,false,Jeanne Mbuyi,+243 81 987 8367,2.47161,25.89845
+2025-00283,Bas-Uele,Aketi,Kawa,22,male,false,false,false,Jeanne Mbuyi,+243 81 987 8367,2.47161,25.89845
+2025-00284,Bas-Uele,Aketi,Kawa,2,male,true,false,false,Esther Ilunga,+243 87 866 4282,4.32399,24.05748
+2025-00285,Bas-Uele,Aketi,Kawa,7,male,true,false,false,Esther Ilunga,+243 87 866 4282,4.32399,24.05748
+2025-00286,Bas-Uele,Aketi,Kawa,6,male,false,false,false,Josephine Kasongo,+243 87 459 9517,3.75994,24.81832
+2025-00287,Bas-Uele,Aketi,Kawa,15,male,true,false,false,Grace Ngoy,+243 82 107 4284,2.90744,25.40464
+2025-00288,Bas-Uele,Aketi,Kawa,22,female,false,false,false,Grace Ngoy,+243 82 107 4284,2.90744,25.40464
+2025-00289,Bas-Uele,Aketi,Kawa,19,male,,,false,Josephine Lukusa,+243 85 691 2707,2.58674,24.56844
+2025-00290,Bas-Uele,Aketi,Kawa,1,male,false,false,false,Marie Bokele,+243 83 838 1910,3.36753,24.28003
+2025-00291,Bas-Uele,Aketi,Kawa,7,male,false,false,false,Marie Bokele,+243 83 838 1910,3.36753,24.28003
+2025-00292,Bas-Uele,Aketi,Kawa,1,male,false,false,false,Sarah Kabila,+243 87 113 8564,3.1456,24.0663
+2025-00293,Bas-Uele,Aketi,Kawa,18,female,true,true,true,Sarah Kabila,+243 87 113 8564,3.1456,24.0663
+2025-00294,Bas-Uele,Aketi,Kawa,13,male,true,true,true,Rachel Lukusa,+243 87 129 7192,2.5823,25.11152
+2025-00295,Bas-Uele,Aketi,Kawa,22,male,true,false,true,Josephine Bokele,+243 89 860 7908,2.60757,25.01484
+2025-00296,Bas-Uele,Aketi,Kawa,13,male,true,false,true,Ruth Mukendi,+243 86 562 4029,3.43694,24.59417
+2025-00297,Bas-Uele,Aketi,Kawa,15,male,false,false,false,Ruth Mukendi,+243 86 562 4029,3.43694,24.59417
+2025-00298,Bas-Uele,Aketi,Kawa,13,male,false,false,false,Ruth Bokele,+243 87 123 4003,2.67869,24.19163
+2025-00299,Bas-Uele,Aketi,Kawa,12,female,false,false,false,Ruth Bokele,+243 87 123 4003,2.67869,24.19163
+2025-00300,Bas-Uele,Aketi,Kawa,23,male,false,false,false,Ruth Ilunga,+243 81 974 9508,2.48204,25.47895
+2025-00301,Bas-Uele,Aketi,Kawa,9,male,,,true,Rachel Mukendi,+243 87 761 3590,3.11356,23.87617
+2025-00302,Bas-Uele,Aketi,Kawa,6,male,false,false,false,Marie Lukusa,+243 87 676 1322,3.43626,25.40485
+2025-00303,Bas-Uele,Aketi,Seba,14,female,true,false,true,Ruth Bokele,+243 84 889 3397,3.24685,24.6402
+2025-00304,Bas-Uele,Aketi,Seba,14,male,true,true,true,Sarah Kabila,+243 87 616 1621,2.74289,24.56775
+2025-00305,Bas-Uele,Aketi,Seba,22,male,true,true,false,Marie Lukusa,+243 85 311 5503,3.13507,25.25911
+2025-00306,Bas-Uele,Aketi,Seba,20,female,false,false,true,Marie Lukusa,+243 85 311 5503,3.13507,25.25911
+2025-00307,Bas-Uele,Aketi,Seba,2,male,false,false,,Rachel Kasongo,+243 88 335 5985,3.26267,24.91676
+2025-00308,Bas-Uele,Aketi,Seba,19,female,true,true,true,Rachel Kasongo,+243 88 335 5985,3.26267,24.91676
+2025-00309,Bas-Uele,Aketi,Seba,18,female,true,true,true,Josephine Kabila,+243 85 223 5998,2.69047,24.65574
+2025-00310,Bas-Uele,Aketi,Seba,4,male,true,true,false,Ruth Ilunga,+243 88 426 8254,2.15757,24.58879
+2025-00311,Bas-Uele,Aketi,Seba,5,female,,,,Ruth Ilunga,+243 88 426 8254,2.15757,24.58879
+2025-00312,Bas-Uele,Aketi,Seba,17,female,false,false,false,Ruth Ilunga,+243 88 426 8254,2.15757,24.58879
+2025-00313,Bas-Uele,Aketi,Seba,15,female,true,false,true,Jeanne Lukusa,+243 82 116 7449,2.52913,23.97277
+2025-00314,Bas-Uele,Aketi,Seba,15,female,false,false,false,Jeanne Lukusa,+243 82 116 7449,2.52913,23.97277
+2025-00315,Bas-Uele,Aketi,Seba,13,female,false,false,,Sarah Ngoy,+243 84 407 2969,2.65914,24.84239
+2025-00316,Bas-Uele,Aketi,Seba,15,female,true,true,true,Sarah Ngoy,+243 84 407 2969,2.65914,24.84239
+2025-00317,Bas-Uele,Aketi,Seba,6,female,true,false,false,Sarah Kasongo,+243 82 508 4098,2.63377,24.65224
+2025-00318,Bas-Uele,Aketi,Seba,11,female,true,false,false,Josephine Ilunga,+243 89 892 8353,2.99812,24.63081
+2025-00319,Bas-Uele,Aketi,Seba,2,male,false,false,false,Rachel Kabila,+243 89 548 4502,2.59807,24.84966
+2025-00320,Bas-Uele,Aketi,Seba,4,male,true,true,false,Sarah Lukusa,+243 81 401 6068,2.81626,25.63109
+2025-00321,Bas-Uele,Aketi,Seba,15,male,true,false,true,Sarah Lukusa,+243 81 401 6068,2.81626,25.63109
+2025-00322,Bas-Uele,Aketi,Seba,10,female,,,false,Sarah Mbuyi,+243 86 946 5807,3.25053,24.97354
+2025-00323,Bas-Uele,Aketi,Seba,5,male,false,false,false,Sarah Mbuyi,+243 86 946 5807,3.25053,24.97354
+2025-00324,Bas-Uele,Aketi,Seba,2,male,true,false,false,Jeanne Mbuyi,+243 86 739 8704,2.78331,24.55388
+2025-00325,Bas-Uele,Aketi,Seba,6,male,true,true,false,Jeanne Mbuyi,+243 86 739 8704,2.78331,24.55388
+2025-00326,Bas-Uele,Aketi,Seba,15,male,false,false,false,Sarah Mukendi,+243 81 508 1813,2.5829,25.9024
+2025-00327,Bas-Uele,Aketi,Seba,4,male,false,false,false,Sarah Mukendi,+243 81 508 1813,2.5829,25.9024
+2025-00328,Bas-Uele,Aketi,Seba,8,female,true,true,false,Sarah Ngoy,+243 86 953 5133,3.15363,23.75253
+2025-00329,Bas-Uele,Aketi,Seba,1,male,false,false,,Marie Mbuyi,+243 82 980 6098,2.0061,24.96702
+2025-00330,Bas-Uele,Aketi,Seba,3,female,true,false,false,Esther Ilunga,+243 85 933 9376,2.00257,24.2352
+2025-00331,Bas-Uele,Aketi,Seba,19,male,false,false,false,Ruth Kasongo,+243 81 288 9957,3.83308,24.69287
+2025-00332,Bas-Uele,Aketi,Seba,3,female,true,false,false,Esther Mbuyi,+243 88 848 1373,3.27767,25.18989
+2025-00333,Bas-Uele,Poko,Poko Centre,23,male,,,false,Esther Lukusa,+243 84 510 1494,3.08006,24.58458
+2025-00334,Bas-Uele,Poko,Poko Centre,1,female,false,false,false,Grace Mukendi,+243 88 904 1439,3.60844,25.91199
+2025-00335,Bas-Uele,Poko,Poko Centre,0,female,false,false,false,Grace Mukendi,+243 88 904 1439,3.60844,25.91199
+2025-00336,Bas-Uele,Poko,Poko Centre,4,female,true,false,false,Grace Mukendi,+243 88 904 1439,3.60844,25.91199
+2025-00337,Bas-Uele,Poko,Poko Centre,23,female,false,false,false,Grace Kabila,+243 83 596 1987,3.87431,24.65039
+2025-00338,Bas-Uele,Poko,Poko Centre,2,male,true,false,false,Marie Mukendi,+243 89 742 6768,3.79419,24.71181
+2025-00339,Bas-Uele,Poko,Poko Centre,8,male,true,true,false,Marie Mukendi,+243 89 742 6768,3.79419,24.71181
+2025-00340,Bas-Uele,Poko,Poko Centre,23,male,,,false,Marie Mbuyi,+243 87 452 6250,2.52658,24.42468
+2025-00341,Bas-Uele,Poko,Poko Centre,9,female,true,true,true,Jeanne Kasongo,+243 81 852 1718,3.11241,23.93583
+2025-00342,Bas-Uele,Poko,Poko Centre,2,female,true,false,false,Sarah Kabila,+243 81 552 7341,2.39779,23.24548
+2025-00343,Bas-Uele,Poko,Poko Centre,7,male,,,false,Josephine Ilunga,+243 84 738 6332,2.99695,25.07015
+2025-00344,Bas-Uele,Poko,Poko Centre,8,female,false,false,false,Grace Kasongo,+243 86 685 1363,3.74817,25.2686
+2025-00345,Bas-Uele,Poko,Poko Centre,2,male,false,false,false,Grace Kasongo,+243 86 685 1363,3.74817,25.2686
+2025-00346,Bas-Uele,Poko,Poko Centre,2,female,true,false,false,Ruth Kasongo,+243 81 270 2552,2.47691,24.33331
+2025-00347,Bas-Uele,Poko,Poko Centre,16,male,false,false,false,Sarah Mbuyi,+243 84 952 2410,3.55925,24.71475
+2025-00348,Bas-Uele,Poko,Poko Centre,4,male,false,false,,Esther Kasongo,+243 84 940 5783,3.75927,24.67619
+2025-00349,Bas-Uele,Poko,Poko Centre,10,female,true,false,true,Esther Kasongo,+243 84 940 5783,3.75927,24.67619
+2025-00350,Bas-Uele,Poko,Poko Centre,9,male,,,true,Rachel Ngoy,+243 81 214 1236,2.22361,25.15574
+2025-00351,Bas-Uele,Poko,Poko Centre,6,female,true,false,,Jeanne Kasongo,+243 81 202 7209,3.12464,24.18941
+2025-00352,Bas-Uele,Poko,Poko Centre,6,female,,,false,Marie Lukusa,+243 87 857 4850,3.12794,24.6182
+2025-00353,Bas-Uele,Poko,Poko Centre,19,female,false,false,false,Sarah Mbuyi,+243 85 286 5785,2.67108,24.32869
+2025-00354,Bas-Uele,Poko,Poko Centre,21,female,true,false,false,Sarah Mbuyi,+243 85 286 5785,2.67108,24.32869
+2025-00355,Bas-Uele,Poko,Poko Centre,18,male,true,true,true,Esther Ilunga,+243 81 705 1204,3.11913,24.58825
+2025-00356,Bas-Uele,Poko,Poko Centre,9,male,true,true,,Jeanne Ilunga,+243 89 151 7461,3.235,24.80818
+2025-00357,Bas-Uele,Poko,Poko Centre,10,male,true,true,,Esther Kabila,+243 81 483 9673,3.72983,24.08179
+2025-00358,Bas-Uele,Poko,Poko Centre,20,female,true,false,true,Esther Kabila,+243 81 483 9673,3.72983,24.08179
+2025-00359,Bas-Uele,Poko,Poko Centre,10,female,,,false,Grace Bokele,+243 82 813 2991,2.49848,25.49591
+2025-00360,Bas-Uele,Poko,Lise,2,male,false,false,false,Rachel Mbuyi,+243 82 591 5668,4.11678,24.37286
+2025-00361,Bas-Uele,Poko,Lise,10,female,false,false,false,Rachel Mbuyi,+243 82 591 5668,4.11678,24.37286
+2025-00362,Bas-Uele,Poko,Lise,14,female,,,true,Esther Mbuyi,+243 88 897 9264,3.2053,24.84673
+2025-00363,Bas-Uele,Poko,Lise,12,male,true,false,true,Sarah Bokele,+243 88 959 2542,2.61507,24.27135
+2025-00364,Bas-Uele,Poko,Lise,17,male,,,,Jeanne Mukendi,+243 84 250 5917,2.09617,25.71995
+2025-00365,Bas-Uele,Poko,Lise,3,male,false,false,,Josephine Mukendi,+243 89 478 3856,2.94607,24.59895
+2025-00366,Bas-Uele,Poko,Lise,1,male,,,false,Esther Bokele,+243 81 620 4218,2.76124,24.61112
+2025-00367,Bas-Uele,Poko,Lise,4,female,true,true,false,Josephine Mbuyi,+243 82 353 3486,2.60144,24.47808
+2025-00368,Bas-Uele,Poko,Lise,6,male,true,false,false,Josephine Mbuyi,+243 82 353 3486,2.60144,24.47808
+2025-00369,Bas-Uele,Poko,Lise,20,male,false,false,false,Ruth Mukendi,+243 82 271 3229,3.44347,24.79974
+2025-00370,Bas-Uele,Poko,Lise,16,female,false,false,false,Ruth Mukendi,+243 82 271 3229,3.44347,24.79974
+2025-00371,Bas-Uele,Poko,Lise,16,male,true,true,true,Marie Lukusa,+243 85 130 9849,2.31381,25.12565
+2025-00372,Bas-Uele,Poko,Lise,3,female,true,false,false,Grace Kabila,+243 83 348 5059,1.58199,25.31651
+2025-00373,Bas-Uele,Poko,Lise,9,female,,,true,Grace Kabila,+243 83 348 5059,1.58199,25.31651
+2025-00374,Bas-Uele,Poko,Lise,8,female,,,false,Rachel Ngoy,+243 88 377 7591,3.31559,24.35241
+2025-00375,Bas-Uele,Poko,Lise,12,male,,,false,Esther Ngoy,+243 89 688 3662,3.02021,24.48431
+2025-00376,Bas-Uele,Poko,Lise,9,male,true,true,true,Jeanne Kasongo,+243 81 760 2124,2.60617,24.64943
+2025-00377,Bas-Uele,Poko,Lise,4,male,false,false,false,Esther Kabila,+243 82 962 3861,2.08141,24.96062
+2025-00378,Bas-Uele,Poko,Lise,11,male,true,true,true,Jeanne Bokele,+243 81 258 3420,2.81042,25.08283
+2025-00379,Bas-Uele,Poko,Lise,17,male,false,false,,Jeanne Bokele,+243 81 258 3420,2.81042,25.08283
+2025-00380,Bas-Uele,Poko,Lise,2,female,false,false,false,Rachel Ilunga,+243 85 964 9204,2.58587,25.10432
+2025-00381,Bas-Uele,Poko,Lise,0,female,false,false,false,Rachel Ilunga,+243 85 964 9204,2.58587,25.10432
+2025-00382,Bas-Uele,Poko,Lise,8,male,true,true,,Ruth Kabila,+243 83 916 7988,2.89724,24.11103
+2025-00383,Bas-Uele,Poko,Lise,11,male,true,false,true,Ruth Mukendi,+243 83 114 4790,2.80863,25.09951
+2025-00384,Bas-Uele,Poko,Lise,18,male,true,true,true,Marie Kabila,+243 89 984 5950,3.18522,24.32033
+2025-00385,Bas-Uele,Poko,Lise,15,female,false,false,false,Grace Kasongo,+243 85 371 5038,3.08608,24.00965
+2025-00386,Bas-Uele,Poko,Lise,14,female,true,true,true,Grace Kasongo,+243 85 371 5038,3.08608,24.00965
+2025-00387,Nord-Ubangi,Gbadolite,Yokali,11,female,true,true,true,Marie Mukendi,+243 84 107 6577,4.12742,21.8108
+2025-00388,Nord-Ubangi,Gbadolite,Yokali,9,female,,,true,Jeanne Kasongo,+243 82 725 4682,3.74889,21.21237
+2025-00389,Nord-Ubangi,Gbadolite,Yokali,15,male,true,false,false,Josephine Lukusa,+243 86 177 2397,3.90921,21.0804
+2025-00390,Nord-Ubangi,Gbadolite,Yokali,7,female,true,true,false,Josephine Ngoy,+243 82 205 9747,4.53329,20.95906
+2025-00391,Nord-Ubangi,Gbadolite,Yokali,1,female,false,false,false,Ruth Lukusa,+243 88 109 9609,4.10065,20.11847
+2025-00392,Nord-Ubangi,Gbadolite,Yokali,20,female,,,true,Jeanne Kabila,+243 83 725 3399,3.68634,21.82176
+2025-00393,Nord-Ubangi,Gbadolite,Yokali,9,female,true,true,true,Sarah Mbuyi,+243 86 302 7141,3.57139,21.10569
+2025-00394,Nord-Ubangi,Gbadolite,Yokali,8,female,true,true,false,Sarah Mbuyi,+243 86 302 7141,3.57139,21.10569
+2025-00395,Nord-Ubangi,Gbadolite,Yokali,22,female,true,false,true,Jeanne Mbuyi,+243 82 417 4419,3.948,21.16125
+2025-00396,Nord-Ubangi,Gbadolite,Yokali,18,male,true,true,true,Marie Kabila,+243 86 756 1268,3.79824,20.81014
+2025-00397,Nord-Ubangi,Gbadolite,Yokali,15,male,true,false,true,Josephine Kasongo,+243 82 788 3633,4.33519,20.93024
+2025-00398,Nord-Ubangi,Gbadolite,Yokali,7,female,true,true,false,Josephine Bokele,+243 88 176 1224,3.73363,21.39233
+2025-00399,Nord-Ubangi,Gbadolite,Yokali,7,female,false,false,false,Jeanne Kasongo,+243 83 446 8847,3.7148,20.52399
+2025-00400,Nord-Ubangi,Gbadolite,Yokali,9,female,true,true,false,Ruth Bokele,+243 87 205 7283,3.90683,21.31445
+2025-00401,Nord-Ubangi,Gbadolite,Yokali,10,female,true,true,false,Ruth Bokele,+243 87 205 7283,3.90683,21.31445
+2025-00402,Nord-Ubangi,Gbadolite,Yokali,11,male,true,false,true,Marie Ngoy,+243 87 277 1205,4.75165,21.42806
+2025-00403,Nord-Ubangi,Gbadolite,Yokali,7,female,true,false,false,Sarah Bokele,+243 86 304 2748,3.46433,21.2006
+2025-00404,Nord-Ubangi,Gbadolite,Yokali,22,male,true,true,true,Josephine Kabila,+243 87 341 2919,3.73219,20.83283
+2025-00405,Nord-Ubangi,Gbadolite,Yokali,18,male,true,true,true,Esther Ilunga,+243 89 978 5763,4.50115,21.39881
+2025-00406,Nord-Ubangi,Gbadolite,Yokali,23,male,true,true,true,Esther Ilunga,+243 89 978 5763,4.50115,21.39881
+2025-00407,Nord-Ubangi,Gbadolite,Yokali,8,male,true,true,false,Josephine Ilunga,+243 82 437 2248,4.26336,20.89239
+2025-00408,Nord-Ubangi,Gbadolite,Yokali,7,male,true,false,false,Josephine Ilunga,+243 82 437 2248,4.26336,20.89239
+2025-00409,Nord-Ubangi,Gbadolite,Yokali,5,male,,,false,Josephine Ilunga,+243 82 437 2248,4.26336,20.89239
+2025-00410,Nord-Ubangi,Gbadolite,Yokali,20,female,,,true,Sarah Mukendi,+243 86 428 9142,3.80544,20.9292
+2025-00411,Nord-Ubangi,Gbadolite,Yokali,9,male,,,false,Rachel Mukendi,+243 84 890 7941,4.73583,21.44556
+2025-00412,Nord-Ubangi,Gbadolite,Gbadolite Centre,6,female,true,false,false,Sarah Ilunga,+243 85 831 6218,4.17864,21.55477
+2025-00413,Nord-Ubangi,Gbadolite,Gbadolite Centre,5,female,,,false,Josephine Mukendi,+243 86 845 5921,5.1154,21.01999
+2025-00414,Nord-Ubangi,Gbadolite,Gbadolite Centre,6,male,true,true,false,Josephine Mukendi,+243 86 845 5921,5.1154,21.01999
+2025-00415,Nord-Ubangi,Gbadolite,Gbadolite Centre,4,male,,,false,Josephine Kabila,+243 88 731 5647,4.08661,20.39487
+2025-00416,Nord-Ubangi,Gbadolite,Gbadolite Centre,20,female,true,true,true,Josephine Mukendi,+243 82 215 9351,4.47121,21.10664
+2025-00417,Nord-Ubangi,Gbadolite,Gbadolite Centre,15,male,true,true,false,Ruth Ilunga,+243 89 894 9330,4.67487,21.06465
+2025-00418,Nord-Ubangi,Gbadolite,Gbadolite Centre,14,female,true,true,true,Marie Lukusa,+243 83 727 8593,4.19478,21.37775
+2025-00419,Nord-Ubangi,Gbadolite,Gbadolite Centre,23,male,,,true,Ruth Ngoy,+243 83 834 3736,4.66826,21.69236
+2025-00420,Nord-Ubangi,Gbadolite,Gbadolite Centre,21,male,true,false,true,Ruth Ngoy,+243 83 834 3736,4.66826,21.69236
+2025-00421,Nord-Ubangi,Gbadolite,Gbadolite Centre,20,female,,,true,Rachel Ilunga,+243 88 764 2670,3.4946,21.18866
+2025-00422,Nord-Ubangi,Gbadolite,Gbadolite Centre,1,female,,,false,Esther Kabila,+243 89 858 3219,4.64114,20.26712
+2025-00423,Nord-Ubangi,Gbadolite,Gbadolite Centre,15,female,true,true,true,Esther Lukusa,+243 88 807 6794,4.791,20.10869
+2025-00424,Nord-Ubangi,Gbadolite,Gbadolite Centre,8,male,true,false,false,Josephine Ngoy,+243 86 617 2210,3.78837,21.07429
+2025-00425,Nord-Ubangi,Gbadolite,Gbadolite Centre,22,male,true,false,true,Josephine Ngoy,+243 86 617 2210,3.78837,21.07429
+2025-00426,Nord-Ubangi,Gbadolite,Gbadolite Centre,13,male,true,false,false,Esther Lukusa,+243 83 505 5551,3.63205,20.22271
+2025-00427,Nord-Ubangi,Gbadolite,Gbadolite Centre,3,female,true,false,false,Esther Lukusa,+243 83 505 5551,3.63205,20.22271
+2025-00428,Nord-Ubangi,Gbadolite,Gbadolite Centre,4,male,true,true,false,Sarah Mbuyi,+243 89 656 3383,4.81295,21.16194
+2025-00429,Nord-Ubangi,Gbadolite,Gbadolite Centre,21,female,true,false,true,Jeanne Kabila,+243 88 903 7236,4.70419,21.53129
+2025-00430,Nord-Ubangi,Gbadolite,Gbadolite Centre,16,male,true,true,,Jeanne Kabila,+243 88 903 7236,4.70419,21.53129
+2025-00431,Nord-Ubangi,Gbadolite,Gbadolite Centre,11,male,true,true,true,Jeanne Kabila,+243 88 903 7236,4.70419,21.53129
+2025-00432,Nord-Ubangi,Gbadolite,Gbadolite Centre,2,female,true,false,false,Ruth Mukendi,+243 82 136 4425,4.917,21.23448
+2025-00433,Nord-Ubangi,Gbadolite,Gbadolite Centre,21,female,true,true,false,Marie Mukendi,+243 86 568 8425,3.72321,21.22558
+2025-00434,Nord-Ubangi,Gbadolite,Gbadolite Centre,19,female,true,false,true,Marie Mukendi,+243 86 568 8425,3.72321,21.22558
+2025-00435,Nord-Ubangi,Gbadolite,Gbadolite Centre,5,female,true,true,false,Rachel Mbuyi,+243 84 371 7027,3.92792,20.74051
+2025-00436,Nord-Ubangi,Gbadolite,Gbadolite Centre,18,male,false,false,false,Sarah Mbuyi,+243 81 728 6546,4.00498,21.25144
+2025-00437,Nord-Ubangi,Gbadolite,Gbadolite Centre,19,female,true,true,true,Josephine Kabila,+243 89 884 7599,4.58674,21.50442
+2025-00438,Nord-Ubangi,Gbadolite,Gbadolite Centre,9,female,true,false,true,Rachel Mbuyi,+243 82 151 5465,4.5223,21.25966
+2025-00439,Nord-Ubangi,Gbadolite,Towamo,18,female,true,true,false,Rachel Kasongo,+243 83 988 8657,3.46212,21.36989
+2025-00440,Nord-Ubangi,Gbadolite,Towamo,14,male,false,false,false,Grace Ngoy,+243 86 292 4893,4.16165,21.15449
+2025-00441,Nord-Ubangi,Gbadolite,Towamo,14,female,true,true,false,Grace Ngoy,+243 86 292 4893,4.16165,21.15449
+2025-00442,Nord-Ubangi,Gbadolite,Towamo,9,male,true,true,true,Ruth Kabila,+243 83 949 9575,3.70446,20.17174
+2025-00443,Nord-Ubangi,Gbadolite,Towamo,17,male,true,true,true,Ruth Kabila,+243 83 949 9575,3.70446,20.17174
+2025-00444,Nord-Ubangi,Gbadolite,Towamo,5,male,true,false,false,Ruth Kabila,+243 83 949 9575,3.70446,20.17174
+2025-00445,Nord-Ubangi,Gbadolite,Towamo,12,female,true,true,false,Esther Bokele,+243 81 142 2946,4.16418,21.19376
+2025-00446,Nord-Ubangi,Gbadolite,Towamo,0,female,false,false,false,Sarah Kasongo,+243 87 563 5845,4.11767,20.63292
+2025-00447,Nord-Ubangi,Gbadolite,Towamo,9,female,true,false,true,Sarah Kasongo,+243 87 563 5845,4.11767,20.63292
+2025-00448,Nord-Ubangi,Gbadolite,Towamo,0,male,false,false,false,Esther Kasongo,+243 81 362 9283,4.26009,21.43983
+2025-00449,Nord-Ubangi,Gbadolite,Towamo,2,male,false,false,false,Rachel Bokele,+243 88 986 1047,4.21855,20.53716
+2025-00450,Nord-Ubangi,Gbadolite,Towamo,19,male,true,true,true,Rachel Bokele,+243 88 986 1047,4.21855,20.53716
+2025-00451,Nord-Ubangi,Gbadolite,Towamo,0,male,false,false,,Jeanne Bokele,+243 87 525 6675,3.94287,20.82143
+2025-00452,Nord-Ubangi,Gbadolite,Towamo,10,female,true,true,false,Rachel Ngoy,+243 89 654 6741,4.20825,20.92518
+2025-00453,Nord-Ubangi,Gbadolite,Towamo,11,female,true,false,false,Josephine Mukendi,+243 82 653 7782,4.62943,21.59095
+2025-00454,Nord-Ubangi,Gbadolite,Towamo,20,male,true,false,true,Marie Ilunga,+243 88 507 4192,4.96435,21.66478
+2025-00455,Nord-Ubangi,Gbadolite,Towamo,15,male,true,false,true,Marie Ilunga,+243 88 507 4192,4.96435,21.66478
+2025-00456,Nord-Ubangi,Gbadolite,Towamo,16,female,true,true,true,Marie Ilunga,+243 88 507 4192,4.96435,21.66478
+2025-00457,Nord-Ubangi,Gbadolite,Towamo,17,male,true,true,true,Rachel Ilunga,+243 82 167 2740,4.41105,20.30491
+2025-00458,Nord-Ubangi,Gbadolite,Towamo,14,female,true,true,true,Sarah Ilunga,+243 88 453 6282,5.06899,20.66507
+2025-00459,Nord-Ubangi,Gbadolite,Towamo,14,male,true,true,true,Sarah Ilunga,+243 88 453 6282,5.06899,20.66507
+2025-00460,Nord-Ubangi,Gbadolite,Towamo,17,male,true,false,true,Sarah Mbuyi,+243 88 798 9398,3.82432,21.09483
+2025-00461,Nord-Ubangi,Gbadolite,Towamo,4,female,true,false,false,Esther Kabila,+243 89 749 8331,3.98151,20.25355
+2025-00462,Nord-Ubangi,Gbadolite,Towamo,21,female,true,false,,Esther Kabila,+243 89 749 8331,3.98151,20.25355
+2025-00463,Nord-Ubangi,Gbadolite,Towamo,10,female,,,true,Esther Kabila,+243 89 749 8331,3.98151,20.25355
+2025-00464,Nord-Ubangi,Gbadolite,Towamo,21,female,true,true,true,Ruth Bokele,+243 89 486 2663,5.30387,19.73355
+2025-00465,Nord-Ubangi,Gbadolite,Towamo,8,female,true,true,false,Ruth Bokele,+243 89 486 2663,5.30387,19.73355
+2025-00466,Nord-Ubangi,Gbadolite,Towamo,6,female,,,,Esther Ilunga,+243 82 934 5969,3.33407,21.43676
+2025-00467,Nord-Ubangi,Gbadolite,Towamo,18,female,,,true,Marie Mbuyi,+243 85 599 3940,4.07372,20.66295
+2025-00468,Nord-Ubangi,Gbadolite,Towamo,13,female,false,false,false,Josephine Ilunga,+243 86 157 7639,3.84644,21.50263
+2025-00469,Nord-Ubangi,Gbadolite,Towamo,22,female,true,true,true,Marie Kabila,+243 81 937 1959,3.9577,20.87089
+2025-00470,Nord-Ubangi,Gbadolite,Towamo,13,male,false,false,false,Marie Kabila,+243 81 937 1959,3.9577,20.87089
+2025-00471,Nord-Ubangi,Gbadolite,Towamo,14,female,true,true,,Marie Kabila,+243 81 937 1959,3.9577,20.87089
+2025-00472,Nord-Ubangi,Gbadolite,Lingako,7,female,false,false,false,Ruth Mukendi,+243 88 408 5933,3.59342,20.03767
+2025-00473,Nord-Ubangi,Gbadolite,Lingako,5,female,true,true,false,Josephine Mbuyi,+243 85 896 9944,4.28296,20.4377
+2025-00474,Nord-Ubangi,Gbadolite,Lingako,22,female,true,true,false,Josephine Kasongo,+243 85 924 7688,4.06154,20.62788
+2025-00475,Nord-Ubangi,Gbadolite,Lingako,8,male,true,true,false,Marie Kasongo,+243 83 387 8634,3.95575,21.47584
+2025-00476,Nord-Ubangi,Gbadolite,Lingako,14,female,true,true,true,Sarah Ngoy,+243 84 137 4793,3.73393,20.99498
+2025-00477,Nord-Ubangi,Gbadolite,Lingako,13,female,true,true,,Josephine Bokele,+243 88 726 9256,4.55669,20.57246
+2025-00478,Nord-Ubangi,Gbadolite,Lingako,17,male,true,true,false,Josephine Bokele,+243 88 726 9256,4.55669,20.57246
+2025-00479,Nord-Ubangi,Gbadolite,Lingako,9,male,true,true,true,Josephine Mukendi,+243 84 457 9532,4.30969,20.03403
+2025-00480,Nord-Ubangi,Gbadolite,Lingako,6,female,true,true,false,Rachel Mukendi,+243 84 772 2192,3.98623,21.14987
+2025-00481,Nord-Ubangi,Gbadolite,Lingako,22,female,true,true,true,Josephine Mukendi,+243 88 887 5513,4.2147,20.7262
+2025-00482,Nord-Ubangi,Gbadolite,Lingako,4,female,true,true,false,Josephine Mukendi,+243 88 887 5513,4.2147,20.7262
+2025-00483,Nord-Ubangi,Gbadolite,Lingako,0,female,false,false,false,Ruth Ilunga,+243 84 321 6329,3.71138,21.51392
+2025-00484,Nord-Ubangi,Gbadolite,Lingako,21,male,true,true,true,Josephine Bokele,+243 83 866 3683,3.33331,21.69046
+2025-00485,Nord-Ubangi,Gbadolite,Lingako,23,male,true,true,true,Ruth Kasongo,+243 89 611 9438,3.49123,20.51872
+2025-00486,Nord-Ubangi,Gbadolite,Lingako,7,female,,,,Josephine Kabila,+243 82 323 6232,4.44824,21.604
+2025-00487,Nord-Ubangi,Gbadolite,Lingako,1,male,false,false,false,Josephine Kabila,+243 82 323 6232,4.44824,21.604
+2025-00488,Nord-Ubangi,Gbadolite,Lingako,17,female,true,true,true,Sarah Ilunga,+243 82 104 6499,4.63187,20.63993
+2025-00489,Nord-Ubangi,Gbadolite,Lingako,6,female,,,,Jeanne Lukusa,+243 89 584 8063,3.8736,21.02386
+2025-00490,Nord-Ubangi,Gbadolite,Lingako,1,female,false,false,,Jeanne Lukusa,+243 89 584 8063,3.8736,21.02386
+2025-00491,Nord-Ubangi,Gbadolite,Lingako,19,female,true,false,true,Ruth Kabila,+243 89 865 9549,4.55254,21.227
+2025-00492,Nord-Ubangi,Gbadolite,Lingako,17,female,true,true,true,Grace Mbuyi,+243 81 924 6257,3.67615,21.58247
+2025-00493,Nord-Ubangi,Gbadolite,Lingako,6,female,false,false,false,Grace Mbuyi,+243 81 924 6257,3.67615,21.58247
+2025-00494,Nord-Ubangi,Gbadolite,Lingako,7,female,true,false,false,Rachel Mukendi,+243 81 575 4142,3.72017,21.56012
+2025-00495,Nord-Ubangi,Gbadolite,Lingako,12,female,true,true,true,Marie Lukusa,+243 81 307 9622,4.02665,20.397
+2025-00496,Nord-Ubangi,Gbadolite,Lingako,7,male,true,true,false,Sarah Mbuyi,+243 85 527 1747,4.46948,20.07147
+2025-00497,Nord-Ubangi,Bili,Ngaka,7,male,false,false,false,Josephine Kabila,+243 86 321 8778,5.31597,20.98424
+2025-00498,Nord-Ubangi,Bili,Ngaka,17,male,true,false,true,Ruth Mbuyi,+243 87 870 7838,3.62492,20.62814
+2025-00499,Nord-Ubangi,Bili,Ngaka,3,female,false,false,false,Sarah Mbuyi,+243 87 531 6237,5.23281,21.20855
+2025-00500,Nord-Ubangi,Bili,Ngaka,23,male,,,,Grace Mukendi,+243 83 613 7893,4.35953,21.22352
+2025-00501,Nord-Ubangi,Bili,Ngaka,5,female,true,true,false,Grace Mukendi,+243 83 613 7893,4.35953,21.22352
+2025-00502,Nord-Ubangi,Bili,Ngaka,14,male,false,false,false,Esther Kabila,+243 87 172 5270,4.43447,20.75516
+2025-00503,Nord-Ubangi,Bili,Ngaka,16,female,false,false,false,Ruth Mukendi,+243 87 893 1889,3.30156,21.31485
+2025-00504,Nord-Ubangi,Bili,Ngaka,11,female,true,true,false,Marie Bokele,+243 86 433 6464,4.49052,21.06948
+2025-00505,Nord-Ubangi,Bili,Ngaka,18,female,,,false,Marie Bokele,+243 86 433 6464,4.49052,21.06948
+2025-00506,Nord-Ubangi,Bili,Ngaka,13,male,false,false,false,Grace Mukendi,+243 87 778 5512,4.41721,21.48846
+2025-00507,Nord-Ubangi,Bili,Ngaka,13,female,false,false,false,Grace Mukendi,+243 87 778 5512,4.41721,21.48846
+2025-00508,Nord-Ubangi,Bili,Ngaka,6,male,false,false,false,Rachel Lukusa,+243 87 790 7720,3.46677,20.36124
+2025-00509,Nord-Ubangi,Bili,Ngaka,9,female,true,true,true,Esther Mukendi,+243 89 722 1521,4.14079,21.2965
+2025-00510,Nord-Ubangi,Bili,Ngaka,23,male,true,false,true,Sarah Lukusa,+243 88 603 2485,4.46967,20.65085
+2025-00511,Nord-Ubangi,Bili,Ngaka,5,female,false,false,false,Marie Ngoy,+243 81 220 4570,3.49517,21.62073
+2025-00512,Nord-Ubangi,Bili,Ngaka,16,male,true,true,,Grace Ilunga,+243 89 770 5324,3.39693,20.79806
+2025-00513,Nord-Ubangi,Bili,Ngaka,11,female,true,true,true,Esther Ngoy,+243 85 746 7908,4.28325,20.6222
+2025-00514,Nord-Ubangi,Bili,Ngaka,11,male,,,true,Esther Ngoy,+243 85 746 7908,4.28325,20.6222
+2025-00515,Nord-Ubangi,Bili,Ngaka,16,male,false,false,false,Sarah Bokele,+243 89 170 2216,4.95204,21.70306
+2025-00516,Nord-Ubangi,Bili,Ngaka,2,male,true,false,false,Sarah Bokele,+243 89 170 2216,4.95204,21.70306
+2025-00517,Nord-Ubangi,Bili,Ngaka,11,male,false,false,false,Sarah Bokele,+243 89 170 2216,4.95204,21.70306
+2025-00518,Nord-Ubangi,Bili,Ngaka,16,female,false,false,false,Sarah Kasongo,+243 83 703 8059,3.98734,20.94972
+2025-00519,Nord-Ubangi,Bili,Ngaka,21,female,true,true,true,Jeanne Bokele,+243 82 201 5337,4.71644,20.83814
+2025-00520,Nord-Ubangi,Bili,Ngaka,12,male,false,false,true,Rachel Mukendi,+243 82 183 3318,3.51433,21.55044
+2025-00521,Nord-Ubangi,Bili,Ngaka,23,female,true,true,,Rachel Mukendi,+243 82 183 3318,3.51433,21.55044
+2025-00522,Nord-Ubangi,Bili,Ngaka,22,male,true,true,true,Esther Ngoy,+243 85 370 6318,4.60438,20.37329
+2025-00523,Nord-Ubangi,Bili,Ngaka,7,female,true,false,false,Esther Ngoy,+243 85 370 6318,4.60438,20.37329
+2025-00524,Nord-Ubangi,Bili,Ngaka,9,female,true,true,true,Jeanne Ngoy,+243 81 479 3845,3.94802,20.95264
+2025-00525,Nord-Ubangi,Bili,Bili Centre,4,female,false,false,,Sarah Mukendi,+243 85 259 3231,4.34712,21.38544
+2025-00526,Nord-Ubangi,Bili,Bili Centre,18,female,,,false,Josephine Ngoy,+243 81 360 7982,3.64014,22.29753
+2025-00527,Nord-Ubangi,Bili,Bili Centre,15,male,false,false,false,Sarah Lukusa,+243 84 770 1201,4.9348,21.8794
+2025-00528,Nord-Ubangi,Bili,Bili Centre,18,male,false,false,,Sarah Lukusa,+243 84 770 1201,4.9348,21.8794
+2025-00529,Nord-Ubangi,Bili,Bili Centre,13,male,true,true,true,Sarah Lukusa,+243 84 770 1201,4.9348,21.8794
+2025-00530,Nord-Ubangi,Bili,Bili Centre,17,female,true,false,true,Rachel Mukendi,+243 89 503 2791,3.97005,21.15574
+2025-00531,Nord-Ubangi,Bili,Bili Centre,12,male,,,false,Jeanne Bokele,+243 87 128 7506,4.75773,21.83263
+2025-00532,Nord-Ubangi,Bili,Bili Centre,2,male,true,false,false,Ruth Kasongo,+243 89 119 7897,3.72472,21.46041
+2025-00533,Nord-Ubangi,Bili,Bili Centre,4,male,true,true,false,Ruth Kasongo,+243 89 119 7897,3.72472,21.46041
+2025-00534,Nord-Ubangi,Bili,Bili Centre,1,female,false,false,false,Sarah Kabila,+243 82 301 3542,5.35181,21.25963
+2025-00535,Nord-Ubangi,Bili,Bili Centre,10,female,true,true,true,Josephine Bokele,+243 89 367 3348,3.8804,21.85875
+2025-00536,Nord-Ubangi,Bili,Bili Centre,6,male,true,true,false,Jeanne Lukusa,+243 86 652 9876,4.07086,20.78941
+2025-00537,Nord-Ubangi,Bili,Bili Centre,12,female,false,false,false,Jeanne Lukusa,+243 86 652 9876,4.07086,20.78941
+2025-00538,Nord-Ubangi,Bili,Bili Centre,10,female,true,true,,Sarah Kabila,+243 86 604 5177,4.93562,21.43277
+2025-00539,Nord-Ubangi,Bili,Bili Centre,3,male,true,false,false,Jeanne Mbuyi,+243 85 760 9184,4.05192,21.38286
+2025-00540,Nord-Ubangi,Bili,Bili Centre,8,male,false,false,false,Rachel Ngoy,+243 81 642 1151,4.69295,20.43698
+2025-00541,Nord-Ubangi,Bili,Bili Centre,21,female,false,false,false,Rachel Ngoy,+243 81 642 1151,4.69295,20.43698
+2025-00542,Nord-Ubangi,Bili,Bili Centre,16,male,,,true,Grace Kasongo,+243 83 447 7784,4.35178,21.63993
+2025-00543,Nord-Ubangi,Bili,Bili Centre,4,female,true,true,false,Ruth Ngoy,+243 87 808 1944,3.92652,21.40997
+2025-00544,Nord-Ubangi,Bili,Bili Centre,0,female,false,false,false,Ruth Ngoy,+243 87 808 1944,3.92652,21.40997
+2025-00545,Nord-Ubangi,Bili,Bili Centre,18,male,true,true,true,Esther Lukusa,+243 81 486 8357,4.48999,21.06974
+2025-00546,Nord-Ubangi,Bili,Bili Centre,12,female,false,false,false,Esther Lukusa,+243 81 486 8357,4.48999,21.06974
+2025-00547,Nord-Ubangi,Bili,Bili Centre,9,female,false,false,false,Marie Mukendi,+243 85 229 7507,4.07635,20.80385
+2025-00548,Nord-Ubangi,Bili,Bili Centre,23,male,,,false,Marie Mukendi,+243 85 229 7507,4.07635,20.80385
+2025-00549,Nord-Ubangi,Bili,Bili Centre,4,female,false,false,,Jeanne Bokele,+243 88 618 3220,3.86597,21.34592
+2025-00550,Nord-Ubangi,Bili,Bili Centre,19,male,false,false,false,Jeanne Bokele,+243 88 618 3220,3.86597,21.34592
+2025-00551,Nord-Ubangi,Bili,Bili Centre,23,male,,,true,Marie Ilunga,+243 83 311 7055,4.4481,20.98228
+2025-00552,Nord-Ubangi,Bili,Bili Centre,17,female,false,false,false,Sarah Ilunga,+243 85 650 4874,3.35561,20.87372
+2025-00553,Nord-Ubangi,Bili,Bili Centre,15,female,true,false,true,Marie Mukendi,+243 88 867 8400,4.0023,21.18251
+2025-00554,Nord-Ubangi,Bili,Bili Centre,16,female,false,false,false,Marie Mukendi,+243 88 867 8400,4.0023,21.18251
+2025-00555,Nord-Ubangi,Bili,Dingamo,7,female,,,false,Esther Lukusa,+243 87 586 1898,4.93733,19.90779
+2025-00556,Nord-Ubangi,Bili,Dingamo,0,female,false,false,false,Grace Kabila,+243 85 436 6332,5.07643,20.91984
+2025-00557,Nord-Ubangi,Bili,Dingamo,18,female,true,true,,Grace Kabila,+243 85 436 6332,5.07643,20.91984
+2025-00558,Nord-Ubangi,Bili,Dingamo,20,female,true,false,true,Jeanne Mukendi,+243 86 499 5286,4.4157,20.43921
+2025-00559,Nord-Ubangi,Bili,Dingamo,17,male,false,false,false,Grace Kasongo,+243 82 579 3633,4.28764,20.73902
+2025-00560,Nord-Ubangi,Bili,Dingamo,16,female,,,true,Grace Kasongo,+243 82 579 3633,4.28764,20.73902
+2025-00561,Nord-Ubangi,Bili,Dingamo,1,male,false,false,false,Grace Ngoy,+243 84 601 7445,4.33581,20.64895
+2025-00562,Nord-Ubangi,Bili,Dingamo,9,female,false,false,false,Esther Kabila,+243 82 250 6270,3.86889,20.83137
+2025-00563,Nord-Ubangi,Bili,Dingamo,1,female,false,false,false,Josephine Mbuyi,+243 83 994 2760,4.07429,20.8881
+2025-00564,Nord-Ubangi,Bili,Dingamo,16,male,,,false,Josephine Mbuyi,+243 83 994 2760,4.07429,20.8881
+2025-00565,Nord-Ubangi,Bili,Dingamo,5,male,true,true,false,Grace Bokele,+243 82 492 5699,3.8752,20.8208
+2025-00566,Nord-Ubangi,Bili,Dingamo,7,male,,,false,Esther Lukusa,+243 88 688 9216,3.94953,21.34097
+2025-00567,Nord-Ubangi,Bili,Dingamo,23,male,true,true,false,Rachel Ngoy,+243 83 620 9833,3.38341,20.80287
+2025-00568,Nord-Ubangi,Bili,Dingamo,1,male,,,false,Esther Lukusa,+243 88 481 4889,4.64636,21.12045
+2025-00569,Nord-Ubangi,Bili,Dingamo,8,male,,,false,Josephine Kabila,+243 82 763 4540,3.69209,21.54561
+2025-00570,Nord-Ubangi,Bili,Dingamo,8,female,true,true,false,Josephine Kabila,+243 82 763 4540,3.69209,21.54561
+2025-00571,Nord-Ubangi,Bili,Dingamo,12,female,true,true,true,Sarah Bokele,+243 84 403 3301,3.99931,21.46433
+2025-00572,Nord-Ubangi,Bili,Dingamo,14,female,false,false,false,Jeanne Mbuyi,+243 86 405 3571,4.33046,21.51142
+2025-00573,Nord-Ubangi,Bili,Dingamo,15,female,false,false,false,Jeanne Mbuyi,+243 86 405 3571,4.33046,21.51142
+2025-00574,Nord-Ubangi,Bili,Dingamo,16,female,,,false,Sarah Mukendi,+243 85 488 3063,4.11729,20.28282
+2025-00575,Nord-Ubangi,Bili,Dingamo,12,female,false,false,false,Sarah Mukendi,+243 82 106 8134,4.12093,20.86087
+2025-00576,Nord-Ubangi,Bili,Dingamo,17,male,true,true,true,Josephine Bokele,+243 86 389 8207,4.74091,21.4685
+2025-00577,Nord-Ubangi,Bili,Dingamo,5,male,false,false,,Ruth Ilunga,+243 81 304 2270,3.20386,21.93837
+2025-00578,Nord-Ubangi,Bili,Dingamo,21,female,true,false,true,Jeanne Ngoy,+243 89 367 7147,4.15113,22.21834
+2025-00579,Nord-Ubangi,Bili,Dingamo,5,female,false,false,false,Sarah Ngoy,+243 88 546 6310,4.51484,20.82381
+2025-00580,Nord-Ubangi,Bili,Dingamo,13,female,false,false,false,Sarah Ngoy,+243 88 546 6310,4.51484,20.82381
+2025-00581,Nord-Ubangi,Bili,Yokonga,1,male,false,false,false,Grace Kasongo,+243 85 949 5567,4.25652,22.11555
+2025-00582,Nord-Ubangi,Bili,Yokonga,20,male,,,false,Marie Ngoy,+243 82 709 2981,4.46578,21.1969
+2025-00583,Nord-Ubangi,Bili,Yokonga,14,female,true,true,false,Marie Mukendi,+243 86 487 6119,4.04794,19.76465
+2025-00584,Nord-Ubangi,Bili,Yokonga,12,male,false,false,false,Grace Kabila,+243 86 961 2829,4.38259,21.00273
+2025-00585,Nord-Ubangi,Bili,Yokonga,20,female,true,true,true,Grace Ilunga,+243 85 504 3628,4.65346,21.20415
+2025-00586,Nord-Ubangi,Bili,Yokonga,23,male,true,true,true,Grace Ilunga,+243 85 504 3628,4.65346,21.20415
+2025-00587,Nord-Ubangi,Bili,Yokonga,19,female,true,true,true,Jeanne Kabila,+243 82 167 2673,5.02045,21.06138
+2025-00588,Nord-Ubangi,Bili,Yokonga,13,male,false,false,false,Grace Bokele,+243 81 761 2013,3.73882,20.14599
+2025-00589,Nord-Ubangi,Bili,Yokonga,0,male,false,false,false,Josephine Kabila,+243 81 255 1125,4.14481,20.85748
+2025-00590,Nord-Ubangi,Bili,Yokonga,15,female,false,false,,Ruth Ilunga,+243 82 522 7435,3.3927,20.89301
+2025-00591,Nord-Ubangi,Bili,Yokonga,18,male,false,false,,Esther Bokele,+243 88 458 1651,4.50312,21.05431
+2025-00592,Nord-Ubangi,Bili,Yokonga,0,female,false,false,false,Marie Ilunga,+243 81 557 2653,4.21908,21.30567
+2025-00593,Nord-Ubangi,Bili,Yokonga,12,male,,,false,Ruth Mbuyi,+243 84 908 6214,4.18377,21.13263
+2025-00594,Nord-Ubangi,Bili,Yokonga,21,female,false,false,false,Rachel Ilunga,+243 88 726 1096,3.69422,20.72907
+2025-00595,Nord-Ubangi,Bili,Yokonga,3,male,true,false,false,Jeanne Mbuyi,+243 88 918 8769,4.31487,20.17223
+2025-00596,Nord-Ubangi,Bili,Yokonga,14,female,true,true,true,Grace Mukendi,+243 86 237 1955,5.52792,20.20415
+2025-00597,Nord-Ubangi,Bili,Yokonga,16,female,true,true,true,Ruth Kasongo,+243 84 560 8448,4.56372,21.16303
+2025-00598,Nord-Ubangi,Bili,Yokonga,9,male,true,true,false,Ruth Lukusa,+243 87 301 9979,4.3755,20.33749
+2025-00599,Nord-Ubangi,Bili,Yokonga,23,female,false,false,false,Rachel Kasongo,+243 85 910 8027,5.17248,20.99647
+2025-00600,Nord-Ubangi,Bili,Yokonga,16,female,true,true,true,Rachel Kasongo,+243 85 910 8027,5.17248,20.99647
+2025-00601,Nord-Ubangi,Bili,Yokonga,6,male,,,false,Sarah Ilunga,+243 85 156 2772,4.27368,20.45424
+2025-00602,Nord-Ubangi,Bili,Yokonga,3,male,true,false,false,Esther Bokele,+243 88 180 4813,3.70037,21.69432
+2025-00603,Nord-Ubangi,Businga,Businga Centre,0,female,false,false,false,Sarah Lukusa,+243 85 981 8328,4.20049,21.24442
+2025-00604,Nord-Ubangi,Businga,Businga Centre,11,male,true,true,true,Jeanne Lukusa,+243 85 871 2377,4.53148,20.37987
+2025-00605,Nord-Ubangi,Businga,Businga Centre,1,male,false,false,false,Esther Bokele,+243 82 338 4848,3.82049,20.65621
+2025-00606,Nord-Ubangi,Businga,Businga Centre,6,female,false,false,false,Josephine Mbuyi,+243 81 335 8366,4.38989,20.83455
+2025-00607,Nord-Ubangi,Businga,Businga Centre,23,female,true,false,true,Sarah Ngoy,+243 83 870 4014,3.70102,22.00769
+2025-00608,Nord-Ubangi,Businga,Businga Centre,21,female,,,false,Esther Kabila,+243 89 496 4401,3.67593,20.75706
+2025-00609,Nord-Ubangi,Businga,Businga Centre,7,male,true,true,false,Rachel Kabila,+243 83 332 6333,4.40224,20.94035
+2025-00610,Nord-Ubangi,Businga,Businga Centre,15,female,true,false,true,Rachel Kabila,+243 83 332 6333,4.40224,20.94035
+2025-00611,Nord-Ubangi,Businga,Businga Centre,16,female,false,false,,Rachel Kabila,+243 83 332 6333,4.40224,20.94035
+2025-00612,Nord-Ubangi,Businga,Businga Centre,3,male,false,false,,Rachel Bokele,+243 81 553 8420,4.38533,20.83954
+2025-00613,Nord-Ubangi,Businga,Businga Centre,0,male,false,false,false,Marie Lukusa,+243 82 530 2509,4.47926,21.51946
+2025-00614,Nord-Ubangi,Businga,Businga Centre,4,male,true,false,false,Esther Kasongo,+243 82 862 3632,4.01686,21.19358
+2025-00615,Nord-Ubangi,Businga,Businga Centre,4,male,true,true,false,Esther Mukendi,+243 81 972 1221,4.21424,21.0276
+2025-00616,Nord-Ubangi,Businga,Businga Centre,17,female,false,false,false,Grace Lukusa,+243 86 186 3237,3.92999,20.56748
+2025-00617,Nord-Ubangi,Businga,Businga Centre,8,female,true,true,false,Grace Lukusa,+243 86 186 3237,3.92999,20.56748
+2025-00618,Nord-Ubangi,Businga,Businga Centre,20,male,false,false,,Sarah Kasongo,+243 85 542 4923,4.5085,20.47141
+2025-00619,Nord-Ubangi,Businga,Businga Centre,19,male,false,false,false,Sarah Kasongo,+243 85 542 4923,4.5085,20.47141
+2025-00620,Nord-Ubangi,Businga,Businga Centre,23,female,true,true,,Ruth Kabila,+243 87 573 4917,4.14242,20.99086
+2025-00621,Nord-Ubangi,Businga,Businga Centre,20,male,true,true,true,Grace Bokele,+243 87 150 1365,4.84975,21.07743
+2025-00622,Nord-Ubangi,Businga,Businga Centre,6,male,true,true,false,Grace Bokele,+243 87 150 1365,4.84975,21.07743
+2025-00623,Nord-Ubangi,Businga,Businga Centre,16,male,false,false,false,Esther Lukusa,+243 89 927 2601,3.78955,21.61331
+2025-00624,Nord-Ubangi,Businga,Businga Centre,4,female,false,false,false,Esther Lukusa,+243 88 751 2844,3.15325,21.73256
+2025-00625,Nord-Ubangi,Businga,Businga Centre,14,male,,,,Marie Mukendi,+243 87 454 3025,4.0262,20.83396
+2025-00626,Nord-Ubangi,Businga,Businga Centre,18,female,true,true,true,Marie Mukendi,+243 84 889 2300,3.55865,20.59735
+2025-00627,Nord-Ubangi,Businga,Businga Centre,22,female,false,false,false,Ruth Lukusa,+243 85 965 2612,4.69986,20.48279
+2025-00628,Nord-Ubangi,Businga,Sekoba,22,female,true,false,true,Marie Bokele,+243 86 900 4736,4.74541,21.05242
+2025-00629,Nord-Ubangi,Businga,Sekoba,6,male,false,false,false,Marie Mukendi,+243 85 824 5804,3.94771,21.48912
+2025-00630,Nord-Ubangi,Businga,Sekoba,16,male,false,false,false,Marie Mukendi,+243 85 824 5804,3.94771,21.48912
+2025-00631,Nord-Ubangi,Businga,Sekoba,12,male,true,true,false,Sarah Ilunga,+243 85 142 2519,3.50156,21.38731
+2025-00632,Nord-Ubangi,Businga,Sekoba,7,male,true,true,false,Marie Ngoy,+243 83 355 7494,4.63725,19.48797
+2025-00633,Nord-Ubangi,Businga,Sekoba,7,male,true,true,false,Marie Ngoy,+243 83 355 7494,4.63725,19.48797
+2025-00634,Nord-Ubangi,Businga,Sekoba,11,female,true,true,,Marie Ngoy,+243 83 355 7494,4.63725,19.48797
+2025-00635,Nord-Ubangi,Businga,Sekoba,13,male,,,,Ruth Ngoy,+243 83 837 7215,4.51486,20.29694
+2025-00636,Nord-Ubangi,Businga,Sekoba,3,female,,,,Ruth Ngoy,+243 83 837 7215,4.51486,20.29694
+2025-00637,Nord-Ubangi,Businga,Sekoba,0,male,false,false,,Ruth Ngoy,+243 83 837 7215,4.51486,20.29694
+2025-00638,Nord-Ubangi,Businga,Sekoba,17,female,true,true,true,Sarah Mbuyi,+243 82 446 4544,3.85071,21.07042
+2025-00639,Nord-Ubangi,Businga,Sekoba,8,female,true,true,false,Ruth Mukendi,+243 85 330 6102,3.69953,21.21758
+2025-00640,Nord-Ubangi,Businga,Sekoba,10,male,false,false,false,Josephine Kabila,+243 89 706 1925,4.14968,21.52942
+2025-00641,Nord-Ubangi,Businga,Sekoba,19,male,,,,Sarah Kabila,+243 85 791 7494,4.49889,20.34846
+2025-00642,Nord-Ubangi,Businga,Sekoba,20,male,true,true,true,Ruth Ilunga,+243 89 647 7163,3.55679,21.19373
+2025-00643,Nord-Ubangi,Businga,Sekoba,2,female,false,false,false,Ruth Ilunga,+243 89 647 7163,3.55679,21.19373
+2025-00644,Nord-Ubangi,Businga,Sekoba,10,female,false,false,,Grace Kasongo,+243 88 343 4203,4.69291,21.06384
+2025-00645,Nord-Ubangi,Businga,Sekoba,5,female,true,true,false,Rachel Ilunga,+243 81 809 7543,4.24404,20.65861
+2025-00646,Nord-Ubangi,Businga,Sekoba,8,female,true,false,false,Rachel Ilunga,+243 81 809 7543,4.24404,20.65861
+2025-00647,Nord-Ubangi,Businga,Sekoba,20,female,false,false,false,Ruth Mbuyi,+243 83 205 3285,4.29236,20.69282
+2025-00648,Nord-Ubangi,Businga,Sekoba,0,female,false,false,false,Ruth Mbuyi,+243 83 205 3285,4.29236,20.69282
+2025-00649,Nord-Ubangi,Businga,Sekoba,9,female,true,false,true,Josephine Kabila,+243 89 552 9161,4.69851,20.90161
+2025-00650,Nord-Ubangi,Businga,Sekoba,9,female,true,true,true,Josephine Kabila,+243 89 552 9161,4.69851,20.90161
+2025-00651,Nord-Ubangi,Businga,Sekoba,11,male,true,true,true,Josephine Kabila,+243 81 851 6015,4.18167,21.31028
+2025-00652,Nord-Ubangi,Businga,Sekoba,11,female,false,false,false,Esther Mbuyi,+243 88 781 4011,3.65491,21.3131
+2025-00653,Nord-Ubangi,Businga,Sekoba,7,male,true,false,false,Jeanne Mukendi,+243 87 223 2737,4.48642,20.63183
+2025-00654,Nord-Ubangi,Businga,Sekoba,0,male,false,false,,Esther Kasongo,+243 89 830 3374,4.03091,20.31554
+2025-00655,Nord-Ubangi,Businga,Sekoba,8,male,false,false,false,Sarah Ngoy,+243 84 881 5237,3.54173,21.43317
+2025-00656,Nord-Ubangi,Businga,Sekoba,23,female,false,false,true,Rachel Ilunga,+243 82 134 7114,4.4264,21.7632
+2025-00657,Nord-Ubangi,Businga,Malo,0,male,false,false,false,Josephine Mukendi,+243 81 881 9507,3.80105,20.71965
+2025-00658,Nord-Ubangi,Businga,Malo,14,male,,,,Jeanne Ilunga,+243 89 958 5357,4.28063,20.76365
+2025-00659,Nord-Ubangi,Businga,Malo,3,female,true,false,false,Jeanne Ilunga,+243 89 958 5357,4.28063,20.76365
+2025-00660,Nord-Ubangi,Businga,Malo,0,female,false,false,false,Jeanne Ilunga,+243 89 958 5357,4.28063,20.76365
+2025-00661,Nord-Ubangi,Businga,Malo,17,female,,,false,Marie Mukendi,+243 84 421 7134,3.84645,21.40267
+2025-00662,Nord-Ubangi,Businga,Malo,5,female,true,true,false,Grace Ngoy,+243 85 659 9907,4.16862,20.88254
+2025-00663,Nord-Ubangi,Businga,Malo,17,female,false,false,false,Esther Bokele,+243 88 310 8563,4.25192,21.1928
+2025-00664,Nord-Ubangi,Businga,Malo,22,male,false,false,,Grace Lukusa,+243 82 438 6615,3.92339,21.3913
+2025-00665,Nord-Ubangi,Businga,Malo,6,female,true,true,false,Esther Ilunga,+243 84 356 7133,3.44477,21.22177
+2025-00666,Nord-Ubangi,Businga,Malo,21,male,true,true,true,Josephine Kabila,+243 86 605 7298,4.25081,20.38488
+2025-00667,Nord-Ubangi,Businga,Malo,12,female,true,true,,Marie Kabila,+243 86 967 8007,3.48161,20.29531
+2025-00668,Nord-Ubangi,Businga,Malo,17,male,false,false,false,Marie Kabila,+243 87 985 7674,4.69294,20.4971
+2025-00669,Nord-Ubangi,Businga,Malo,12,female,,,,Marie Kabila,+243 81 898 7977,4.5997,20.765
+2025-00670,Nord-Ubangi,Businga,Malo,20,female,,,false,Rachel Kasongo,+243 82 237 4707,3.95919,21.94931
+2025-00671,Nord-Ubangi,Businga,Malo,14,female,true,true,true,Sarah Bokele,+243 87 942 6293,4.19125,20.41076
+2025-00672,Nord-Ubangi,Businga,Malo,1,male,,,false,Sarah Bokele,+243 87 942 6293,4.19125,20.41076
+2025-00673,Nord-Ubangi,Businga,Malo,8,male,true,true,false,Marie Mukendi,+243 87 544 9745,4.33197,21.25467
+2025-00674,Nord-Ubangi,Businga,Malo,16,male,false,false,false,Marie Bokele,+243 83 470 8618,4.40956,21.05319
+2025-00675,Nord-Ubangi,Businga,Malo,15,female,,,true,Jeanne Kasongo,+243 81 481 3263,4.08574,20.63627
+2025-00676,Nord-Ubangi,Businga,Malo,19,male,false,false,true,Esther Lukusa,+243 84 485 5914,4.0286,20.95098
+2025-00677,Nord-Ubangi,Businga,Malo,12,male,false,false,false,Sarah Kabila,+243 89 370 7281,4.27856,20.8004
+2025-00678,Nord-Ubangi,Businga,Malo,14,male,true,true,true,Sarah Ilunga,+243 82 479 5546,4.07371,20.14779
+2025-00679,Nord-Ubangi,Businga,Malo,20,female,true,false,true,Sarah Ilunga,+243 82 479 5546,4.07371,20.14779
+2025-00680,Nord-Ubangi,Businga,Malo,6,male,true,true,false,Sarah Ilunga,+243 82 479 5546,4.07371,20.14779
+2025-00681,Nord-Ubangi,Businga,Malo,7,male,true,true,false,Sarah Mukendi,+243 82 469 2067,4.23403,21.17617
+2025-00682,Nord-Ubangi,Businga,Koyo,19,male,false,false,,Sarah Mbuyi,+243 88 390 5396,3.52571,21.15567
+2025-00683,Nord-Ubangi,Businga,Koyo,14,male,false,false,false,Sarah Mbuyi,+243 88 390 5396,3.52571,21.15567
+2025-00684,Nord-Ubangi,Businga,Koyo,19,female,false,false,,Marie Ngoy,+243 89 231 7578,3.83909,21.03548
+2025-00685,Nord-Ubangi,Businga,Koyo,17,male,true,true,true,Josephine Ilunga,+243 81 840 4586,4.23342,21.30826
+2025-00686,Nord-Ubangi,Businga,Koyo,20,female,false,false,,Esther Ngoy,+243 85 600 1253,3.84104,19.65526
+2025-00687,Nord-Ubangi,Businga,Koyo,8,female,true,true,false,Esther Ngoy,+243 85 600 1253,3.84104,19.65526
+2025-00688,Nord-Ubangi,Businga,Koyo,21,female,true,false,true,Rachel Mbuyi,+243 82 266 7670,3.41317,19.94969
+2025-00689,Nord-Ubangi,Businga,Koyo,4,female,,,false,Marie Kasongo,+243 89 146 2687,3.67175,21.33519
+2025-00690,Nord-Ubangi,Businga,Koyo,20,female,false,false,false,Marie Kasongo,+243 89 146 2687,3.67175,21.33519
+2025-00691,Nord-Ubangi,Businga,Koyo,21,male,false,false,false,Josephine Ngoy,+243 83 307 6490,4.75802,20.96674
+2025-00692,Nord-Ubangi,Businga,Koyo,6,female,true,true,false,Sarah Lukusa,+243 89 487 8079,3.98046,20.89648
+2025-00693,Nord-Ubangi,Businga,Koyo,7,female,false,false,false,Marie Ngoy,+243 85 598 6322,3.91079,21.45744
+2025-00694,Nord-Ubangi,Businga,Koyo,15,male,true,true,true,Marie Ngoy,+243 85 598 6322,3.91079,21.45744
+2025-00695,Nord-Ubangi,Businga,Koyo,5,female,true,true,false,Esther Ngoy,+243 83 148 7839,3.76517,21.63764
+2025-00696,Nord-Ubangi,Businga,Koyo,4,female,false,false,false,Marie Ilunga,+243 81 397 9634,4.71063,21.45292
+2025-00697,Nord-Ubangi,Businga,Koyo,11,male,false,false,false,Marie Kabila,+243 84 379 5124,4.18377,19.91538
+2025-00698,Nord-Ubangi,Businga,Koyo,9,male,false,false,,Rachel Ngoy,+243 89 363 6770,4.40076,20.61892
+2025-00699,Nord-Ubangi,Businga,Koyo,4,female,true,true,false,Esther Ilunga,+243 89 647 9601,4.66693,21.91355
+2025-00700,Nord-Ubangi,Businga,Koyo,15,male,true,false,true,Jeanne Ilunga,+243 87 781 6718,4.02111,20.39826
+2025-00701,Nord-Ubangi,Businga,Koyo,18,female,false,false,false,Grace Mbuyi,+243 82 402 6162,4.25973,20.89939
+2025-00702,Nord-Ubangi,Businga,Koyo,20,female,,,true,Grace Mbuyi,+243 82 402 6162,4.25973,20.89939
+2025-00703,Nord-Ubangi,Businga,Koyo,14,female,false,false,false,Rachel Mbuyi,+243 83 786 4835,4.29065,20.23951
+2025-00704,Nord-Ubangi,Businga,Koyo,17,female,true,true,false,Sarah Lukusa,+243 89 240 5384,4.75996,20.68666
+2025-00705,Nord-Ubangi,Businga,Koyo,19,male,true,false,false,Sarah Lukusa,+243 89 240 5384,4.75996,20.68666
+2025-00706,Nord-Ubangi,Businga,Koyo,15,female,false,false,true,Grace Mbuyi,+243 83 827 5172,3.62955,21.03803
+2025-00707,Nord-Ubangi,Businga,Koyo,23,male,true,true,true,Rachel Kabila,+243 88 785 7133,4.12969,20.67629
+2025-00708,Nord-Ubangi,Mobayi-Mbongo,Lobuse,3,female,true,false,false,Josephine Mukendi,+243 82 450 1052,4.40003,21.16365
+2025-00709,Nord-Ubangi,Mobayi-Mbongo,Lobuse,20,female,,,,Rachel Mukendi,+243 89 822 6854,4.53705,20.30298
+2025-00710,Nord-Ubangi,Mobayi-Mbongo,Lobuse,23,male,true,false,false,Rachel Mukendi,+243 89 822 6854,4.53705,20.30298
+2025-00711,Nord-Ubangi,Mobayi-Mbongo,Lobuse,9,male,true,false,true,Sarah Mukendi,+243 88 486 2004,4.55706,20.59893
+2025-00712,Nord-Ubangi,Mobayi-Mbongo,Lobuse,0,male,false,false,false,Sarah Mukendi,+243 88 486 2004,4.55706,20.59893
+2025-00713,Nord-Ubangi,Mobayi-Mbongo,Lobuse,16,male,true,true,false,Ruth Bokele,+243 88 348 9765,4.1106,21.15542
+2025-00714,Nord-Ubangi,Mobayi-Mbongo,Lobuse,1,male,false,false,false,Ruth Bokele,+243 88 348 9765,4.1106,21.15542
+2025-00715,Nord-Ubangi,Mobayi-Mbongo,Lobuse,13,male,true,true,true,Grace Bokele,+243 81 619 7027,4.57316,20.90516
+2025-00716,Nord-Ubangi,Mobayi-Mbongo,Lobuse,8,female,true,true,false,Ruth Mukendi,+243 88 634 6354,4.11787,22.04257
+2025-00717,Nord-Ubangi,Mobayi-Mbongo,Lobuse,14,male,,,false,Esther Lukusa,+243 85 964 3780,4.50977,21.4509
+2025-00718,Nord-Ubangi,Mobayi-Mbongo,Lobuse,1,female,,,false,Esther Kabila,+243 87 964 7294,4.04533,20.94375
+2025-00719,Nord-Ubangi,Mobayi-Mbongo,Lobuse,18,female,true,true,true,Esther Kabila,+243 87 964 7294,4.04533,20.94375
+2025-00720,Nord-Ubangi,Mobayi-Mbongo,Lobuse,22,female,true,true,true,Sarah Kasongo,+243 82 306 3427,5.39711,20.55139
+2025-00721,Nord-Ubangi,Mobayi-Mbongo,Lobuse,2,male,,,false,Josephine Ngoy,+243 86 556 5378,4.24199,20.76519
+2025-00722,Nord-Ubangi,Mobayi-Mbongo,Lobuse,0,male,false,false,false,Sarah Lukusa,+243 87 622 5202,4.60192,20.58022
+2025-00723,Nord-Ubangi,Mobayi-Mbongo,Lobuse,3,female,false,false,false,Grace Mukendi,+243 87 398 9505,4.53395,20.01127
+2025-00724,Nord-Ubangi,Mobayi-Mbongo,Lobuse,7,male,true,true,false,Rachel Mukendi,+243 81 185 4342,3.72319,21.61127
+2025-00725,Nord-Ubangi,Mobayi-Mbongo,Lobuse,4,male,true,false,false,Rachel Mukendi,+243 81 185 4342,3.72319,21.61127
+2025-00726,Nord-Ubangi,Mobayi-Mbongo,Lobuse,21,male,true,false,true,Sarah Kasongo,+243 84 309 7701,4.94294,20.45518
+2025-00727,Nord-Ubangi,Mobayi-Mbongo,Lobuse,7,male,,,,Sarah Ilunga,+243 85 663 7373,3.34832,20.74342
+2025-00728,Nord-Ubangi,Mobayi-Mbongo,Lobuse,16,female,,,true,Sarah Ilunga,+243 85 663 7373,3.34832,20.74342
+2025-00729,Nord-Ubangi,Mobayi-Mbongo,Lobuse,23,male,false,false,false,Ruth Mukendi,+243 89 781 3281,5.04677,21.1484
+2025-00730,Nord-Ubangi,Mobayi-Mbongo,Lobuse,19,female,true,false,false,Ruth Mbuyi,+243 83 388 5020,4.42235,19.57308
+2025-00731,Nord-Ubangi,Mobayi-Mbongo,Lobuse,22,female,true,false,true,Josephine Ilunga,+243 86 862 8008,3.58564,20.11626
+2025-00732,Nord-Ubangi,Mobayi-Mbongo,Lobuse,23,female,false,false,,Ruth Ilunga,+243 86 676 5004,4.42766,20.66373
+2025-00733,Nord-Ubangi,Mobayi-Mbongo,Lobuse,11,male,true,true,true,Ruth Ilunga,+243 88 767 1245,4.11138,21.50243
+2025-00734,Nord-Ubangi,Mobayi-Mbongo,Kakoto,12,female,false,false,false,Rachel Ngoy,+243 89 936 9679,3.81134,20.4538
+2025-00735,Nord-Ubangi,Mobayi-Mbongo,Kakoto,1,male,false,false,false,Rachel Ngoy,+243 89 936 9679,3.81134,20.4538
+2025-00736,Nord-Ubangi,Mobayi-Mbongo,Kakoto,11,male,true,true,true,Jeanne Kabila,+243 86 827 1862,3.75818,20.80333
+2025-00737,Nord-Ubangi,Mobayi-Mbongo,Kakoto,7,male,,,false,Grace Mbuyi,+243 82 207 8936,4.14262,20.97107
+2025-00738,Nord-Ubangi,Mobayi-Mbongo,Kakoto,23,female,true,true,false,Grace Kabila,+243 81 355 3551,4.23483,20.26712
+2025-00739,Nord-Ubangi,Mobayi-Mbongo,Kakoto,17,male,true,true,false,Ruth Mbuyi,+243 82 886 1413,4.09369,21.42745
+2025-00740,Nord-Ubangi,Mobayi-Mbongo,Kakoto,12,female,false,false,false,Esther Lukusa,+243 87 216 4535,3.39743,20.88139
+2025-00741,Nord-Ubangi,Mobayi-Mbongo,Kakoto,20,female,true,true,true,Marie Mukendi,+243 85 431 3460,4.2166,20.72698
+2025-00742,Nord-Ubangi,Mobayi-Mbongo,Kakoto,13,male,false,false,false,Marie Mukendi,+243 85 431 3460,4.2166,20.72698
+2025-00743,Nord-Ubangi,Mobayi-Mbongo,Kakoto,6,female,true,true,false,Sarah Lukusa,+243 81 908 7353,4.03983,21.35752
+2025-00744,Nord-Ubangi,Mobayi-Mbongo,Kakoto,8,male,false,false,false,Sarah Lukusa,+243 81 908 7353,4.03983,21.35752
+2025-00745,Nord-Ubangi,Mobayi-Mbongo,Kakoto,12,male,true,true,true,Jeanne Kabila,+243 89 390 6687,4.45067,21.03644
+2025-00746,Nord-Ubangi,Mobayi-Mbongo,Kakoto,9,female,true,true,true,Jeanne Kabila,+243 89 390 6687,4.45067,21.03644
+2025-00747,Nord-Ubangi,Mobayi-Mbongo,Kakoto,10,female,true,true,true,Grace Lukusa,+243 88 236 8550,3.96273,19.80748
+2025-00748,Nord-Ubangi,Mobayi-Mbongo,Kakoto,12,female,true,false,true,Grace Lukusa,+243 88 236 8550,3.96273,19.80748
+2025-00749,Nord-Ubangi,Mobayi-Mbongo,Kakoto,10,female,false,false,false,Grace Lukusa,+243 88 236 8550,3.96273,19.80748
+2025-00750,Nord-Ubangi,Mobayi-Mbongo,Kakoto,18,female,,,false,Grace Bokele,+243 86 979 3395,3.46979,20.08753
+2025-00751,Nord-Ubangi,Mobayi-Mbongo,Kakoto,0,female,,,false,Grace Bokele,+243 86 979 3395,3.46979,20.08753
+2025-00752,Nord-Ubangi,Mobayi-Mbongo,Kakoto,5,male,true,true,false,Grace Kasongo,+243 83 700 4191,3.92294,20.14464
+2025-00753,Nord-Ubangi,Mobayi-Mbongo,Kakoto,7,male,false,false,false,Grace Kasongo,+243 83 700 4191,3.92294,20.14464
+2025-00754,Nord-Ubangi,Mobayi-Mbongo,Kakoto,6,male,false,false,false,Grace Kasongo,+243 83 700 4191,3.92294,20.14464
+2025-00755,Nord-Ubangi,Mobayi-Mbongo,Kakoto,9,female,true,true,,Grace Kasongo,+243 82 892 6780,4.39019,20.43897
+2025-00756,Nord-Ubangi,Mobayi-Mbongo,Kakoto,15,female,false,false,false,Ruth Kasongo,+243 82 971 7638,2.95052,19.70346
+2025-00757,Nord-Ubangi,Mobayi-Mbongo,Kakoto,10,male,false,false,true,Esther Kasongo,+243 81 752 5098,3.53057,21.36832
+2025-00758,Nord-Ubangi,Mobayi-Mbongo,Kakoto,23,male,true,true,true,Josephine Lukusa,+243 85 765 3892,4.29184,21.52415
+2025-00759,Nord-Ubangi,Mobayi-Mbongo,Kakoto,1,male,false,false,false,Grace Lukusa,+243 82 230 1436,4.48957,21.07346
+2025-00760,Nord-Ubangi,Mobayi-Mbongo,Kakoto,18,male,true,false,true,Grace Lukusa,+243 82 230 1436,4.48957,21.07346
+2025-00761,Nord-Ubangi,Mobayi-Mbongo,Kakoto,22,female,,,true,Sarah Ilunga,+243 84 179 1790,5.10114,21.6425
+2025-00762,Nord-Ubangi,Mobayi-Mbongo,Kakoto,6,female,true,true,,Sarah Ngoy,+243 87 791 3128,4.28554,21.1907
+2025-00763,Nord-Ubangi,Mobayi-Mbongo,Kakoto,17,male,false,false,false,Esther Bokele,+243 89 781 9813,4.02816,20.74725
+2025-00764,Nord-Ubangi,Mobayi-Mbongo,Kakoto,21,male,true,true,true,Esther Bokele,+243 89 781 9813,4.02816,20.74725
+2025-00765,Nord-Ubangi,Mobayi-Mbongo,Yoma,2,female,,,,Grace Mbuyi,+243 85 538 7686,5.09268,21.13765
+2025-00766,Nord-Ubangi,Mobayi-Mbongo,Yoma,21,female,false,false,false,Jeanne Kabila,+243 85 257 4751,4.78618,21.22081
+2025-00767,Nord-Ubangi,Mobayi-Mbongo,Yoma,1,male,,,false,Jeanne Kabila,+243 85 257 4751,4.78618,21.22081
+2025-00768,Nord-Ubangi,Mobayi-Mbongo,Yoma,4,female,false,false,false,Rachel Ilunga,+243 85 990 1692,4.77756,20.57696
+2025-00769,Nord-Ubangi,Mobayi-Mbongo,Yoma,11,female,true,true,true,Marie Ilunga,+243 83 786 8198,4.43354,21.25157
+2025-00770,Nord-Ubangi,Mobayi-Mbongo,Yoma,1,male,false,false,false,Grace Kasongo,+243 88 388 2057,4.07644,20.32101
+2025-00771,Nord-Ubangi,Mobayi-Mbongo,Yoma,15,male,false,false,false,Grace Kasongo,+243 88 388 2057,4.07644,20.32101
+2025-00772,Nord-Ubangi,Mobayi-Mbongo,Yoma,17,male,true,true,true,Marie Kabila,+243 89 802 2852,3.75911,20.47689
+2025-00773,Nord-Ubangi,Mobayi-Mbongo,Yoma,16,male,false,false,false,Ruth Lukusa,+243 81 197 4452,4.2727,20.92248
+2025-00774,Nord-Ubangi,Mobayi-Mbongo,Yoma,6,male,false,false,false,Ruth Lukusa,+243 81 197 4452,4.2727,20.92248
+2025-00775,Nord-Ubangi,Mobayi-Mbongo,Yoma,18,male,true,true,true,Grace Kasongo,+243 86 239 4106,3.82492,20.88583
+2025-00776,Nord-Ubangi,Mobayi-Mbongo,Yoma,2,female,true,false,false,Jeanne Mukendi,+243 83 864 5196,4.4868,21.13807
+2025-00777,Nord-Ubangi,Mobayi-Mbongo,Yoma,21,male,true,true,true,Marie Bokele,+243 83 342 2775,4.35295,20.74187
+2025-00778,Nord-Ubangi,Mobayi-Mbongo,Yoma,7,female,true,true,false,Jeanne Bokele,+243 84 965 8179,3.71924,19.89378
+2025-00779,Nord-Ubangi,Mobayi-Mbongo,Yoma,14,male,,,true,Rachel Bokele,+243 84 629 1195,3.97239,20.40487
+2025-00780,Nord-Ubangi,Mobayi-Mbongo,Yoma,18,male,false,false,false,Josephine Mukendi,+243 81 415 4714,4.12328,21.86817
+2025-00781,Nord-Ubangi,Mobayi-Mbongo,Yoma,12,male,true,false,false,Grace Lukusa,+243 86 405 2878,4.30917,21.11449
+2025-00782,Nord-Ubangi,Mobayi-Mbongo,Yoma,12,male,false,false,true,Jeanne Ilunga,+243 83 463 2278,4.76789,21.50086
+2025-00783,Nord-Ubangi,Mobayi-Mbongo,Yoma,16,male,true,true,true,Rachel Lukusa,+243 87 866 2719,4.2152,21.16623
+2025-00784,Nord-Ubangi,Mobayi-Mbongo,Yoma,16,female,true,true,true,Rachel Lukusa,+243 87 866 2719,4.2152,21.16623
+2025-00785,Nord-Ubangi,Mobayi-Mbongo,Yoma,16,female,true,true,false,Grace Ilunga,+243 88 415 5634,4.70328,21.34175
+2025-00786,Nord-Ubangi,Mobayi-Mbongo,Yoma,23,female,,,,Grace Lukusa,+243 81 428 4054,4.64097,20.73403
+2025-00787,Nord-Ubangi,Mobayi-Mbongo,Yoma,4,male,false,false,,Sarah Ngoy,+243 86 956 8166,3.67743,20.0096
+2025-00788,Nord-Ubangi,Mobayi-Mbongo,Yoma,15,male,false,false,,Esther Kasongo,+243 85 325 2307,3.92248,21.63586
+2025-00789,Nord-Ubangi,Mobayi-Mbongo,Yoma,3,female,true,false,false,Esther Kasongo,+243 85 325 2307,3.92248,21.63586
+2025-00790,Tshopo,Kisangani,Toko,23,male,true,false,,Rachel Kabila,+243 87 126 1469,0.77566,25.2638
+2025-00791,Tshopo,Kisangani,Toko,14,female,true,true,true,Rachel Bokele,+243 88 823 4105,0.17025,24.66901
+2025-00792,Tshopo,Kisangani,Toko,18,male,true,true,true,Rachel Bokele,+243 88 823 4105,0.17025,24.66901
+2025-00793,Tshopo,Kisangani,Toko,4,male,true,false,false,Ruth Kabila,+243 81 243 4256,0.47288,24.21202
+2025-00794,Tshopo,Kisangani,Toko,7,male,true,true,false,Ruth Kabila,+243 81 243 4256,0.47288,24.21202
+2025-00795,Tshopo,Kisangani,Toko,6,male,true,true,false,Ruth Ngoy,+243 87 649 2276,-0.18777,26.11374
+2025-00796,Tshopo,Kisangani,Toko,15,female,,,,Jeanne Ngoy,+243 85 918 4738,1.10275,25.1103
+2025-00797,Tshopo,Kisangani,Toko,8,male,true,true,false,Marie Mukendi,+243 81 367 1781,1.09151,24.02594
+2025-00798,Tshopo,Kisangani,Toko,21,female,true,true,true,Marie Mukendi,+243 81 367 1781,1.09151,24.02594
+2025-00799,Tshopo,Kisangani,Toko,3,female,true,false,false,Grace Mukendi,+243 89 167 8922,0.18415,24.1744
+2025-00800,Tshopo,Kisangani,Toko,0,female,false,false,false,Ruth Lukusa,+243 85 127 9594,0.7989,24.74821
+2025-00801,Tshopo,Kisangani,Toko,7,female,true,true,false,Ruth Lukusa,+243 85 127 9594,0.7989,24.74821
+2025-00802,Tshopo,Kisangani,Toko,15,male,true,true,true,Marie Ngoy,+243 82 399 2509,0.5279,24.70375
+2025-00803,Tshopo,Kisangani,Toko,11,female,true,true,true,Grace Mukendi,+243 85 785 2340,1.19055,24.54861
+2025-00804,Tshopo,Kisangani,Toko,18,male,true,false,false,Grace Mukendi,+243 85 785 2340,1.19055,24.54861
+2025-00805,Tshopo,Kisangani,Toko,8,male,true,true,false,Grace Mbuyi,+243 85 872 3514,0.12071,25.52056
+2025-00806,Tshopo,Kisangani,Toko,0,female,false,false,,Sarah Mbuyi,+243 87 343 4604,0.28472,25.21358
+2025-00807,Tshopo,Kisangani,Toko,0,female,false,false,false,Sarah Mbuyi,+243 87 343 4604,0.28472,25.21358
+2025-00808,Tshopo,Kisangani,Toko,14,female,true,true,,Sarah Mukendi,+243 82 327 8797,-0.02272,25.82385
+2025-00809,Tshopo,Kisangani,Toko,8,female,,,false,Jeanne Bokele,+243 81 226 9934,-0.10303,24.98974
+2025-00810,Tshopo,Kisangani,Toko,2,female,true,false,false,Jeanne Bokele,+243 81 226 9934,-0.10303,24.98974
+2025-00811,Tshopo,Kisangani,Toko,2,male,true,false,,Jeanne Bokele,+243 81 226 9934,-0.10303,24.98974
+2025-00812,Tshopo,Kisangani,Toko,7,female,true,true,false,Ruth Ngoy,+243 88 698 3851,1.00202,24.95134
+2025-00813,Tshopo,Kisangani,Toko,1,female,false,false,false,Marie Kasongo,+243 88 303 9597,0.74582,25.72833
+2025-00814,Tshopo,Kisangani,Toko,3,male,true,false,false,Ruth Kabila,+243 86 441 7353,1.4445,25.01311
+2025-00815,Tshopo,Kisangani,Toko,8,female,true,false,false,Ruth Kabila,+243 86 441 7353,1.4445,25.01311
+2025-00816,Tshopo,Kisangani,Toko,4,male,true,true,false,Rachel Lukusa,+243 87 452 5078,0.95167,24.4813
+2025-00817,Tshopo,Kisangani,Toko,17,female,true,true,true,Ruth Lukusa,+243 85 141 1685,0.78014,24.99251
+2025-00818,Tshopo,Kisangani,Toko,17,male,true,false,true,Ruth Mbuyi,+243 87 875 9233,0.8003,26.15808
+2025-00819,Tshopo,Kisangani,Bumo,2,female,true,false,false,Rachel Bokele,+243 88 430 4380,1.08839,23.65194
+2025-00820,Tshopo,Kisangani,Bumo,19,female,true,true,,Esther Kasongo,+243 88 553 8547,1.33235,24.92524
+2025-00821,Tshopo,Kisangani,Bumo,16,male,true,false,true,Sarah Ilunga,+243 86 334 4355,0.31523,24.6492
+2025-00822,Tshopo,Kisangani,Bumo,4,male,false,false,false,Jeanne Bokele,+243 83 961 9113,0.53648,25.27049
+2025-00823,Tshopo,Kisangani,Bumo,14,male,true,true,true,Grace Kasongo,+243 81 800 4837,1.12592,26.05097
+2025-00824,Tshopo,Kisangani,Bumo,20,female,true,true,true,Rachel Mbuyi,+243 85 497 4123,0.17357,25.41504
+2025-00825,Tshopo,Kisangani,Bumo,4,male,true,true,,Rachel Mbuyi,+243 85 497 4123,0.17357,25.41504
+2025-00826,Tshopo,Kisangani,Bumo,16,male,,,true,Rachel Mbuyi,+243 85 497 4123,0.17357,25.41504
+2025-00827,Tshopo,Kisangani,Bumo,5,male,true,false,false,Ruth Bokele,+243 85 204 9688,1.30612,25.21671
+2025-00828,Tshopo,Kisangani,Bumo,16,female,true,false,true,Esther Mukendi,+243 89 493 4669,0.18749,24.69081
+2025-00829,Tshopo,Kisangani,Bumo,2,male,true,false,false,Ruth Mukendi,+243 85 705 4689,0.35201,25.90981
+2025-00830,Tshopo,Kisangani,Bumo,13,male,true,false,true,Ruth Mukendi,+243 85 705 4689,0.35201,25.90981
+2025-00831,Tshopo,Kisangani,Bumo,11,female,true,true,false,Esther Kabila,+243 89 361 1585,-0.07247,25.02203
+2025-00832,Tshopo,Kisangani,Bumo,19,female,true,true,true,Esther Kabila,+243 89 361 1585,-0.07247,25.02203
+2025-00833,Tshopo,Kisangani,Bumo,12,male,true,true,false,Esther Mukendi,+243 83 887 3731,0.32608,25.00907
+2025-00834,Tshopo,Kisangani,Bumo,7,female,true,true,,Ruth Kasongo,+243 87 610 9223,0.30815,25.31792
+2025-00835,Tshopo,Kisangani,Bumo,16,female,true,true,true,Grace Ngoy,+243 89 606 4848,1.16736,25.12695
+2025-00836,Tshopo,Kisangani,Bumo,2,male,true,false,false,Grace Ngoy,+243 89 606 4848,1.16736,25.12695
+2025-00837,Tshopo,Kisangani,Bumo,11,female,true,false,true,Marie Mbuyi,+243 81 110 3825,1.27111,25.61434
+2025-00838,Tshopo,Kisangani,Bumo,8,female,true,true,false,Jeanne Kabila,+243 89 492 7258,0.78026,25.01626
+2025-00839,Tshopo,Kisangani,Bumo,22,female,false,false,false,Sarah Kabila,+243 87 556 9494,0.64825,26.48162
+2025-00840,Tshopo,Kisangani,Bumo,8,male,true,true,false,Sarah Kabila,+243 87 556 9494,0.64825,26.48162
+2025-00841,Tshopo,Kisangani,Bumo,11,male,true,true,true,Ruth Ilunga,+243 89 364 4124,1.2866,25.70151
+2025-00842,Tshopo,Kisangani,Bumo,12,female,true,true,true,Ruth Ilunga,+243 89 364 4124,1.2866,25.70151
+2025-00843,Tshopo,Kisangani,Bumo,3,female,true,false,false,Jeanne Mukendi,+243 88 141 1104,-0.0039,26.30643
+2025-00844,Tshopo,Kisangani,Bumo,21,female,false,false,false,Josephine Mukendi,+243 81 142 3763,0.25206,25.37221
+2025-00845,Tshopo,Kisangani,Bumo,18,male,,,false,Sarah Kasongo,+243 89 608 7678,1.10001,25.50687
+2025-00846,Tshopo,Kisangani,Bumo,13,female,true,true,true,Sarah Kasongo,+243 89 608 7678,1.10001,25.50687
+2025-00847,Tshopo,Kisangani,Bangali,20,female,,,true,Josephine Kabila,+243 81 875 8142,0.13795,24.97743
+2025-00848,Tshopo,Kisangani,Bangali,2,female,false,false,false,Josephine Kabila,+243 81 875 8142,0.13795,24.97743
+2025-00849,Tshopo,Kisangani,Bangali,12,female,true,true,true,Esther Mukendi,+243 87 176 1483,0.2423,24.86221
+2025-00850,Tshopo,Kisangani,Bangali,22,female,true,true,true,Esther Mukendi,+243 87 176 1483,0.2423,24.86221
+2025-00851,Tshopo,Kisangani,Bangali,7,female,,,false,Esther Mukendi,+243 87 176 1483,0.2423,24.86221
+2025-00852,Tshopo,Kisangani,Bangali,0,female,false,false,false,Josephine Mukendi,+243 82 338 1587,0.83447,25.54481
+2025-00853,Tshopo,Kisangani,Bangali,1,male,false,false,false,Josephine Mukendi,+243 88 957 8225,1.36142,24.63083
+2025-00854,Tshopo,Kisangani,Bangali,19,female,true,true,true,Ruth Mukendi,+243 87 778 4297,0.74886,26.04743
+2025-00855,Tshopo,Kisangani,Bangali,2,female,true,false,false,Marie Ngoy,+243 89 243 8867,0.69139,25.61893
+2025-00856,Tshopo,Kisangani,Bangali,12,male,true,false,true,Josephine Mbuyi,+243 83 234 2727,0.22167,25.5202
+2025-00857,Tshopo,Kisangani,Bangali,7,male,true,true,false,Esther Bokele,+243 81 393 8719,0.71295,24.88296
+2025-00858,Tshopo,Kisangani,Bangali,11,female,,,,Josephine Kabila,+243 89 476 6478,0.71764,25.46965
+2025-00859,Tshopo,Kisangani,Bangali,9,male,true,true,true,Josephine Kabila,+243 89 476 6478,0.71764,25.46965
+2025-00860,Tshopo,Kisangani,Bangali,2,male,true,false,false,Josephine Kabila,+243 89 476 6478,0.71764,25.46965
+2025-00861,Tshopo,Kisangani,Bangali,9,female,,,true,Grace Ilunga,+243 84 358 2630,0.38141,25.3115
+2025-00862,Tshopo,Kisangani,Bangali,1,male,false,false,false,Grace Ilunga,+243 84 358 2630,0.38141,25.3115
+2025-00863,Tshopo,Kisangani,Bangali,13,male,true,false,false,Sarah Bokele,+243 81 671 4591,0.64898,25.66874
+2025-00864,Tshopo,Kisangani,Bangali,22,male,true,false,true,Sarah Ilunga,+243 87 729 2956,0.76378,25.34651
+2025-00865,Tshopo,Kisangani,Bangali,18,male,true,true,true,Sarah Ilunga,+243 87 729 2956,0.76378,25.34651
+2025-00866,Tshopo,Kisangani,Bangali,7,male,true,true,false,Marie Mbuyi,+243 85 283 4088,0.67655,24.79206
+2025-00867,Tshopo,Kisangani,Bangali,13,male,true,true,true,Jeanne Bokele,+243 82 816 6291,0.96119,24.96333
+2025-00868,Tshopo,Kisangani,Bangali,0,male,false,false,false,Marie Kabila,+243 84 637 6051,0.12589,25.07631
+2025-00869,Tshopo,Kisangani,Bangali,23,female,,,false,Marie Kabila,+243 84 637 6051,0.12589,25.07631
+2025-00870,Tshopo,Kisangani,Bangali,11,female,true,true,true,Marie Ngoy,+243 88 280 4145,0.20477,25.83385
+2025-00871,Tshopo,Kisangani,Bangali,21,male,true,true,true,Grace Bokele,+243 86 576 7475,-0.00782,25.20829
+2025-00872,Tshopo,Kisangani,Bangali,22,female,true,true,true,Sarah Kasongo,+243 86 821 8452,0.50643,25.35044
+2025-00873,Tshopo,Kisangani,Bangali,7,female,true,true,false,Josephine Kabila,+243 83 914 1248,0.29508,25.80264
+2025-00874,Tshopo,Kisangani,Bangali,21,male,true,false,true,Josephine Kabila,+243 83 914 1248,0.29508,25.80264
+2025-00875,Tshopo,Kisangani,Bangali,11,male,true,true,true,Josephine Ilunga,+243 83 216 1735,-0.51859,25.34725
+2025-00876,Tshopo,Kisangani,Toka,15,male,false,false,true,Esther Ilunga,+243 83 923 2076,-0.1076,25.41528

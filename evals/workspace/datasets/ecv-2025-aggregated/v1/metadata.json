@@ -1,0 +1,95 @@
+{
+  "columns": [
+    {
+      "name": "level",
+      "label": "Level",
+      "type": "string",
+      "description": "country, province or health_zone.",
+      "pi": false
+    },
+    {
+      "name": "province",
+      "label": "Province",
+      "type": "string",
+      "description": "Province name; null at country level.",
+      "pi": false
+    },
+    {
+      "name": "province_id",
+      "label": "Province ID",
+      "type": "string",
+      "description": "SNIS DHIS2 ID of the province.",
+      "pi": false
+    },
+    {
+      "name": "health_zone",
+      "label": "Health zone",
+      "type": "string",
+      "description": "Health zone name; null above.",
+      "pi": false
+    },
+    {
+      "name": "health_zone_id",
+      "label": "Health zone ID",
+      "type": "string",
+      "description": "SNIS DHIS2 ID of the zone.",
+      "pi": false
+    },
+    {
+      "name": "residence_area",
+      "label": "Residence area",
+      "type": "string",
+      "description": "all, urban or rural.",
+      "pi": false
+    },
+    {
+      "name": "age_group",
+      "label": "Age group",
+      "type": "string",
+      "description": "6-23 or 12-23 months.",
+      "pi": false
+    },
+    {
+      "name": "indicator",
+      "label": "Indicator",
+      "type": "string",
+      "description": "Vaccine dose, zero_dose or dropout_penta1_penta3.",
+      "pi": false
+    },
+    {
+      "name": "estimate",
+      "label": "Estimate",
+      "type": "float",
+      "description": "Proportion from 0 to 1; null if suppressed.",
+      "pi": false
+    },
+    {
+      "name": "ci_low",
+      "label": "CI low",
+      "type": "float",
+      "description": "Lower bound of the 95% confidence interval.",
+      "pi": false
+    },
+    {
+      "name": "ci_high",
+      "label": "CI high",
+      "type": "float",
+      "description": "Upper bound of the 95% confidence interval.",
+      "pi": false
+    },
+    {
+      "name": "children",
+      "label": "Children",
+      "type": "integer",
+      "description": "Children in the denominator.",
+      "pi": false
+    },
+    {
+      "name": "flag",
+      "label": "Flag",
+      "type": "string",
+      "description": "suppressed, unstable or null.",
+      "pi": false
+    }
+  ]
+}

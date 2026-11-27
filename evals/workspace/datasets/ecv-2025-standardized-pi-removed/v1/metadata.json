@@ -1,0 +1,151 @@
+{
+  "columns": [
+    {
+      "name": "survey_round",
+      "label": "Survey round",
+      "type": "integer",
+      "description": "Year of the ECV round.",
+      "pi": false
+    },
+    {
+      "name": "record_id",
+      "label": "Record ID",
+      "type": "string",
+      "description": "Child record, unique within the round.",
+      "pi": false
+    },
+    {
+      "name": "household_id",
+      "label": "Household ID",
+      "type": "string",
+      "description": "Household of the child.",
+      "pi": false
+    },
+    {
+      "name": "caregiver_id",
+      "label": "Caregiver ID",
+      "type": "string",
+      "description": "Mother or caregiver interviewed.",
+      "pi": false
+    },
+    {
+      "name": "province",
+      "label": "Province",
+      "type": "string",
+      "description": "Province name, as recorded by the survey.",
+      "pi": false
+    },
+    {
+      "name": "province_id",
+      "label": "Province ID",
+      "type": "string",
+      "description": "SNIS DHIS2 ID of the province.",
+      "pi": false
+    },
+    {
+      "name": "health_zone",
+      "label": "Health zone",
+      "type": "string",
+      "description": "Health zone name, as recorded. Names repeat across provinces: use `health_zone_id`.",
+      "pi": false
+    },
+    {
+      "name": "health_zone_id",
+      "label": "Health zone ID",
+      "type": "string",
+      "description": "SNIS DHIS2 ID of the health zone.",
+      "pi": false
+    },
+    {
+      "name": "health_area",
+      "label": "Health area",
+      "type": "string",
+      "description": "Sampled health area (cluster).",
+      "pi": false
+    },
+    {
+      "name": "residence_area",
+      "label": "Residence area",
+      "type": "string",
+      "description": "urban or rural.",
+      "pi": false
+    },
+    {
+      "name": "sampling_weight",
+      "label": "Sampling weight",
+      "type": "float",
+      "description": "Weight of the child for estimates.",
+      "pi": false
+    },
+    {
+      "name": "child_age_months",
+      "label": "Age (months)",
+      "type": "integer",
+      "description": "Age of the child in completed months.",
+      "pi": false
+    },
+    {
+      "name": "child_sex",
+      "label": "Sex",
+      "type": "string",
+      "description": "female or male.",
+      "pi": false
+    },
+    {
+      "name": "has_bednet",
+      "label": "Household has a bednet",
+      "type": "boolean",
+      "description": "Household answer, repeated on each child of the household.",
+      "pi": false
+    },
+    {
+      "name": "has_card",
+      "label": "Vaccination card seen",
+      "type": "boolean",
+      "description": "Whether the interviewer saw the card.",
+      "pi": false
+    },
+    {
+      "name": "received_penta1",
+      "label": "Received Penta1",
+      "type": "boolean",
+      "description": "Card or recall; null when unknown.",
+      "pi": false
+    },
+    {
+      "name": "received_penta2",
+      "label": "Received Penta2",
+      "type": "boolean",
+      "description": "Card or recall; null when unknown.",
+      "pi": false
+    },
+    {
+      "name": "received_penta3",
+      "label": "Received Penta3",
+      "type": "boolean",
+      "description": "Card or recall; null when unknown.",
+      "pi": false
+    },
+    {
+      "name": "received_mcv1",
+      "label": "Received MCV1",
+      "type": "boolean",
+      "description": "Card or recall; null when unknown. Due at 9 months.",
+      "pi": false
+    },
+    {
+      "name": "received_mcv2",
+      "label": "Received MCV2",
+      "type": "boolean",
+      "description": "Card or recall; null when unknown. Due at 15 months.",
+      "pi": false
+    },
+    {
+      "name": "zero_dose",
+      "label": "Zero-dose",
+      "type": "boolean",
+      "description": "True if the child has not received Penta1; null when Penta1 is unknown. See README.md before computing a zero-dose rate.",
+      "pi": false
+    }
+  ]
+}
