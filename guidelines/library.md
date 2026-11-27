@@ -10,6 +10,6 @@ These rules apply to `src/openhexa/companion/` outside `cli/` and `server/`.
   where, what went wrong and, when useful, the valid options. Interface-specific
   hints, such as command or tool names, belong to the CLI or the server.
 - Never include tokens or storage URLs in messages or logs. A signed storage URL is
-  only returned by a method that exists to return it, such as
-  `Datasets.download_url`.
+  only returned by a method that exists to return it, such as `Datasets.file_url` and
+  `Datasets.file_urls`.
 - Use dataclasses for internal data; keep Pydantic at API boundaries.

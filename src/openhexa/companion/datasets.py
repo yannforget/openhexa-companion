@@ -1,7 +1,7 @@
 """Datasets of a workspace, their versions and files."""
 
 import builtins
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import datetime
@@ -115,16 +115,35 @@ FILES_QUERY = _dataset_query(
     ", $version: ID!, $page: Int!, $perPage: Int!",
 )
 
+FILE_COUNT_QUERY = _dataset_query(
+    "DatasetFileCount",
+    "version(id: $version) { files(page: 1, perPage: 1) { totalItems } }",
+    ", $version: ID!",
+)
+
 FILE_QUERY = _dataset_query(
     "DatasetFile",
     f"version(id: $version) {{ fileByName(name: $path) {{ {FILE_FIELDS} }} }}",
     ", $version: ID!, $path: String!",
 )
 
-DOWNLOAD_URL_QUERY = _dataset_query(
-    "DatasetFileDownloadUrl",
+FILE_URL_QUERY = _dataset_query(
+    "DatasetFileUrl",
     "version(id: $version) { fileByName(name: $path) { downloadUrl(attachment: false) } }",
     ", $version: ID!, $path: String!",
+)
+
+FILE_URLS_QUERY = _dataset_query(
+    "DatasetFileUrls",
+    """
+      version(id: $version) {
+        files(page: $page, perPage: $perPage) {
+          totalPages
+          items { uri downloadUrl(attachment: false) }
+        }
+      }
+    """,
+    ", $version: ID!, $page: Int!, $perPage: Int!",
 )
 
 CREATE_MUTATION = f"""
@@ -430,16 +449,33 @@ class Datasets:
 
         return [_file(item, version) for item in self._transport.paginate(fetch_page, limit)]
 
+    def file_count(self, version: DatasetVersion) -> int:
+        """Count the files of a dataset version, without listing them.
+
+        Raises:
+            NotFoundError: The dataset or version no longer exists.
+        """
+        return self._find_version(FILE_COUNT_QUERY, version)["files"]["totalItems"]
+
     def file(self, version: DatasetVersion, path: str) -> DatasetFile:
         """Get the file at `path` in a dataset version.
 
         Raises:
             NotFoundError: The version has no file at `path`.
         """
-        data = self._find_version(FILE_QUERY, version, path=path)["fileByName"]
-        if data is None:
+        found = self.find_file(version, path)
+        if found is None:
             raise self._file_not_found(version, path)
-        return _file(data, version)
+        return found
+
+    def find_file(self, version: DatasetVersion, path: str) -> DatasetFile | None:
+        """Get the file at `path` in a dataset version, or `None` if it has none.
+
+        Raises:
+            NotFoundError: The dataset or version no longer exists.
+        """
+        data = self._find_version(FILE_QUERY, version, path=path)["fileByName"]
+        return None if data is None else _file(data, version)
 
     @contextmanager
     def read(
@@ -466,7 +502,7 @@ class Datasets:
             raise InvalidInputError(
                 f"Offset {offset} is past the end of {file.size}-byte '{file.path}'"
             )
-        url = self.download_url(file)
+        url = self.file_url(file)
         what = (
             f"'{file.path}' of dataset '{self._reference(file.workspace, file.dataset)}' "
             f"version '{file.version}'"
@@ -474,7 +510,7 @@ class Datasets:
         with self._transport.download(url, what=what, offset=offset, length=length) as stream:
             yield stream
 
-    def download_url(self, file: DatasetFile) -> str:
+    def file_url(self, file: DatasetFile) -> str:
         """Get a signed storage URL that downloads a dataset file without authentication.
 
         The URL grants access to the file until it expires, after 10 minutes to 1 hour
@@ -485,19 +521,56 @@ class Datasets:
             PermissionDeniedError: The token may not download this dataset.
         """
         dataset = self._reference(file.workspace, file.dataset)
-        data = self._find(DOWNLOAD_URL_QUERY, dataset, version=file.version_id, path=file.path)
+        data = self._find(FILE_URL_QUERY, dataset, version=file.version_id, path=file.path)
         if data["version"] is None or data["version"]["fileByName"] is None:
             raise NotFoundError(
                 f"File '{file.path}' of dataset '{dataset}' version '{file.version}' no "
                 f"longer exists in workspace '{self._workspace}'"
             )
-        url = data["version"]["fileByName"]["downloadUrl"]
-        if url is None:
-            raise PermissionDeniedError(
-                f"The token may not download files of dataset '{dataset}' in "
-                f"workspace '{self._workspace}'"
-            )
-        return url
+        return self._signed_url(data["version"]["fileByName"], dataset)
+
+    def file_urls(
+        self,
+        version: DatasetVersion,
+        paths: Iterable[str] | None = None,
+        *,
+        limit: int | None = None,
+    ) -> dict[str, str]:
+        """Get signed storage URLs serving files of a dataset version, by path.
+
+        Anyone with a URL can read the file without authentication, including byte ranges
+        with HTTP range requests, until it expires after 10 minutes to 1 hour depending on
+        the storage. Treat the URLs as credentials. Each URL is signed anew, so ask only
+        for the files needed.
+
+        Args:
+            version: The version.
+            paths: Paths of the files, in the order wanted, or `None` for every file in
+                path order. Each path costs one query.
+            limit: Maximum number of URLs, or `None` for all of them.
+
+        Raises:
+            NotFoundError: The version no longer exists, or has no file at one of `paths`.
+            PermissionDeniedError: The token may not download this dataset.
+        """
+        dataset = self._reference(version.workspace, version.dataset)
+        if paths is not None:
+            urls = {}
+            for path in builtins.list(dict.fromkeys(paths))[:limit]:
+                found = self._find_version(FILE_URL_QUERY, version, path=path)["fileByName"]
+                if found is None:
+                    raise self._file_not_found(version, path)
+                urls[path] = self._signed_url(found, dataset)
+            return urls
+
+        def fetch_page(page: int, per_page: int) -> dict[str, Any]:
+            data = self._find_version(FILE_URLS_QUERY, version, page=page, perPage=per_page)
+            return data["files"]
+
+        return {
+            _path(item["uri"]): self._signed_url(item, dataset)
+            for item in self._transport.paginate(fetch_page, limit)
+        }
 
     def create(self, name: str, description: str = "") -> Dataset:
         """Create a dataset, with no version, in the workspace.
@@ -796,6 +869,16 @@ class Datasets:
         """Name a dataset by its slug if the workspace owns it, `workspace/slug` otherwise."""
         return slug if workspace == self._workspace else f"{workspace}/{slug}"
 
+    def _signed_url(self, file: dict[str, Any], dataset: str) -> str:
+        """Return the `downloadUrl` of a file, which is null if the token may not download it."""
+        url = file["downloadUrl"]
+        if url is None:
+            raise PermissionDeniedError(
+                f"The token may not download files of dataset '{dataset}' in "
+                f"workspace '{self._workspace}'"
+            )
+        return url
+
     def _file_not_found(self, version: DatasetVersion, path: str) -> NotFoundError:
         paths = (file.path for file in self.files(version))
         return NotFoundError(
@@ -842,14 +925,18 @@ def _version(data: dict[str, Any], dataset: dict[str, Any]) -> DatasetVersion:
     )
 
 
+def _path(uri: str) -> str:
+    """Path of a file within its version: its URI without the dataset and version IDs."""
+    _, _, path = uri.split("/", 2)
+    return path
+
+
 def _file(data: dict[str, Any], version: DatasetVersion) -> DatasetFile:
-    """Build a file, whose path is its URI without the dataset and version IDs."""
-    _, _, path = data["uri"].split("/", 2)
     return DatasetFile(
         dataset=version.dataset,
         workspace=version.workspace,
         version=version.name,
-        path=path,
+        path=_path(data["uri"]),
         size=int(data["size"]),
         content_type=data["contentType"],
         id=data["id"],

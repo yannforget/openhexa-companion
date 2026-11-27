@@ -38,10 +38,14 @@ FAKE_TOKENS = {
 }
 
 
-# The only dataset file of the fake OpenHEXA: `stats.csv` in dataset `stats` of `cases`.
+# Files of the latest version, v1, of dataset `stats` of `cases` in the fake OpenHEXA. Its
+# README is too long to return whole. The older version, v0, has only `stats.csv`.
 FILE_CONTENT = b"district,cases\n" + b"".join(b"d%d,%d\n" % (i, i * 7) for i in range(500))
+README = "# District statistics\n\n" + "Cases by district. " * 1500
+VERSION_FILES = {"README.md": README.encode(), "stats.csv": FILE_CONTENT}
 VERSION_ID = "6f1d2c1e-8c4b-4f6e-9a57-0d1f3b0b6a11"
-STORAGE_URL = "https://storage.test/stats.csv"
+OLD_VERSION_ID = "2b9e4a70-5d1c-4c3e-8f6a-7e0d9c8b1a22"
+STORAGE_HOST = "storage.test"
 # The only run of the fake OpenHEXA, of pipeline `etl` in `cases`, with a secret parameter.
 RUN_ID = "0b3c0a52-3f4e-4d8c-9a0e-5c1b7e2d9f10"
 PIPELINE_VERSION_ID = "9a7e6b2c-1d3f-4e5a-8b9c-0d1e2f3a4b5c"
@@ -66,6 +70,8 @@ def fake_openhexa(revoked: set[str]) -> httpx2.MockTransport:
     """An OpenHEXA instance that knows the users and workspaces of `FAKE_TOKENS`."""
 
     def handle(request: httpx2.Request) -> httpx2.Response:
+        if request.url.host == STORAGE_HOST:
+            return _storage(request)
         token = request.headers["Authorization"].removeprefix("Bearer ")
         if token not in FAKE_TOKENS or token in revoked:
             return httpx2.Response(401)
@@ -148,21 +154,10 @@ def _dataset(variables: Mapping[str, Any], workspaces: set[str]) -> dict[str, An
     """The `stats` dataset with every field the library's dataset queries select."""
     if "cases" not in workspaces or (variables["owner"], variables["slug"]) != ("cases", "stats"):
         return None
-    version: dict[str, Any] = {
-        "id": VERSION_ID,
-        "name": "v1",
-        "changelog": None,
-        "createdAt": "2026-11-01T10:00:00+00:00",
-        "fileByName": None,
-    }
-    if variables.get("path") == "stats.csv":
-        version["fileByName"] = {
-            "id": "file-1",
-            "uri": f"dataset-id/{VERSION_ID}/stats.csv",
-            "size": len(FILE_CONTENT),
-            "contentType": "text/csv",
-            "downloadUrl": STORAGE_URL,
-        }
+    versions = [
+        _dataset_version(VERSION_ID, "v1", list(VERSION_FILES), variables),
+        _dataset_version(OLD_VERSION_ID, "v0", ["stats.csv"], variables),
+    ]
     return {
         "dataset": {
             "id": "dataset-id",
@@ -172,11 +167,49 @@ def _dataset(variables: Mapping[str, Any], workspaces: set[str]) -> dict[str, An
             "name": "District statistics",
             "description": None,
             "attributes": [],
-            "latestVersion": version,
-            "version": version if variables.get("version") == VERSION_ID else None,
-            "versions": {"totalPages": 1, "items": [version]},
+            "latestVersion": versions[0],
+            "version": next((v for v in versions if v["id"] == variables.get("version")), None),
+            "versions": {"totalPages": 1, "items": versions},
         }
     }
+
+
+def _dataset_version(
+    version_id: str, name: str, paths: list[str], variables: Mapping[str, Any]
+) -> dict[str, Any]:
+    """A version of `stats` holding `paths`, read from `VERSION_FILES`."""
+
+    def file(path: str) -> dict[str, Any]:
+        return {
+            "id": f"{name}-{path}",
+            "uri": f"dataset-id/{version_id}/{path}",
+            "size": len(VERSION_FILES[path]),
+            "contentType": "text/plain",
+            "downloadUrl": f"https://{STORAGE_HOST}/{name}/{path}?signature=s",
+        }
+
+    page, per_page = variables.get("page", 1), variables.get("perPage", len(paths))
+    return {
+        "id": version_id,
+        "name": name,
+        "changelog": None,
+        "createdAt": "2026-11-01T10:00:00+00:00",
+        "fileByName": file(variables["path"]) if variables.get("path") in paths else None,
+        "files": {
+            "totalItems": len(paths),
+            "totalPages": -(-len(paths) // per_page),
+            "items": [file(p) for p in paths[(page - 1) * per_page : page * per_page]],
+        },
+    }
+
+
+def _storage(request: httpx2.Request) -> httpx2.Response:
+    """Serve a file of `VERSION_FILES`, or the byte range its request asks for."""
+    content = VERSION_FILES[request.url.path.rsplit("/", 1)[-1]]
+    if "Range" not in request.headers:
+        return httpx2.Response(200, content=iter([content]))
+    start, _, end = request.headers["Range"].removeprefix("bytes=").partition("-")
+    return httpx2.Response(206, content=iter([content[int(start) : int(end) + 1 if end else None]]))
 
 
 def _pipeline_object(body: Mapping[str, Any], workspaces: set[str]) -> dict[str, Any]:
@@ -592,21 +625,46 @@ async def test_file_urls_point_to_storage():
     async with running_service() as service:
         _client, tokens = await connect(service.http, [("cases", "alice-cases")])
         async with mcp_session(service, tokens["access_token"]) as mcp:
-            result = await mcp.call_tool(
-                "openhexa_get_dataset_file_url",
-                {"workspace": "cases", "dataset": "stats", "path": "stats.csv"},
+            args = {"workspace": "cases", "dataset": "stats"}
+            every = await mcp.call_tool("openhexa_get_dataset_file_urls", args)
+            some = await mcp.call_tool(
+                "openhexa_get_dataset_file_urls",
+                {**args, "version": "v0", "paths": ["stats.csv"]},
             )
+            cut = await mcp.call_tool("openhexa_get_dataset_file_urls", {**args, "limit": 1})
 
-    info = result.structured_content
-    assert info["url"] == STORAGE_URL
-    assert info["host"] == "storage.test"
-    assert "note" not in info
-    assert (info["version_id"], info["path"], info["size"]) == (
-        VERSION_ID,
-        "stats.csv",
-        len(FILE_CONTENT),
-    )
-    assert "alice-cases" not in text(result)
+    info = every.structured_content
+    assert list(info["urls"]) == ["README.md", "stats.csv"]
+    assert info["urls"]["stats.csv"].startswith(f"https://{STORAGE_HOST}/v1/")
+    assert (info["host"], info["version_id"], info["total_files"]) == (STORAGE_HOST, VERSION_ID, 2)
+    assert info["note"] is None
+    assert some.structured_content["version_id"] == OLD_VERSION_ID
+    assert list(some.structured_content["urls"]) == ["stats.csv"]
+    assert list(cut.structured_content["urls"]) == ["README.md"]
+    assert cut.structured_content["total_files"] == 2
+    assert "Showing 1 of 2 files" in cut.structured_content["note"]
+    assert "alice-cases" not in text(every)
+
+
+@pytest.mark.anyio
+async def test_dataset_comes_with_the_readme_of_a_version():
+    async with running_service() as service:
+        _client, tokens = await connect(service.http, [("cases", "alice-cases")])
+        async with mcp_session(service, tokens["access_token"]) as mcp:
+            args = {"workspace": "cases", "dataset": "stats"}
+            latest = await mcp.call_tool("openhexa_get_dataset", args)
+            older = await mcp.call_tool("openhexa_get_dataset", {**args, "version": OLD_VERSION_ID})
+            unknown = await mcp.call_tool("openhexa_get_dataset", {**args, "version": "v9"})
+
+    assert not latest.is_error, text(latest)
+    readme = latest.structured_content["readme"]
+    assert readme.startswith("# District statistics")
+    assert len(readme) == 20_000
+    assert "openhexa_get_dataset_file_urls" in latest.structured_content["note"]
+    assert older.structured_content["readme"] is None
+    assert older.structured_content["note"] is None
+    assert unknown.is_error
+    assert "'v1', 'v0'" in text(unknown)
 
 
 @pytest.mark.anyio
@@ -838,7 +896,7 @@ async def test_search_finds_items_for_the_read_tools():
         assert "Showing 1 of 2 matches" in found.structured_content["note"]
         assert not dataset.is_error, text(dataset)
         assert dataset.structured_content["versions"][0]["version_id"] == VERSION_ID
-        assert dataset.structured_content["total_versions"] == 1
+        assert dataset.structured_content["total_versions"] == 2
         assert pipeline.structured_content["pipeline"] == "etl"
         assert pipeline.structured_content["selected_version"]["version"] == "v1"
 
@@ -865,14 +923,14 @@ async def test_end_to_end_with_demo_workspace(demo_env: dict[str, str]):
                 {"workspace": env["OPENHEXA_WORKSPACE"], "dataset": DEMO_DATASET},
             )
             path = files.structured_content["files"][0]["path"]
-            file_url = await mcp.call_tool(
-                "openhexa_get_dataset_file_url",
-                {"workspace": env["OPENHEXA_WORKSPACE"], "dataset": DEMO_DATASET, "path": path},
+            file_urls = await mcp.call_tool(
+                "openhexa_get_dataset_file_urls",
+                {"workspace": env["OPENHEXA_WORKSPACE"], "dataset": DEMO_DATASET, "paths": [path]},
             )
             reads = await _call_remaining_reads(mcp, env["OPENHEXA_WORKSPACE"])
 
     # Downloaded the way a sandbox would: without any OpenHEXA credential.
-    url = file_url.structured_content["url"]
+    url = file_urls.structured_content["urls"][path]
     async with httpx2.AsyncClient() as anonymous:
         whole = await anonymous.get(url)
         part = await anonymous.get(url, headers={"Range": "bytes=100-199"})

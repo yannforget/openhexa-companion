@@ -98,7 +98,9 @@ List the datasets of the workspace, including those shared with it.
 
 **`hexa datasets show DATASET`**
 
-Show a dataset and its description.
+Show a dataset, its newest versions and its description.
+
+With --json, prints the dataset with its newest `versions`.
 
 **`hexa datasets files DATASET`**
 
@@ -121,6 +123,21 @@ one exists. With --json, prints the files written, with their `local_path`.
 - `--version TEXT`: Version name. Defaults to the latest version.
 - `-o, --output DIRECTORY`: Directory to save the files in, keeping their paths within the version. Defaults to the current directory.
 - `--force`: Replace local files that already exist.
+
+**`hexa datasets urls DATASET [PATHS]...`**
+
+Get signed URLs serving the files of a dataset version: those at PATHS, or all of them.
+
+Anyone with a URL can read the file without authentication until it expires, after
+10 minutes to 1 hour; run the command again for new ones. The URLs support HTTP range
+requests, so DuckDB or Polars can read Parquet files in place. Treat them as secrets:
+don't save them in files or code.
+
+Prints one file per line, its path and URL separated by a tab, and the version on
+stderr. With --json, prints the dataset, version and `urls` by path.
+
+- `--version TEXT`: Version name. Defaults to the latest version.
+- `-n, --limit INTEGER RANGE`: Maximum number of URLs to show. Defaults to all. [x>=1]
 
 **`hexa datasets read DATASET PATH`**
 

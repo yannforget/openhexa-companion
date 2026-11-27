@@ -46,15 +46,9 @@ description, or the saved queries that use a table, before interpreting its valu
 
 ## Analysing a dataset file
 
-Answers must come from the whole file, not from a sample or a preview.
-
-1. Pick the version with `openhexa_get_dataset` and `openhexa_list_dataset_files`, and
-   use its `version_id` for every later call.
-2. Get a URL with `openhexa_get_dataset_file_url` and download it in the code sandbox
-   right away. Check that the downloaded size matches `size`.
-3. Analyse it in the sandbox. A follow-up question can reuse the downloaded file if it
-   concerns the same `version_id`; otherwise, or once a URL has expired, get a new URL.
-4. Cite the dataset, version and path in the answer.
+Get URLs with `openhexa_get_dataset_file_urls` and analyse the files in the code
+sandbox. Query large Parquet files in place with Polars or DuckDB, if available, rather
+than downloading them.
 
 Without a code sandbox, say that the file can't be analysed here rather than answering
 from metadata.

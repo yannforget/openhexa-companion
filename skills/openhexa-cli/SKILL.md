@@ -49,8 +49,10 @@ IDs or exact values.
 ## Workflows
 
 **Find data.** `hexa search` with alternatives in one query (`malaria paludisme`), and
-`hexa workspace homepage`. Then `hexa datasets show`, `hexa datasets files` and
-`hexa datasets download` or `read` with an explicit `--version`.
+`hexa workspace homepage`. Then `hexa datasets show` and
+`hexa datasets read DATASET README.md`. Download files with `hexa datasets download`,
+or query large ones in place with Polars or DuckDB, if available, from the URLs of
+`hexa datasets urls --json`.
 
 **Publish a dataset** (write). `hexa datasets list` to find an existing one, else
 `hexa datasets create`. `hexa datasets publish` creates a version holding only the files

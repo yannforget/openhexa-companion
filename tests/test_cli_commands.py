@@ -176,6 +176,54 @@ def test_datasets_create_needs_sources_for_version_options(fake_openhexa: FakeOp
     assert queries == []
 
 
+def test_datasets_show_lists_the_newest_versions(fake_openhexa: FakeOpenHexa):
+    versions = [
+        {
+            "id": f"00000000-0000-0000-0000-00000000000{n}",
+            "name": f"v{n}",
+            "changelog": f"Change {n}",
+            "createdAt": "2026-11-01T10:00:00+00:00",
+        }
+        for n in range(9, 0, -1)
+    ]
+
+    def dataset(body: dict[str, Any]) -> dict[str, Any]:
+        per_page = body["variables"].get("perPage", 0)
+        return {
+            "datasetLinkBySlug": {
+                "dataset": {
+                    "id": "d1",
+                    "slug": "pop",
+                    "name": "Population",
+                    "description": "About",
+                    "workspace": {"slug": "ws"},
+                    "targetId": "d1",
+                    "latestVersion": {"name": "v9"},
+                    "attributes": [],
+                    "versions": {"totalPages": 2, "items": versions[:per_page]},
+                }
+            }
+        }
+
+    fake_openhexa(dataset)
+
+    text = _invoke("datasets", "show", "pop")
+    as_json = _invoke("datasets", "show", "pop", "--json")
+
+    assert text.exit_code == 0, text.output
+    assert "v5" in text.stdout
+    assert "Change 5" in text.stdout
+    assert "v4" not in text.stdout
+    assert "hexa datasets versions list pop" in text.stderr
+    assert [v["name"] for v in json.loads(as_json.stdout)["versions"]] == [
+        "v9",
+        "v8",
+        "v7",
+        "v6",
+        "v5",
+    ]
+
+
 def _workspace_and_user(body: dict[str, Any]) -> dict[str, Any]:
     if "me {" in body["query"]:
         return {"me": {"user": {"id": "u1", "email": "ana@example.org"}}}

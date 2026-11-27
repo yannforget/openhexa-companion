@@ -78,14 +78,16 @@ latest_version is the name of the latest version, or null if it has none yet.
 
 **`openhexa_get_dataset`**
 
-Read an OpenHEXA dataset: its description, attributes and versions.
+Read an OpenHEXA dataset: its description, attributes, versions and README.
 
 The description is Markdown documenting the data, such as its sources, columns
 and caveats; it is empty if there is none. Versions are listed newest first; a
-version's files do not change once a newer version exists.
+version's files do not change once a newer version exists. The readme is the
+text of the README.md file at the root of the given version, cut after 20 KB.
 
 - `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
 - `dataset` (string, required): The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace.
+- `version` (string, optional): Name or ID of the dataset version. Defaults to the latest version.
 - `version_limit` (integer (≥ 1), default `10`): Maximum number of versions to list, newest first.
 
 **`openhexa_list_dataset_files`**
@@ -99,21 +101,21 @@ The response names the version listed, the latest by default, and its ID.
 - `version` (string, optional): Name or ID of the dataset version. Defaults to the latest version.
 - `limit` (integer (≥ 1), default `200`): Maximum number of files to return.
 
-**`openhexa_get_dataset_file_url`**
+**`openhexa_get_dataset_file_urls`**
 
-Get a temporary URL that downloads one file of an OpenHEXA dataset version.
+Get temporary URLs serving the files of a version of an OpenHEXA dataset.
 
-The response holds the URL, not the file's content. The URL points to the storage
-of OpenHEXA and serves the complete file of this version only. Anyone who has it
-can download the file without authentication until it expires, 10 minutes to 1
-hour after it was issued depending on the storage; storage then answers HTTP 400
-or 403, and this tool issues a new URL. The response also gives the URL's host,
-the version's name and ID, and the file's size in bytes and type.
+The version is the latest by default. The response maps each file path to a
+signed URL, not to the content. The URLs point to the storage of OpenHEXA, need no
+authentication and support HTTP range requests, so Parquet files can be read in
+place. They expire 10 minutes to 1 hour after they are issued, depending on the
+storage; storage then answers HTTP 400 or 403, and this tool issues new ones.
 
 - `workspace` (string, required): Slug of the OpenHEXA workspace, as listed by openhexa_list_workspaces.
 - `dataset` (string, required): The dataset, as given by openhexa_list_datasets or openhexa_search: its slug, or 'workspace/slug' for a dataset shared from another workspace.
-- `path` (string, required): Path of the file, as listed by openhexa_list_dataset_files.
 - `version` (string, optional): Name or ID of the dataset version. Defaults to the latest version.
+- `paths` (list of string, optional): Paths of the files, as listed by openhexa_list_dataset_files. All files if omitted.
+- `limit` (integer (≥ 1), default `50`): Maximum number of URLs to return.
 
 **`openhexa_update_dataset`** (**write**)
 

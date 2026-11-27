@@ -1,4 +1,4 @@
-"""Tools reading datasets, and issuing URLs to download their files."""
+"""Tools reading datasets, and issuing URLs to read their files."""
 
 from datetime import datetime
 from typing import Annotated, Any
@@ -8,7 +8,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel, Field, JsonValue
 
-from openhexa.companion import Client, Dataset, DatasetFile, DatasetVersion
+from openhexa.companion import Client, Dataset, DatasetVersion
 from openhexa.companion.server.tools._access import Access
 from openhexa.companion.server.tools._shared import (
     DEFAULT_LIST_LIMIT,
@@ -19,6 +19,7 @@ from openhexa.companion.server.tools._shared import (
     VersionArg,
     WorkspaceArg,
     is_uuid,
+    join_notes,
     truncation_note,
 )
 
@@ -26,6 +27,11 @@ from openhexa.companion.server.tools._shared import (
 DEFAULT_VERSION_LIMIT = 10
 # Files listed when no limit is given.
 DEFAULT_FILE_LIMIT = 200
+# URLs returned when no limit is given. Each is about 900 characters long.
+DEFAULT_URL_LIMIT = 50
+# Path of the README returned with a dataset, and the most bytes of it returned.
+README_PATH = "README.md"
+README_MAX_BYTES = 20_000
 
 
 class DatasetSummary(BaseModel):
@@ -60,7 +66,13 @@ class VersionSummary(BaseModel):
 class DatasetWithVersions(DatasetDetails):
     versions: list[VersionSummary] = Field(description="Versions, newest first.")
     total_versions: int = Field(description="Number of versions of the dataset.")
-    note: str | None = Field(description="Explains how to get more results, if truncated.")
+    readme: str | None = Field(
+        description="Text of README.md in the version, or null if it has none. Usually "
+        "documents the files, columns and caveats."
+    )
+    note: str | None = Field(
+        description="Explains how to get more results or the rest of the readme, if truncated."
+    )
 
 
 class FileSummary(BaseModel):
@@ -79,16 +91,15 @@ class FileList(BaseModel):
     note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
-class FileUrl(BaseModel):
-    url: str = Field(description="Signed storage URL downloading the complete file.")
-    host: str = Field(description="Host of the URL.")
+class FileUrls(BaseModel):
     workspace: str = Field(description="Slug of the workspace.")
     dataset: str = Field(description="The dataset.")
     version: str = Field(description="Name of the version.")
     version_id: str = Field(description="OpenHEXA ID of the version.")
-    path: str = Field(description="Path of the file within the version.")
-    size: int = Field(description="Size in bytes.")
-    content_type: str = Field(description="Media type declared when the file was uploaded.")
+    urls: dict[str, str] = Field(description="Signed storage URL of each file, by path.")
+    host: str = Field(description="Host of the URLs, to allow in a sandbox.")
+    total_files: int = Field(description="Number of files in the version, or of paths asked for.")
+    note: str | None = Field(description="Explains how to get more results, if truncated.")
 
 
 def register(server: MCPServer, access: Access) -> None:
@@ -122,26 +133,40 @@ def register(server: MCPServer, access: Access) -> None:
     async def get_dataset(
         workspace: WorkspaceArg,
         dataset: DatasetArg,
+        version: VersionArg = None,
         version_limit: Annotated[
             int, Field(ge=1, description="Maximum number of versions to list, newest first.")
         ] = DEFAULT_VERSION_LIMIT,
     ) -> DatasetWithVersions:
-        """Read an OpenHEXA dataset: its description, attributes and versions.
+        """Read an OpenHEXA dataset: its description, attributes, versions and README.
 
         The description is Markdown documenting the data, such as its sources, columns
         and caveats; it is empty if there is none. Versions are listed newest first; a
-        version's files do not change once a newer version exists.
+        version's files do not change once a newer version exists. The readme is the
+        text of the README.md file at the root of the given version, cut after 20 KB.
         """
 
-        def read(client: Client) -> tuple[Dataset, list[DatasetVersion]]:
-            return client.datasets.get(dataset), client.datasets.versions(dataset)
+        def read(client: Client) -> tuple[Dataset, list[DatasetVersion], str | None, str | None]:
+            item = client.datasets.get(dataset)
+            versions = client.datasets.versions(dataset)
+            if version is not None:
+                selected = _find_version(client, dataset, version)
+            elif versions:
+                selected = versions[0]
+            else:
+                return item, versions, None, None
+            return item, versions, *_readme(client, selected)
 
-        item, versions = await access.run(workspace, read)
+        item, versions, readme, readme_note = await access.run(workspace, read)
         return DatasetWithVersions(
             **_details(workspace, item).model_dump(),
             versions=[_version(v) for v in versions[:version_limit]],
             total_versions=len(versions),
-            note=truncation_note(len(versions), version_limit, "versions", "version_limit"),
+            readme=readme,
+            note=join_notes(
+                truncation_note(len(versions), version_limit, "versions", "version_limit"),
+                readme_note,
+            ),
         )
 
     @server.tool(
@@ -181,43 +206,54 @@ def register(server: MCPServer, access: Access) -> None:
         )
 
     @server.tool(
-        name="openhexa_get_dataset_file_url",
-        title="Get a download URL for an OpenHEXA dataset file",
+        name="openhexa_get_dataset_file_urls",
+        title="Get URLs for the files of an OpenHEXA dataset version",
         annotations=READ_ONLY,
     )
-    async def get_dataset_file_url(
+    async def get_dataset_file_urls(
         workspace: WorkspaceArg,
         dataset: DatasetArg,
-        path: Annotated[
-            str, Field(description="Path of the file, as listed by openhexa_list_dataset_files.")
-        ],
         version: VersionArg = None,
-    ) -> FileUrl:
-        """Get a temporary URL that downloads one file of an OpenHEXA dataset version.
+        paths: Annotated[
+            list[str] | None,
+            Field(
+                min_length=1,
+                description="Paths of the files, as listed by openhexa_list_dataset_files. "
+                "All files if omitted.",
+            ),
+        ] = None,
+        limit: Annotated[
+            int, Field(ge=1, description="Maximum number of URLs to return.")
+        ] = DEFAULT_URL_LIMIT,
+    ) -> FileUrls:
+        """Get temporary URLs serving the files of a version of an OpenHEXA dataset.
 
-        The response holds the URL, not the file's content. The URL points to the storage
-        of OpenHEXA and serves the complete file of this version only. Anyone who has it
-        can download the file without authentication until it expires, 10 minutes to 1
-        hour after it was issued depending on the storage; storage then answers HTTP 400
-        or 403, and this tool issues a new URL. The response also gives the URL's host,
-        the version's name and ID, and the file's size in bytes and type.
+        The version is the latest by default. The response maps each file path to a
+        signed URL, not to the content. The URLs point to the storage of OpenHEXA, need no
+        authentication and support HTTP range requests, so Parquet files can be read in
+        place. They expire 10 minutes to 1 hour after they are issued, depending on the
+        storage; storage then answers HTTP 400 or 403, and this tool issues new ones.
         """
 
-        def file_url(client: Client) -> tuple[DatasetFile, str]:
-            file = client.datasets.file(_find_version(client, dataset, version), path)
-            return file, client.datasets.download_url(file)
+        def file_urls(client: Client) -> tuple[DatasetVersion, dict[str, str], int]:
+            found = _find_version(client, dataset, version)
+            if paths is not None:
+                urls = client.datasets.file_urls(found, paths, limit=limit)
+                return found, urls, len(set(paths))
+            urls = client.datasets.file_urls(found, limit=limit + 1)
+            total = len(urls) if len(urls) <= limit else client.datasets.file_count(found)
+            return found, dict(list(urls.items())[:limit]), total
 
-        file, url = await access.run(workspace, file_url)
-        return FileUrl(
-            url=url,
-            host=urlsplit(url).hostname or "",
+        found, urls, total = await access.run(workspace, file_urls)
+        return FileUrls(
             workspace=workspace,
             dataset=dataset,
-            version=file.version,
-            version_id=file.version_id,
-            path=file.path,
-            size=file.size,
-            content_type=file.content_type,
+            version=found.name,
+            version_id=found.id,
+            urls=urls,
+            host=next((urlsplit(url).hostname or "" for url in urls.values()), ""),
+            total_files=total,
+            note=truncation_note(total, limit, "files"),
         )
 
 
@@ -290,6 +326,21 @@ def register_writes(server: MCPServer, access: Access) -> None:
             workspace, lambda client: client.datasets.delete_attribute(dataset, key)
         )
         return _details(workspace, item)
+
+
+def _readme(client: Client, version: DatasetVersion) -> tuple[str | None, str | None]:
+    """Read the start of the README.md of `version`, if it has one, and a note if it is cut."""
+    file = client.datasets.find_file(version, README_PATH)
+    if file is None or file.size == 0:
+        return None, None
+    with client.datasets.read(file, length=min(file.size, README_MAX_BYTES)) as stream:
+        text = stream.read().decode("utf-8", errors="replace")
+    if file.size <= README_MAX_BYTES:
+        return text, None
+    return text, (
+        f"The readme is cut after {README_MAX_BYTES} bytes. Read the whole of it through "
+        f"openhexa_get_dataset_file_urls with paths=['{README_PATH}'] and the same version."
+    )
 
 
 def _find_version(client: Client, dataset: str, version: str | None) -> DatasetVersion:

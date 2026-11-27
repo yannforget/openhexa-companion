@@ -23,14 +23,20 @@ them. SQL queries are read-only and recorded in OpenHEXA's audit log under your 
 
 ## Analysing dataset files
 
-The server gives the client a temporary download link for a file in a given dataset
-version, valid for a few minutes. The client downloads the complete file into its code
-sandbox and analyses it there; the data doesn't go through the server.
+The server gives the client temporary links to the files of a dataset version, valid
+for 10 minutes to 1 hour depending on the storage. The client reads the files from its
+code sandbox, either whole or only the parts it needs, such as columns of a Parquet
+file, and analyses them there. The files don't go through the server, except the
+README of a version, which the server returns with the dataset.
 
 The sandbox must be allowed to reach OpenHEXA's storage. For hosted OpenHEXA, add
 `storage.googleapis.com` to the allowed websites of Claude's code sandbox, in its
 settings. On Team and Enterprise plans, an organization admin does this. For other
 instances, ask the administrator where dataset files are stored.
+
+To query Parquet files in place with DuckDB, the sandbox also needs DuckDB's `httpfs`
+extension, which DuckDB downloads from `extensions.duckdb.org` the first time it is used:
+allow that host too. Polars reads the files without any extension.
 
 ## Limits
 

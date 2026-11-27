@@ -6,7 +6,7 @@ from typing import Any
 
 import click
 
-from openhexa.companion import Client
+from openhexa.companion import Client, DatasetVersion
 from openhexa.companion.cli._context import LazyClient, pass_client
 from openhexa.companion.cli._local import (
     check_targets,
@@ -22,6 +22,7 @@ from openhexa.companion.cli._output import (
     json_option,
     limit_option,
     nest,
+    note,
     print_bytes,
     print_json,
     print_table,
@@ -29,6 +30,8 @@ from openhexa.companion.cli._output import (
 from openhexa.companion.cli._prompt import confirm, yes_option
 
 dataset_argument = click.argument("dataset")
+# Versions that `hexa datasets show` lists.
+SHOWN_VERSIONS = 5
 version_option = click.option(
     "--version", "version_name", help="Version name. Defaults to the latest version."
 )
@@ -72,13 +75,27 @@ def list_datasets(client: LazyClient, limit: int | None, as_json: bool) -> None:
 @json_option
 @pass_client
 def show(client: LazyClient, dataset: str, as_json: bool) -> None:
-    """Show a dataset and its description."""
-    item = client.get().datasets.get(dataset)
+    """Show a dataset, its newest versions and its description.
+
+    With --json, prints the dataset with its newest `versions`.
+    """
+    library = client.get()
+    item = library.datasets.get(dataset)
+    versions = library.datasets.versions(dataset, limit=SHOWN_VERSIONS + 1)
+    if len(versions) > SHOWN_VERSIONS:
+        note(
+            f"Showing the {SHOWN_VERSIONS} newest versions; list them all with "
+            f"`hexa datasets versions list {dataset}`"
+        )
+    versions = versions[:SHOWN_VERSIONS]
     if as_json:
-        print_json(item)
+        print_json(nest(item, versions=versions))
         return
     click.echo(f"{item.name} ({item.reference})")
     click.echo(f"Latest version: {item.latest_version or 'none'}")
+    if versions:
+        click.echo()
+        _print_versions(versions)
     if item.attributes:
         click.echo("Attributes:")
         for key, value in item.attributes.items():
@@ -165,6 +182,59 @@ def download(
     click.echo(f"Downloaded {len(targets)} file(s) of version {version.name} to {output}", err=True)
     if as_json:
         print_json([nest(file, local_path=str(target)) for file, target in targets])
+
+
+@datasets.command()
+@dataset_argument
+@click.argument("paths", nargs=-1)
+@version_option
+@limit_option("URLs")
+@json_option
+@pass_client
+def urls(
+    client: LazyClient,
+    *,
+    dataset: str,
+    paths: tuple[str, ...],
+    version_name: str | None,
+    limit: int | None,
+    as_json: bool,
+) -> None:
+    """Get signed URLs serving the files of a dataset version: those at PATHS, or all of them.
+
+    Anyone with a URL can read the file without authentication until it expires, after
+    10 minutes to 1 hour; run the command again for new ones. The URLs support HTTP range
+    requests, so DuckDB or Polars can read Parquet files in place. Treat them as secrets:
+    don't save them in files or code.
+
+    Prints one file per line, its path and URL separated by a tab, and the version on
+    stderr. With --json, prints the dataset, version and `urls` by path.
+    """
+    library = client.get()
+    version = library.datasets.version(dataset, version_name)
+    click.echo(f"Version {version.name}", err=True)
+    if paths:
+        found = library.datasets.file_urls(version, paths)
+    else:
+        found = library.datasets.file_urls(version, limit=fetch_limit(limit))
+    items = cut(
+        list(found.items()),
+        limit,
+        empty=f"Version {version.name} of dataset {dataset} has no files",
+        complete=bool(paths),
+    )
+    if as_json:
+        print_json(
+            {
+                "dataset": dataset,
+                "version": version.name,
+                "version_id": version.id,
+                "urls": dict(items),
+            }
+        )
+        return
+    for path, url in items:
+        click.echo(f"{path}\t{url}")
 
 
 @datasets.command()
@@ -363,6 +433,10 @@ def list_versions(client: LazyClient, dataset: str, limit: int, as_json: bool) -
     if as_json:
         print_json(items)
         return
+    _print_versions(items)
+
+
+def _print_versions(items: list[DatasetVersion]) -> None:
     print_table(
         [(v.name, format_time(v.created_at), v.changelog or "") for v in items],
         ("version", "created", "message"),
